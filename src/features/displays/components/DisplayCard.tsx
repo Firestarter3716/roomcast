@@ -1,6 +1,7 @@
 "use client";
 
 import { Monitor, ExternalLink, Copy, RotateCcw, Trash2 } from "lucide-react";
+import { DisplayQRCode } from "./DisplayQRCode";
 import { toast } from "sonner";
 
 interface DisplayCardProps {
@@ -72,6 +73,15 @@ export function DisplayCard({ display, onDelete, onRegenerateToken }: DisplayCar
           ))}
         </div>
       )}
+
+      <details className="mt-3 group">
+        <summary className="cursor-pointer text-xs text-[var(--color-muted-foreground)] hover:text-[var(--color-foreground)] transition-colors">
+          Show QR Code
+        </summary>
+        <div className="mt-2 flex justify-center">
+          <DisplayQRCode token={display.token} displayName={display.name} size={160} />
+        </div>
+      </details>
 
       <div className="mt-4 flex items-center gap-2 border-t border-[var(--color-border)] pt-3">
         <a href={`/admin/displays/${display.id}`} className="inline-flex items-center gap-1 rounded-md bg-[var(--color-primary)] px-3 py-1.5 text-xs font-medium text-[var(--color-primary-foreground)] hover:bg-[var(--color-primary-hover)] transition-colors">

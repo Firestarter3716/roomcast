@@ -10,17 +10,19 @@ import {
   Settings,
   LogOut,
 } from "lucide-react";
-
-const navItems = [
-  { href: "/admin/calendars", label: "Calendars", icon: Calendar },
-  { href: "/admin/rooms", label: "Rooms", icon: DoorOpen },
-  { href: "/admin/displays", label: "Displays", icon: Monitor },
-  { href: "/admin/settings", label: "Admin", icon: Settings },
-];
+import { useTranslations } from "next-intl";
 
 export function AdminNav() {
   const pathname = usePathname();
   const { data: session } = useSession();
+  const t = useTranslations("nav");
+
+  const navItems = [
+    { href: "/admin/calendars", label: t("calendars"), icon: Calendar },
+    { href: "/admin/rooms", label: t("rooms"), icon: DoorOpen },
+    { href: "/admin/displays", label: t("displays"), icon: Monitor },
+    { href: "/admin/settings", label: t("admin"), icon: Settings },
+  ];
 
   const userInitial = session?.user?.name?.[0]?.toUpperCase()
     ?? session?.user?.email?.[0]?.toUpperCase()
@@ -71,7 +73,7 @@ export function AdminNav() {
           <button
             onClick={() => signOut({ callbackUrl: "/login" })}
             className="flex items-center gap-1.5 rounded-md px-2 py-1.5 text-sm text-[var(--color-muted-foreground)] transition-colors hover:bg-[var(--color-secondary)] hover:text-[var(--color-foreground)]"
-            title="Logout"
+            title={t("logout")}
           >
             <LogOut className="h-4 w-4" />
           </button>

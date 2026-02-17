@@ -111,6 +111,11 @@ function LoginForm() {
           >
             {loading ? "Anmelden..." : "Anmelden"}
           </button>
+          <div className="text-center pt-2">
+            <a href="/reset-password" className="text-sm text-[var(--color-muted-foreground)] hover:text-[var(--color-foreground)]">
+              Forgot password?
+            </a>
+          </div>
         </form>
       </div>
     </div>
