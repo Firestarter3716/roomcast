@@ -1,6 +1,7 @@
 import { type NextRequest } from "next/server";
 import prisma from "@/server/db/prisma";
 import { sseRegistry } from "@/server/sse/registry";
+import { isIpInWhitelist } from "@/shared/lib/ip-utils";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -23,11 +24,9 @@ export async function GET(
     return new Response("Display not found", { status: 404 });
   }
 
-  if (display.ipWhitelist.length > 0) {
-    const clientIp = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || request.headers.get("x-real-ip") || "unknown";
-    if (!display.ipWhitelist.includes(clientIp)) {
-      return new Response("Forbidden", { status: 403 });
-    }
+  const clientIp = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || request.headers.get("x-real-ip") || "unknown";
+  if (!isIpInWhitelist(clientIp, display.ipWhitelist)) {
+    return new Response("Forbidden", { status: 403 });
   }
 
   const calendarIds: string[] = [];

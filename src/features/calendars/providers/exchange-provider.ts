@@ -1,4 +1,4 @@
-import { type CalendarProviderAdapter, type ConnectionTestResult, type DateRange, type ExternalEvent, type ExternalCalendarInfo } from "./types";
+import { type CalendarProviderAdapter, type ConnectionTestResult, type DateRange, type ExternalEvent, type ExternalCalendarInfo, throwClassifiedHttpError } from "./types";
 import { logger } from "@/server/lib/logger";
 
 interface ExchangeCredentials {
@@ -110,7 +110,7 @@ export class ExchangeProvider implements CalendarProviderAdapter {
       });
 
       if (!response.ok) {
-        throw new Error(`Graph API error (${response.status}): ${await response.text()}`);
+        throwClassifiedHttpError(response, "Graph API");
       }
 
       const data: { value?: GraphEvent[]; "@odata.nextLink"?: string } = await response.json();

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { useTranslations } from "next-intl";
 import { updateSystemSettings } from "../actions";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
@@ -26,6 +27,7 @@ const LANGUAGE_OPTIONS = [
 ];
 
 export function GeneralSettingsForm({ initialSettings }: GeneralSettingsFormProps) {
+  const t = useTranslations("admin.settings");
   const [saving, setSaving] = useState(false);
 
   const form = useForm<SettingsData>({
@@ -48,9 +50,9 @@ export function GeneralSettingsForm({ initialSettings }: GeneralSettingsFormProp
         defaultLogoUrl: data.defaultLogoUrl || null,
         sessionTimeoutHours: data.sessionTimeoutHours,
       });
-      toast.success("Settings saved");
+      toast.success(t("saved"));
     } catch {
-      toast.error("Failed to save settings");
+      toast.error(t("saveFailed"));
     } finally {
       setSaving(false);
     }
@@ -64,7 +66,7 @@ export function GeneralSettingsForm({ initialSettings }: GeneralSettingsFormProp
   return (
     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
       <div>
-        <label className={labelClass}>Default Language</label>
+        <label className={labelClass}>{t("defaultLanguage")}</label>
         <select {...form.register("defaultLocale")} className={inputClass}>
           {LANGUAGE_OPTIONS.map((opt) => (
             <option key={opt.value} value={opt.value}>
@@ -75,7 +77,7 @@ export function GeneralSettingsForm({ initialSettings }: GeneralSettingsFormProp
       </div>
 
       <div>
-        <label className={labelClass}>Timezone</label>
+        <label className={labelClass}>{t("defaultTimezone")}</label>
         <input
           {...form.register("defaultTimezone")}
           className={inputClass}
@@ -84,7 +86,7 @@ export function GeneralSettingsForm({ initialSettings }: GeneralSettingsFormProp
       </div>
 
       <div>
-        <label className={labelClass}>Default Font</label>
+        <label className={labelClass}>{t("defaultFont")}</label>
         <select {...form.register("defaultFont")} className={inputClass}>
           {FONT_OPTIONS.map((opt) => (
             <option key={opt.value} value={opt.value}>
@@ -95,19 +97,19 @@ export function GeneralSettingsForm({ initialSettings }: GeneralSettingsFormProp
       </div>
 
       <div>
-        <label className={labelClass}>Default Logo URL</label>
+        <label className={labelClass}>{t("defaultLogo")}</label>
         <input
           {...form.register("defaultLogoUrl")}
           className={inputClass}
           placeholder="https://example.com/logo.png"
         />
         <p className="mt-1 text-xs text-[var(--color-muted-foreground)]">
-          URL to the default logo displayed on room screens. Leave empty for no logo.
+          {t("logoHelp")}
         </p>
       </div>
 
       <div>
-        <label className={labelClass}>Session Timeout (Hours)</label>
+        <label className={labelClass}>{t("sessionTimeout")}</label>
         <input
           {...form.register("sessionTimeoutHours", { valueAsNumber: true })}
           type="number"
@@ -117,7 +119,7 @@ export function GeneralSettingsForm({ initialSettings }: GeneralSettingsFormProp
           placeholder="24"
         />
         <p className="mt-1 text-xs text-[var(--color-muted-foreground)]">
-          How long admin sessions remain active before requiring re-authentication.
+          {t("sessionHelp")}
         </p>
       </div>
 
@@ -128,7 +130,7 @@ export function GeneralSettingsForm({ initialSettings }: GeneralSettingsFormProp
           className="inline-flex items-center gap-2 rounded-md bg-[var(--color-primary)] px-4 py-2.5 text-sm font-medium text-[var(--color-primary-foreground)] hover:bg-[var(--color-primary-hover)] transition-colors disabled:opacity-50"
         >
           {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-          Save Settings
+          {t("saveSettings")}
         </button>
       </div>
     </form>

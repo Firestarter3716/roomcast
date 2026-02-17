@@ -112,7 +112,8 @@ function computeOverlapLayout(events: DisplayEvent[]): LayoutEvent[] {
   return result;
 }
 
-export function DayGridView({ events, config, locale }: DayGridViewProps) {
+export function DayGridView({ events, config, locale: localeProp }: DayGridViewProps) {
+  const locale = localeProp || "de-DE";
   const now = useCurrentTime(60000);
   const totalHours = config.timeRangeEnd - config.timeRangeStart;
   const hours = useMemo(() => { const h = []; for (let i = config.timeRangeStart; i < config.timeRangeEnd; i++) h.push(i); return h; }, [config.timeRangeStart, config.timeRangeEnd]);
@@ -173,11 +174,30 @@ export function DayGridView({ events, config, locale }: DayGridViewProps) {
     scrollToCurrentTime();
   }, [scrollToCurrentTime]);
 
+  // Locale-aware date header
+  const dateString = now.toLocaleDateString(locale, {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+
   return (
     <div
       ref={scrollContainerRef}
       style={{ height: "100%", overflowY: "auto", padding: "1.5rem" }}
     >
+      {/* Date header */}
+      <div
+        style={{
+          fontSize: "clamp(0.875rem, 1.5vw, 1.125rem)",
+          opacity: 0.6,
+          marginBottom: "1rem",
+          paddingLeft: "4rem",
+        }}
+      >
+        {dateString}
+      </div>
       <div style={{ display: "flex", position: "relative", minHeight: "100%" }}>
         {/* Hour labels column */}
         <div style={{ width: "4rem", flexShrink: 0, position: "relative" }}>
@@ -227,7 +247,7 @@ export function DayGridView({ events, config, locale }: DayGridViewProps) {
               >
                 <div style={{ fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{event.title}</div>
                 <div style={{ opacity: 0.7, fontSize: "0.6875rem" }}>
-                  {new Date(event.startTime).toLocaleTimeString(locale || "de-DE", { hour: "2-digit", minute: "2-digit" })} - {new Date(event.endTime).toLocaleTimeString(locale || "de-DE", { hour: "2-digit", minute: "2-digit" })}
+                  {new Date(event.startTime).toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" })} - {new Date(event.endTime).toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" })}
                 </div>
               </div>
             );

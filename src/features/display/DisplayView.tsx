@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { useDisplaySSE, type DisplayEvent } from "./hooks/useDisplaySSE";
 import { DisplayShell } from "./shared/DisplayShell";
 import { EventErrorBoundary } from "./shared/EventErrorBoundary";
@@ -20,8 +21,16 @@ import {
   DEFAULT_BACKGROUND,
   getDefaultLayoutConfig,
 } from "@/features/displays/types";
+import { THEME_PALETTES } from "@/features/displays/palettes";
 
 const LOCALE_MAP: Record<string, string> = { de: "de-DE", en: "en-US", fr: "fr-FR" };
+
+interface DisplayOverrides {
+  theme?: string;
+  lang?: string;
+  refresh?: number;
+  scale?: string;
+}
 
 interface DisplayViewProps {
   token: string;
@@ -29,8 +38,10 @@ interface DisplayViewProps {
   initialConfig: DisplayConfig;
   initialEvents: DisplayEvent[];
   roomName?: string;
+  roomLocation?: string;
   defaultLang?: string;
   orientation?: string;
+  overrides?: DisplayOverrides;
 }
 
 export function DisplayView({
@@ -39,14 +50,52 @@ export function DisplayView({
   initialConfig,
   initialEvents,
   roomName,
+  roomLocation,
   defaultLang,
   orientation,
+  overrides,
 }: DisplayViewProps) {
-  const locale = LOCALE_MAP[defaultLang || "de"] || "de-DE";
+  const effectiveLang = overrides?.lang || defaultLang || "de";
+  const locale = LOCALE_MAP[effectiveLang] || "de-DE";
   const { events, config: liveConfig, connected, error, connectionMode } = useDisplaySSE({ token });
 
+  // Refresh interval override: reload the page periodically
+  useEffect(() => {
+    if (!overrides?.refresh) return;
+    const intervalMs = overrides.refresh * 1000;
+    const id = setInterval(() => {
+      window.location.reload();
+    }, intervalMs);
+    return () => clearInterval(id);
+  }, [overrides?.refresh]);
+
+  // Log connection status to console for debugging (not shown visually)
+  useEffect(() => {
+    if (error) {
+      console.warn("[RoomCast] Display connection error:", error);
+    }
+  }, [error]);
+
+  useEffect(() => {
+    if (connectionMode === "polling") {
+      console.info("[RoomCast] Display connection mode: polling (SSE unavailable)");
+    }
+  }, [connectionMode]);
+
+  useEffect(() => {
+    if (!connected && connectionMode === "sse") {
+      console.info("[RoomCast] Display SSE reconnecting...");
+    }
+  }, [connected, connectionMode]);
+
   const displayEvents = events.length > 0 ? events : initialEvents;
-  const displayConfig: DisplayConfig = liveConfig
+
+  // Resolve theme palette override
+  const themePaletteOverride = overrides?.theme
+    ? THEME_PALETTES.find((p) => p.id === overrides.theme)?.theme
+    : undefined;
+
+  const baseConfig: DisplayConfig = liveConfig
     ? {
         theme: { ...DEFAULT_THEME, ...(liveConfig as DisplayConfig).theme },
         branding: { ...DEFAULT_BRANDING, ...(liveConfig as DisplayConfig).branding },
@@ -54,6 +103,11 @@ export function DisplayView({
         layout: { ...getDefaultLayoutConfig(layoutType), ...(liveConfig as DisplayConfig).layout },
       }
     : initialConfig;
+
+  // Apply theme override on top of resolved config
+  const displayConfig: DisplayConfig = themePaletteOverride
+    ? { ...baseConfig, theme: { ...baseConfig.theme, ...themePaletteOverride } }
+    : baseConfig;
 
   function renderView() {
     switch (layoutType) {
@@ -63,6 +117,7 @@ export function DisplayView({
             events={displayEvents}
             config={displayConfig.layout as RoomBookingConfig}
             roomName={roomName}
+            roomLocation={roomLocation}
             locale={locale}
             orientation={orientation}
           />
@@ -104,70 +159,16 @@ export function DisplayView({
     }
   }
 
+  const scaleStyle: React.CSSProperties | undefined =
+    overrides?.scale === "fit"
+      ? { objectFit: "contain" as const }
+      : overrides?.scale === "fill"
+        ? { objectFit: "cover" as const }
+        : undefined;
+
   return (
-    <DisplayShell config={displayConfig}>
-      {error && (
-        <div
-          style={{
-            position: "absolute",
-            top: "0.5rem",
-            right: "0.5rem",
-            zIndex: 100,
-            padding: "0.5rem 1rem",
-            borderRadius: "0.375rem",
-            backgroundColor: "rgba(239, 68, 68, 0.9)",
-            color: "white",
-            fontSize: "0.75rem",
-          }}
-        >
-          {error}
-        </div>
-      )}
-      {connectionMode === "polling" && (
-        <div
-          style={{
-            position: "absolute",
-            top: "0.5rem",
-            right: "0.5rem",
-            zIndex: 100,
-            display: "flex",
-            alignItems: "center",
-            gap: "0.25rem",
-            padding: "0.25rem 0.5rem",
-            borderRadius: "0.375rem",
-            backgroundColor: "rgba(234, 179, 8, 0.15)",
-            fontSize: "0.625rem",
-            color: "#A16207",
-          }}
-          title="SSE unavailable. Using HTTP polling (30s refresh). Attempting SSE reconnect in background."
-        >
-          <div
-            style={{
-              width: "6px",
-              height: "6px",
-              borderRadius: "50%",
-              backgroundColor: "#EAB308",
-              flexShrink: 0,
-            }}
-          />
-          Polling
-        </div>
-      )}
-      {!connected && !error && connectionMode === "sse" && (
-        <div
-          style={{
-            position: "absolute",
-            top: "0.5rem",
-            right: "0.5rem",
-            zIndex: 100,
-            width: "8px",
-            height: "8px",
-            borderRadius: "50%",
-            backgroundColor: "#EAB308",
-          }}
-          title="Reconnecting..."
-        />
-      )}
+    <DisplayShell config={displayConfig} style={scaleStyle}>
+      {/* Connection status is logged to console only -- no visible indicators for display viewers */}
       <EventErrorBoundary>
         {renderView()}
       </EventErrorBoundary>

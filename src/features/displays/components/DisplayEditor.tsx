@@ -299,6 +299,13 @@ function AgendaOptions({ config, onChange, labelClass, checkboxClass, inputClass
       <label className={checkboxClass}><input type="checkbox" checked={config.showRoomName} onChange={(e) => onChange({ showRoomName: e.target.checked })} /> Show room name</label>
       <label className={checkboxClass}><input type="checkbox" checked={config.highlightCurrent} onChange={(e) => onChange({ highlightCurrent: e.target.checked })} /> Highlight current event</label>
       <label className={checkboxClass}><input type="checkbox" checked={config.autoScroll} onChange={(e) => onChange({ autoScroll: e.target.checked })} /> Auto-scroll</label>
+      {config.autoScroll && (
+        <div>
+          <label className={labelClass}>Auto-scroll speed: {config.autoScrollSpeed ?? 1}</label>
+          <input type="range" min="1" max="10" step="1" value={config.autoScrollSpeed ?? 1} onChange={(e) => onChange({ autoScrollSpeed: Number(e.target.value) })} className="w-full" />
+          <div className="flex justify-between text-[10px] text-[var(--color-muted-foreground)]"><span>Slow</span><span>Fast</span></div>
+        </div>
+      )}
       <div><label className={labelClass}>Max events</label><input type="number" min="5" max="50" value={config.maxEvents} onChange={(e) => onChange({ maxEvents: Number(e.target.value) })} className={inputClass} /></div>
     </div>
   );
@@ -326,10 +333,17 @@ function WeekGridOptions({ config, onChange, checkboxClass }: { config: WeekGrid
 }
 
 function InfoDisplayOptions({ config, onChange, labelClass, checkboxClass, inputClass }: { config: InfoDisplayConfig; onChange: (p: Record<string, unknown>) => void; labelClass: string; checkboxClass: string; inputClass: string }) {
+  const tickerSpeedLabel = config.tickerSpeed <= 30 ? "Slow" : config.tickerSpeed <= 60 ? "Medium" : "Fast";
   return (
     <div className="space-y-3">
       <label className={checkboxClass}><input type="checkbox" checked={config.showClock} onChange={(e) => onChange({ showClock: e.target.checked })} /> Show clock</label>
-      {config.showClock && <div><label className={labelClass}>Clock format</label><select value={config.clockFormat} onChange={(e) => onChange({ clockFormat: e.target.value })} className={inputClass}><option value="24h">24-hour</option><option value="12h">12-hour</option></select></div>}
+      {config.showClock && (
+        <>
+          <div><label className={labelClass}>Clock format</label><select value={config.clockFormat} onChange={(e) => onChange({ clockFormat: e.target.value })} className={inputClass}><option value="24h">24-hour</option><option value="12h">12-hour</option></select></div>
+          <label className={checkboxClass}><input type="checkbox" checked={config.showSeconds ?? false} onChange={(e) => onChange({ showSeconds: e.target.checked })} /> Show seconds</label>
+          <div><label className={labelClass}>Clock position</label><select value={config.clockPosition ?? "top-right"} onChange={(e) => onChange({ clockPosition: e.target.value })} className={inputClass}><option value="top-right">Top Right</option><option value="center">Center</option></select></div>
+        </>
+      )}
       <label className={checkboxClass}><input type="checkbox" checked={config.showDate} onChange={(e) => onChange({ showDate: e.target.checked })} /> Show date</label>
       <label className={checkboxClass}><input type="checkbox" checked={config.showTodayEvents} onChange={(e) => onChange({ showTodayEvents: e.target.checked })} /> Show today&apos;s events</label>
       <div><label className={labelClass}>Upcoming days</label><input type="number" min="1" max="14" value={config.upcomingDaysCount} onChange={(e) => onChange({ upcomingDaysCount: Number(e.target.value) })} className={inputClass} /></div>
@@ -337,7 +351,19 @@ function InfoDisplayOptions({ config, onChange, labelClass, checkboxClass, input
       {config.tickerEnabled && (
         <>
           <div><label className={labelClass}>Ticker messages (one per line)</label><textarea value={(config.tickerMessages || []).join("\n")} onChange={(e) => onChange({ tickerMessages: e.target.value.split("\n").filter(Boolean) })} rows={3} className={inputClass} /></div>
-          <div><label className={labelClass}>Ticker speed: {config.tickerSpeed}px/s</label><input type="range" min="10" max="200" value={config.tickerSpeed} onChange={(e) => onChange({ tickerSpeed: Number(e.target.value) })} className="w-full" /></div>
+          <div>
+            <label className={labelClass}>Ticker speed: {tickerSpeedLabel}</label>
+            <select value={config.tickerSpeed <= 30 ? "30" : config.tickerSpeed <= 60 ? "60" : "120"} onChange={(e) => onChange({ tickerSpeed: Number(e.target.value) })} className={inputClass}>
+              <option value="30">Slow</option>
+              <option value="60">Medium</option>
+              <option value="120">Fast</option>
+            </select>
+          </div>
+          <div>
+            <label className={labelClass}>Ticker separator</label>
+            <input type="text" value={config.tickerSeparator ?? " \u2022\u2022\u2022 "} onChange={(e) => onChange({ tickerSeparator: e.target.value })} className={inputClass} placeholder="\u00b7 or | or \u2022\u2022\u2022" />
+            <p className="mt-1 text-xs text-[var(--color-muted-foreground)]">Character(s) between ticker messages (e.g. &quot;\u00b7&quot; or &quot;|&quot;)</p>
+          </div>
         </>
       )}
     </div>

@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
+import { useTranslations } from "next-intl";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { createUserSchema, type CreateUserInput } from "../schemas";
 import { createUser, updateUser } from "../actions";
@@ -20,14 +21,13 @@ interface UserFormProps {
   };
 }
 
-const ROLE_OPTIONS: { value: Role; label: string }[] = [
-  { value: "ADMIN", label: "Admin" },
-  { value: "EDITOR", label: "Editor" },
-  { value: "VIEWER", label: "Viewer" },
-];
+const ROLE_KEYS: Role[] = ["ADMIN", "EDITOR", "VIEWER"];
 
 export function UserForm({ mode, initialData }: UserFormProps) {
   const router = useRouter();
+  const t = useTranslations("admin.users");
+  const tr = useTranslations("admin.roles");
+  const tc = useTranslations("common");
   const [saving, setSaving] = useState(false);
 
   const form = useForm<CreateUserInput>({
@@ -45,7 +45,7 @@ export function UserForm({ mode, initialData }: UserFormProps) {
     try {
       if (mode === "create") {
         await createUser(data);
-        toast.success("User created");
+        toast.success(t("created"));
       } else if (initialData) {
         await updateUser(initialData.id, {
           name: data.name,
@@ -53,11 +53,11 @@ export function UserForm({ mode, initialData }: UserFormProps) {
           password: data.password,
           role: data.role,
         });
-        toast.success("User updated");
+        toast.success(t("updated"));
       }
       router.push("/admin/settings/users");
     } catch {
-      toast.error("Failed to save user");
+      toast.error(t("saveFailed"));
     } finally {
       setSaving(false);
     }
@@ -71,7 +71,7 @@ export function UserForm({ mode, initialData }: UserFormProps) {
   return (
     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
       <div>
-        <label className={labelClass}>Name</label>
+        <label className={labelClass}>{t("name")}</label>
         <input
           {...form.register("name")}
           className={inputClass}
@@ -85,7 +85,7 @@ export function UserForm({ mode, initialData }: UserFormProps) {
       </div>
 
       <div>
-        <label className={labelClass}>Email</label>
+        <label className={labelClass}>{t("email")}</label>
         <input
           {...form.register("email")}
           type="email"
@@ -101,10 +101,10 @@ export function UserForm({ mode, initialData }: UserFormProps) {
 
       <div>
         <label className={labelClass}>
-          Password
+          {t("password")}
           {mode === "edit" && (
             <span className="ml-1.5 font-normal text-[var(--color-muted-foreground)]">
-              (Leave blank to keep current)
+              ({t("passwordHint")})
             </span>
           )}
         </label>
@@ -113,7 +113,7 @@ export function UserForm({ mode, initialData }: UserFormProps) {
           type="password"
           className={inputClass}
           placeholder={
-            mode === "edit" ? "Enter new password..." : "Minimum 8 characters"
+            mode === "edit" ? t("passwordPlaceholderEdit") : t("passwordPlaceholderNew")
           }
         />
         {form.formState.errors.password && (
@@ -124,11 +124,11 @@ export function UserForm({ mode, initialData }: UserFormProps) {
       </div>
 
       <div>
-        <label className={labelClass}>Role</label>
+        <label className={labelClass}>{t("role")}</label>
         <select {...form.register("role")} className={inputClass}>
-          {ROLE_OPTIONS.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
+          {ROLE_KEYS.map((role) => (
+            <option key={role} value={role}>
+              {tr(role)}
             </option>
           ))}
         </select>
@@ -146,14 +146,14 @@ export function UserForm({ mode, initialData }: UserFormProps) {
           className="inline-flex items-center gap-2 rounded-md bg-[var(--color-primary)] px-4 py-2.5 text-sm font-medium text-[var(--color-primary-foreground)] hover:bg-[var(--color-primary-hover)] transition-colors disabled:opacity-50"
         >
           {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-          {mode === "create" ? "Create User" : "Save Changes"}
+          {mode === "create" ? t("createUser") : t("saveChanges")}
         </button>
         <button
           type="button"
           onClick={() => router.push("/admin/settings/users")}
           className="rounded-md px-4 py-2.5 text-sm font-medium text-[var(--color-muted-foreground)] hover:text-[var(--color-foreground)] transition-colors"
         >
-          Cancel
+          {tc("cancel")}
         </button>
       </div>
     </form>

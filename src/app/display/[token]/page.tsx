@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import type { Viewport } from "next";
 import prisma from "@/server/db/prisma";
 import { DisplayView } from "@/features/display/DisplayView";
 import {
@@ -11,18 +12,26 @@ import {
 
 export const dynamic = "force-dynamic";
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  userScalable: false,
+};
+
 interface DisplayPageProps {
   params: Promise<{ token: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
-export default async function DisplayPage({ params }: DisplayPageProps) {
+export default async function DisplayPage({ params, searchParams }: DisplayPageProps) {
   const { token } = await params;
+  const query = await searchParams;
 
   const display = await prisma.display.findUnique({
     where: { token },
     include: {
       room: {
-        select: { name: true, calendarId: true },
+        select: { name: true, location: true, calendarId: true },
       },
       displayCalendars: {
         select: { calendarId: true },
@@ -83,6 +92,34 @@ export default async function DisplayPage({ params }: DisplayPageProps) {
     layout: { ...getDefaultLayoutConfig(display.layoutType), ...rawConfig?.layout },
   };
 
+  // Build query parameter overrides
+  const overrides: {
+    theme?: string;
+    lang?: string;
+    refresh?: number;
+    scale?: string;
+  } = {};
+
+  const qTheme = typeof query.theme === "string" ? query.theme : undefined;
+  if (qTheme === "light" || qTheme === "dark") {
+    overrides.theme = qTheme;
+  }
+
+  const qLang = typeof query.lang === "string" ? query.lang : undefined;
+  if (qLang === "de" || qLang === "en" || qLang === "fr") {
+    overrides.lang = qLang;
+  }
+
+  const qRefresh = typeof query.refresh === "string" ? parseInt(query.refresh, 10) : NaN;
+  if (!isNaN(qRefresh) && qRefresh > 0) {
+    overrides.refresh = qRefresh;
+  }
+
+  const qScale = typeof query.scale === "string" ? query.scale : undefined;
+  if (qScale === "fit" || qScale === "fill") {
+    overrides.scale = qScale;
+  }
+
   return (
     <DisplayView
       token={token}
@@ -90,8 +127,10 @@ export default async function DisplayPage({ params }: DisplayPageProps) {
       initialConfig={config}
       initialEvents={serializedEvents}
       roomName={display.room?.name}
+      roomLocation={display.room?.location ?? undefined}
       defaultLang={display.defaultLang ?? undefined}
       orientation={display.orientation}
+      overrides={overrides}
     />
   );
 }

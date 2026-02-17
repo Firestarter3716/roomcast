@@ -2,6 +2,7 @@
 
 import { useMemo, useState, useEffect } from "react";
 import { useCurrentTime } from "../hooks/useCurrentTime";
+import { getDisplayTranslations, type DisplayTranslations } from "../shared/translations";
 import { type DisplayEvent } from "../hooks/useDisplaySSE";
 import { type AgendaConfig } from "@/features/displays/types";
 import { AutoScroller } from "../shared/AutoScroller";
@@ -45,6 +46,7 @@ function buildGapPlaceholders(
   now: Date,
   endOfDayHour: number,
   locale: string,
+  t: DisplayTranslations,
   minGapHours = 2,
 ): { afterIndex: number; item: AgendaItem }[] {
   const gaps: { afterIndex: number; item: AgendaItem }[] = [];
@@ -68,13 +70,13 @@ function buildGapPlaceholders(
         const isLunch = startFrac <= 13.5 && endFrac >= 11.5 && startFrac >= 11 && endFrac <= 14;
 
         if (isLunch) {
-          gaps.push({ afterIndex: i, item: { kind: "gap", label: "Lunch Break" } });
+          gaps.push({ afterIndex: i, item: { kind: "gap", label: t.lunchBreak } });
         } else {
           gaps.push({
             afterIndex: i,
             item: {
               kind: "gap",
-              label: "Free",
+              label: t.free,
               subLabel: `${fmtTime(currentEnd, locale)} \u2013 ${fmtTime(nextStart, locale)}`,
             },
           });
@@ -89,7 +91,7 @@ function buildGapPlaceholders(
       if (gapHours > minGapHours) {
         gaps.push({
           afterIndex: i,
-          item: { kind: "gap", label: "No further events today" },
+          item: { kind: "gap", label: t.noFurtherEvents },
         });
       }
     }
@@ -106,6 +108,7 @@ function buildAgendaItems(
   now: Date,
   endOfDayHour: number,
   locale: string,
+  t: DisplayTranslations,
 ): AgendaItem[] {
   const nowMs = now.getTime();
 
@@ -122,7 +125,7 @@ function buildAgendaItems(
   });
 
   // Build gap placeholders
-  const gaps = buildGapPlaceholders(events, now, endOfDayHour, locale);
+  const gaps = buildGapPlaceholders(events, now, endOfDayHour, locale, t);
 
   // Merge: iterate event items and insert gaps after the correct indices
   const result: AgendaItem[] = [];
@@ -253,8 +256,17 @@ function useDateKey(): string {
 
 export function AgendaView({ events, config, locale: localeProp }: AgendaViewProps) {
   const locale = localeProp || "de-DE";
+  const t = getDisplayTranslations(locale);
   const now = useCurrentTime(30_000);
   const dateKey = useDateKey();
+
+  // Written-out date header
+  const dateString = now.toLocaleDateString(locale, {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
 
   // Filter events to today's time range. `dateKey` is included so that the
   // memo re-runs after a midnight rollover even if `now` hasn't ticked yet.
@@ -272,8 +284,8 @@ export function AgendaView({ events, config, locale: localeProp }: AgendaViewPro
 
   // Build the agenda items list (events + gap placeholders)
   const agendaItems = useMemo(
-    () => buildAgendaItems(filteredEvents, now, config.timeRangeEnd, locale),
-    [filteredEvents, now, config.timeRangeEnd, locale],
+    () => buildAgendaItems(filteredEvents, now, config.timeRangeEnd, locale, t),
+    [filteredEvents, now, config.timeRangeEnd, locale, t],
   );
 
   // Build hour labels for the gutter
@@ -284,62 +296,76 @@ export function AgendaView({ events, config, locale: localeProp }: AgendaViewPro
   }, [config.timeRangeStart, config.timeRangeEnd]);
 
   return (
-    <div style={{ display: "flex", height: "100%", padding: "1.5rem", overflow: "hidden" }}>
-      {/* Hour gutter */}
-      <div style={{ width: "4rem", flexShrink: 0, paddingTop: "0.25rem" }}>
-        {hours.map((h) => (
-          <div
-            key={h}
-            style={{
-              height: `${100 / hours.length}%`,
-              fontSize: "0.75rem",
-              opacity: 0.5,
-              display: "flex",
-              alignItems: "flex-start",
-            }}
-          >
-            {String(h).padStart(2, "0")}:00
-          </div>
-        ))}
-      </div>
-
-      {/* Event list with auto-scroll */}
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", padding: "1.5rem", overflow: "hidden" }}>
+      {/* Date header */}
       <div
         style={{
-          flex: 1,
-          borderLeft: "1px solid var(--display-muted)33",
-          paddingLeft: "1rem",
-          minHeight: 0,
-          overflow: "hidden",
+          fontSize: "clamp(0.875rem, 1.5vw, 1.125rem)",
+          opacity: 0.6,
+          marginBottom: "1rem",
+          paddingLeft: "4rem",
         }}
       >
-        <AutoScroller
-          enabled={config.autoScroll}
-          speed={config.autoScrollSpeed * 30}
-          pauseAtBottomMs={3000}
-        >
-          {filteredEvents.length === 0 && (
+        {dateString}
+      </div>
+
+      <div style={{ display: "flex", flex: 1, minHeight: 0 }}>
+        {/* Hour gutter */}
+        <div style={{ width: "4rem", flexShrink: 0, paddingTop: "0.25rem" }}>
+          {hours.map((h) => (
             <div
+              key={h}
               style={{
+                height: `${100 / hours.length}%`,
+                fontSize: "0.75rem",
+                opacity: 0.5,
                 display: "flex",
-                height: "100%",
-                alignItems: "center",
-                justifyContent: "center",
-                opacity: 0.4,
+                alignItems: "flex-start",
               }}
             >
-              No events today
+              {String(h).padStart(2, "0")}:00
             </div>
-          )}
+          ))}
+        </div>
 
-          {agendaItems.map((item, idx) =>
-            item.kind === "event" ? (
-              <EventCard key={item.event.id} item={item} config={config} locale={locale} />
-            ) : (
-              <GapPlaceholder key={`gap-${idx}`} item={item} />
-            ),
-          )}
-        </AutoScroller>
+        {/* Event list with auto-scroll */}
+        <div
+          style={{
+            flex: 1,
+            borderLeft: "1px solid var(--display-muted)33",
+            paddingLeft: "1rem",
+            minHeight: 0,
+            overflow: "hidden",
+          }}
+        >
+          <AutoScroller
+            enabled={config.autoScroll}
+            speed={config.autoScrollSpeed * 30}
+            pauseAtBottomMs={3000}
+          >
+            {filteredEvents.length === 0 && (
+              <div
+                style={{
+                  display: "flex",
+                  height: "100%",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  opacity: 0.4,
+                }}
+              >
+                {t.noEventsToday}
+              </div>
+            )}
+
+            {agendaItems.map((item, idx) =>
+              item.kind === "event" ? (
+                <EventCard key={item.event.id} item={item} config={config} locale={locale} />
+              ) : (
+                <GapPlaceholder key={`gap-${idx}`} item={item} />
+              ),
+            )}
+          </AutoScroller>
+        </div>
       </div>
     </div>
   );

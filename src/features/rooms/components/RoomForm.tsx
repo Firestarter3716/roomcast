@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
+import { useTranslations } from "next-intl";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { createRoomSchema, type CreateRoomInput } from "../schemas";
 import { createRoom, updateRoom } from "../actions";
@@ -34,6 +35,8 @@ interface RoomFormProps {
 
 export function RoomForm({ mode, calendars, initialData }: RoomFormProps) {
   const router = useRouter();
+  const t = useTranslations("rooms");
+  const tc = useTranslations("common");
   const [saving, setSaving] = useState(false);
 
   const form = useForm<CreateRoomInput>({
@@ -65,14 +68,14 @@ export function RoomForm({ mode, calendars, initialData }: RoomFormProps) {
     try {
       if (mode === "create") {
         await createRoom(data);
-        toast.success("Room created");
+        toast.success(t("created"));
       } else if (initialData) {
         await updateRoom(initialData.id, data);
-        toast.success("Room updated");
+        toast.success(t("updated"));
       }
       router.push("/admin/rooms");
     } catch {
-      toast.error("Failed to save room");
+      toast.error(t("saveFailed"));
     } finally {
       setSaving(false);
     }
@@ -84,7 +87,7 @@ export function RoomForm({ mode, calendars, initialData }: RoomFormProps) {
   return (
     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
       <div>
-        <label className={labelClass}>Name</label>
+        <label className={labelClass}>{t("name")}</label>
         <input {...form.register("name")} className={inputClass} placeholder="Conference Room A" />
         {form.formState.errors.name && (
           <p className="mt-1 text-xs text-[var(--color-destructive)]">{form.formState.errors.name.message}</p>
@@ -93,17 +96,17 @@ export function RoomForm({ mode, calendars, initialData }: RoomFormProps) {
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
-          <label className={labelClass}>Location / Building</label>
+          <label className={labelClass}>{t("location")}</label>
           <input {...form.register("location")} className={inputClass} placeholder="Floor 3, Building A" />
         </div>
         <div>
-          <label className={labelClass}>Capacity</label>
+          <label className={labelClass}>{t("capacity")}</label>
           <input {...form.register("capacity", { valueAsNumber: true })} type="number" min="1" className={inputClass} placeholder="10" />
         </div>
       </div>
 
       <div>
-        <label className={labelClass}>Equipment</label>
+        <label className={labelClass}>{t("equipment")}</label>
         <div className="flex flex-wrap gap-2">
           {EQUIPMENT_OPTIONS.map((opt) => (
             <button
@@ -123,9 +126,9 @@ export function RoomForm({ mode, calendars, initialData }: RoomFormProps) {
       </div>
 
       <div>
-        <label className={labelClass}>Calendar</label>
+        <label className={labelClass}>{t("calendar")}</label>
         <select {...form.register("calendarId")} className={inputClass}>
-          <option value="">Select a calendar...</option>
+          <option value="">{t("selectCalendar")}</option>
           {calendars.map((cal) => (
             <option key={cal.id} value={cal.id}>
               {cal.name} ({cal.provider})
@@ -139,11 +142,11 @@ export function RoomForm({ mode, calendars, initialData }: RoomFormProps) {
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
-          <label className={labelClass}>Resource Email <span className="text-[var(--color-muted-foreground)]">(Exchange)</span></label>
+          <label className={labelClass}>{t("resourceEmail")} <span className="text-[var(--color-muted-foreground)]">(Exchange)</span></label>
           <input {...form.register("resourceEmail")} type="email" className={inputClass} placeholder="room@company.com" />
         </div>
         <div>
-          <label className={labelClass}>Resource ID <span className="text-[var(--color-muted-foreground)]">(Google)</span></label>
+          <label className={labelClass}>{t("resourceId")} <span className="text-[var(--color-muted-foreground)]">(Google)</span></label>
           <input {...form.register("resourceId")} className={inputClass} />
         </div>
       </div>
@@ -155,14 +158,14 @@ export function RoomForm({ mode, calendars, initialData }: RoomFormProps) {
           className="inline-flex items-center gap-2 rounded-md bg-[var(--color-primary)] px-4 py-2.5 text-sm font-medium text-[var(--color-primary-foreground)] hover:bg-[var(--color-primary-hover)] transition-colors disabled:opacity-50"
         >
           {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-          {mode === "create" ? "Create Room" : "Save Changes"}
+          {mode === "create" ? t("createRoom") : t("saveChanges")}
         </button>
         <button
           type="button"
           onClick={() => router.push("/admin/rooms")}
           className="rounded-md px-4 py-2.5 text-sm font-medium text-[var(--color-muted-foreground)] hover:text-[var(--color-foreground)] transition-colors"
         >
-          Cancel
+          {tc("cancel")}
         </button>
       </div>
     </form>

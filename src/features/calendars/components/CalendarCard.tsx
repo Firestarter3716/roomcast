@@ -1,6 +1,7 @@
 "use client";
 
 import { type CalendarProvider, type SyncStatus } from "@prisma/client";
+import { useTranslations } from "next-intl";
 import { Calendar, MoreHorizontal, RefreshCw, Pencil, Trash2 } from "lucide-react";
 import { SyncStatusIndicator } from "./SyncStatusIndicator";
 import { PROVIDER_LABELS } from "../types";
@@ -34,6 +35,9 @@ export function CalendarCard({
   onSync,
   onDelete,
 }: CalendarCardProps) {
+  const t = useTranslations("calendars");
+  const tc = useTranslations("common");
+
   return (
     <div className="group relative rounded-lg border border-[var(--color-border)] bg-[var(--color-card)] p-4 transition-shadow hover:shadow-[var(--shadow-md)]">
       <div className="flex items-start justify-between">
@@ -47,7 +51,7 @@ export function CalendarCard({
           <div>
             <h3 className="font-medium text-[var(--color-foreground)]">{name}</h3>
             <p className="text-xs text-[var(--color-muted-foreground)]">
-              {PROVIDER_LABELS[provider]}
+              {t(`providers.${provider}`)}
             </p>
           </div>
         </div>
@@ -56,21 +60,21 @@ export function CalendarCard({
           <button
             onClick={() => onSync(id)}
             className="rounded-md p-1.5 text-[var(--color-muted-foreground)] hover:bg-[var(--color-secondary)] hover:text-[var(--color-foreground)] transition-colors"
-            title="Sync now"
+            title={t("syncNow")}
           >
             <RefreshCw className={`h-4 w-4 ${syncStatus === "SYNCING" ? "animate-spin" : ""}`} />
           </button>
           <Link
             href={`/admin/calendars/${id}`}
             className="rounded-md p-1.5 text-[var(--color-muted-foreground)] hover:bg-[var(--color-secondary)] hover:text-[var(--color-foreground)] transition-colors"
-            title="Edit"
+            title={tc("edit")}
           >
             <Pencil className="h-4 w-4" />
           </Link>
           <button
             onClick={() => onDelete(id)}
             className="rounded-md p-1.5 text-[var(--color-muted-foreground)] hover:bg-[var(--color-destructive)]/10 hover:text-[var(--color-destructive)] transition-colors"
-            title="Delete"
+            title={tc("delete")}
           >
             <Trash2 className="h-4 w-4" />
           </button>
@@ -80,12 +84,12 @@ export function CalendarCard({
       <div className="mt-3 flex items-center justify-between">
         <SyncStatusIndicator status={syncStatus} lastSyncAt={lastSyncAt} error={lastSyncError} />
         <span className="text-xs text-[var(--color-muted-foreground)]">
-          {eventCount} events
+          {t("events", { count: eventCount })}
         </span>
       </div>
 
       {!enabled && (
-        <div className="mt-2 text-xs text-[var(--color-warning)]">Disabled</div>
+        <div className="mt-2 text-xs text-[var(--color-warning)]">{t("disabled")}</div>
       )}
 
       {syncStatus === "ERROR" && lastSyncError && (

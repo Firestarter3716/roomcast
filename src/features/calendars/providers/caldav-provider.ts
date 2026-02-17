@@ -1,4 +1,4 @@
-import { type CalendarProviderAdapter, type ConnectionTestResult, type DateRange, type ExternalEvent, type ExternalCalendarInfo } from "./types";
+import { type CalendarProviderAdapter, type ConnectionTestResult, type DateRange, type ExternalEvent, type ExternalCalendarInfo, throwClassifiedHttpError } from "./types";
 import { logger } from "@/server/lib/logger";
 
 interface CalDAVCredentials {
@@ -126,7 +126,7 @@ export class CalDAVProvider implements CalendarProviderAdapter {
     });
 
     if (!response.ok && response.status !== 207) {
-      throw new Error(`CalDAV REPORT failed (${response.status}): ${await response.text()}`);
+      throwClassifiedHttpError(response, "CalDAV REPORT");
     }
 
     const xml = await response.text();

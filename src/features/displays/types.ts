@@ -75,12 +75,15 @@ export interface WeekGridConfig {
 export interface InfoDisplayConfig {
   showClock: boolean;
   clockFormat: "12h" | "24h";
+  showSeconds: boolean;
+  clockPosition: "center" | "top-right";
   showDate: boolean;
   showTodayEvents: boolean;
   upcomingDaysCount: number;
   tickerEnabled: boolean;
   tickerMessages: string[];
   tickerSpeed: number;
+  tickerSeparator: string;
 }
 
 export interface DisplayConfig {
@@ -153,12 +156,15 @@ export const DEFAULT_WEEK_GRID: WeekGridConfig = {
 export const DEFAULT_INFO_DISPLAY: InfoDisplayConfig = {
   showClock: true,
   clockFormat: "24h",
+  showSeconds: false,
+  clockPosition: "top-right",
   showDate: true,
   showTodayEvents: true,
   upcomingDaysCount: 3,
   tickerEnabled: false,
   tickerMessages: [],
-  tickerSpeed: 50,
+  tickerSpeed: 60,
+  tickerSeparator: " \u2022\u2022\u2022 ",
 };
 
 export function getDefaultLayoutConfig(layoutType: string) {

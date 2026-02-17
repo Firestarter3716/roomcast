@@ -7,10 +7,11 @@ import { getFontFamily } from "@/shared/lib/fonts";
 interface DisplayShellProps {
   config: DisplayConfig;
   isPreview?: boolean;
+  style?: React.CSSProperties;
   children: ReactNode;
 }
 
-export function DisplayShell({ config, isPreview = false, children }: DisplayShellProps) {
+export function DisplayShell({ config, isPreview = false, style, children }: DisplayShellProps) {
   const theme = { ...DEFAULT_THEME, ...config?.theme };
   const branding = { ...DEFAULT_BRANDING, ...config?.branding };
   const background = { ...DEFAULT_BACKGROUND, ...config?.background };
@@ -69,6 +70,7 @@ export function DisplayShell({ config, isPreview = false, children }: DisplayShe
         "--display-busy": theme.busy,
         "--display-muted": theme.muted,
         "--display-base-size": `${theme.baseFontSize}px`,
+        ...style,
       } as React.CSSProperties}
     >
       {background.type === "image" && background.imageUrl && (

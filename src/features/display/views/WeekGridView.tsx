@@ -5,8 +5,24 @@ import { useCurrentTime } from "../hooks/useCurrentTime";
 import { type DisplayEvent } from "../hooks/useDisplaySSE";
 import { type WeekGridConfig } from "@/features/displays/types";
 
-const DAY_NAMES = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const HOURS_START = 7; const HOURS_END = 22; const TOTAL_HOURS = HOURS_END - HOURS_START;
+
+/**
+ * Generate short day names (Mon, Tue, ...) using Intl.DateTimeFormat for the given locale.
+ * Returns an array of 7 strings starting with Monday.
+ */
+function getLocaleDayNames(locale: string): string[] {
+  const formatter = new Intl.DateTimeFormat(locale, { weekday: "short" });
+  // Jan 5, 2026 is a Monday
+  const monday = new Date(2026, 0, 5);
+  const names: string[] = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(monday);
+    d.setDate(d.getDate() + i);
+    names.push(formatter.format(d));
+  }
+  return names;
+}
 
 /** Returns ISO week number string "YYYY-Www" for stable week identity */
 function getISOWeekKey(date: Date): string {
@@ -37,7 +53,8 @@ export function WeekGridView({ events, config, locale }: WeekGridViewProps) {
     return () => clearInterval(check);
   }, []);
 
-  const days = useMemo(() => DAY_NAMES.slice(0, config.showWeekends ? 7 : 5), [config.showWeekends]);
+  const localeDayNames = useMemo(() => getLocaleDayNames(locale || "de-DE"), [locale]);
+  const days = useMemo(() => localeDayNames.slice(0, config.showWeekends ? 7 : 5), [localeDayNames, config.showWeekends]);
 
   const weekStart = useMemo(() => {
     // weekKey is included as a dependency so the week resets on Monday rollover

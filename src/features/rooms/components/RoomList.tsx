@@ -5,6 +5,7 @@ import { RoomCard } from "./RoomCard";
 import { deleteRoom } from "../actions";
 import type { RoomStatus } from "../actions";
 import { toast } from "sonner";
+import { ConfirmDialog } from "@/shared/components/ConfirmDialog";
 
 interface RoomItem {
   id: string;
@@ -23,22 +24,22 @@ interface RoomListProps {
 }
 
 export function RoomList({ rooms }: RoomListProps) {
-  const [pendingDelete, setPendingDelete] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
 
-  async function handleDelete(id: string) {
-    if (pendingDelete === id) {
-      try {
-        await deleteRoom(id);
-        toast.success("Room deleted");
-        setPendingDelete(null);
-      } catch {
-        toast.error("Failed to delete room");
-      }
-    } else {
-      setPendingDelete(id);
-      toast.info("Click again to confirm deletion");
-      setTimeout(() => setPendingDelete(null), 3000);
+  function handleDeleteClick(id: string) {
+    const room = rooms.find((r) => r.id === id);
+    if (room) setDeleteTarget({ id: room.id, name: room.name });
+  }
+
+  async function handleDeleteConfirm() {
+    if (!deleteTarget) return;
+    try {
+      await deleteRoom(deleteTarget.id);
+      toast.success("Room deleted");
+    } catch {
+      toast.error("Failed to delete room");
     }
+    setDeleteTarget(null);
   }
 
   if (rooms.length === 0) {
@@ -52,10 +53,22 @@ export function RoomList({ rooms }: RoomListProps) {
   }
 
   return (
-    <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      {rooms.map((room) => (
-        <RoomCard key={room.id} {...room} onDelete={handleDelete} />
-      ))}
-    </div>
+    <>
+      <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {rooms.map((room) => (
+          <RoomCard key={room.id} {...room} onDelete={handleDeleteClick} />
+        ))}
+      </div>
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}
+        title="Delete Room"
+        description={`This will permanently delete the room '${deleteTarget?.name ?? ""}'.`}
+        confirmLabel="Delete"
+        variant="destructive"
+        onConfirm={handleDeleteConfirm}
+      />
+    </>
   );
 }

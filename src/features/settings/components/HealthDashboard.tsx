@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { Calendar, CalendarDays, Database, Monitor, Radio } from "lucide-react";
 
 interface SyncStatus {
@@ -63,13 +64,15 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 const STAT_CARDS = [
-  { key: "calendarCount" as const, label: "Calendars", icon: Calendar },
-  { key: "eventCount" as const, label: "Events", icon: CalendarDays },
-  { key: "displayCount" as const, label: "Displays", icon: Monitor },
-  { key: "sseConnections" as const, label: "SSE Connections", icon: Radio },
+  { key: "calendarCount" as const, labelKey: "calendars" as const, icon: Calendar },
+  { key: "eventCount" as const, labelKey: "events" as const, icon: CalendarDays },
+  { key: "displayCount" as const, labelKey: "displays" as const, icon: Monitor },
+  { key: "sseConnections" as const, labelKey: "sseConnections" as const, icon: Radio },
 ];
 
 export function HealthDashboard({ healthData }: HealthDashboardProps) {
+  const t = useTranslations("admin.health");
+
   return (
     <div className="space-y-8">
       {/* Stats Cards */}
@@ -86,7 +89,7 @@ export function HealthDashboard({ healthData }: HealthDashboardProps) {
         >
           <div className="flex items-center justify-between">
             <p className="text-sm font-medium text-[var(--color-muted-foreground)]">
-              Database
+              {t("database")}
             </p>
             <Database
               className="h-5 w-5"
@@ -105,11 +108,11 @@ export function HealthDashboard({ healthData }: HealthDashboardProps) {
                 : "var(--color-destructive)",
             }}
           >
-            {healthData.dbStatus.connected ? "Connected" : "Disconnected"}
+            {healthData.dbStatus.connected ? t("connected") : t("disconnected")}
           </p>
           {healthData.dbStatus.connected && (
             <p className="mt-1 text-xs text-[var(--color-muted-foreground)]">
-              {healthData.dbStatus.responseTimeMs}ms response time
+              {t("responseTime", { ms: healthData.dbStatus.responseTimeMs })}
             </p>
           )}
         </div>
@@ -123,7 +126,7 @@ export function HealthDashboard({ healthData }: HealthDashboardProps) {
             >
               <div className="flex items-center justify-between">
                 <p className="text-sm font-medium text-[var(--color-muted-foreground)]">
-                  {card.label}
+                  {t(card.labelKey)}
                 </p>
                 <Icon className="h-5 w-5 text-[var(--color-muted-foreground)]" />
               </div>
@@ -139,23 +142,23 @@ export function HealthDashboard({ healthData }: HealthDashboardProps) {
       {healthData.syncStatuses.length > 0 && (
         <div>
           <h2 className="mb-4 text-lg font-semibold text-[var(--color-foreground)]">
-            Calendar Sync Status
+            {t("calendarSyncStatus")}
           </h2>
           <div className="overflow-hidden rounded-lg border border-[var(--color-border)]">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-[var(--color-border)] bg-[var(--color-muted)]/30">
                   <th className="px-4 py-3 text-left font-medium text-[var(--color-muted-foreground)]">
-                    Name
+                    {t("syncName")}
                   </th>
                   <th className="px-4 py-3 text-left font-medium text-[var(--color-muted-foreground)]">
-                    Status
+                    {t("syncStatus")}
                   </th>
                   <th className="px-4 py-3 text-left font-medium text-[var(--color-muted-foreground)]">
-                    Last Sync
+                    {t("lastSync")}
                   </th>
                   <th className="px-4 py-3 text-left font-medium text-[var(--color-muted-foreground)]">
-                    Error
+                    {t("syncError")}
                   </th>
                 </tr>
               </thead>
@@ -188,7 +191,7 @@ export function HealthDashboard({ healthData }: HealthDashboardProps) {
       {healthData.syncStatuses.length === 0 && (
         <div className="flex items-center justify-center rounded-lg border border-dashed border-[var(--color-border)] p-12">
           <p className="text-[var(--color-muted-foreground)]">
-            No calendars configured yet.
+            {t("noCalendars")}
           </p>
         </div>
       )}

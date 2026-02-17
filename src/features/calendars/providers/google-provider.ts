@@ -1,4 +1,4 @@
-import { type CalendarProviderAdapter, type ConnectionTestResult, type DateRange, type ExternalEvent, type ExternalCalendarInfo } from "./types";
+import { type CalendarProviderAdapter, type ConnectionTestResult, type DateRange, type ExternalEvent, type ExternalCalendarInfo, throwClassifiedHttpError } from "./types";
 import { logger } from "@/server/lib/logger";
 
 interface GoogleCredentials {
@@ -106,7 +106,7 @@ export class GoogleProvider implements CalendarProviderAdapter {
       });
 
       if (!response.ok) {
-        throw new Error(`Google API error (${response.status}): ${await response.text()}`);
+        throwClassifiedHttpError(response, "Google Calendar API");
       }
 
       const data = await response.json();

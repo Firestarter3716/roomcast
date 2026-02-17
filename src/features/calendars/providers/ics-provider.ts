@@ -1,4 +1,4 @@
-import { type CalendarProviderAdapter, type ConnectionTestResult, type DateRange, type ExternalEvent } from "./types";
+import { type CalendarProviderAdapter, type ConnectionTestResult, type DateRange, type ExternalEvent, throwClassifiedHttpError } from "./types";
 import { logger } from "@/server/lib/logger";
 
 interface ICSCredentials {
@@ -16,7 +16,7 @@ export class ICSProvider implements CalendarProviderAdapter {
     const response = await fetch(creds.feedUrl, { headers });
 
     if (!response.ok) {
-      throw new Error(`ICS feed fetch failed (${response.status}): ${response.statusText}`);
+      throwClassifiedHttpError(response, "ICS feed");
     }
 
     return response.text();

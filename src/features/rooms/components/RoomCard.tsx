@@ -1,6 +1,7 @@
 "use client";
 
 import { DoorOpen, Pencil, Trash2, Monitor, Users, Clock, CalendarClock } from "lucide-react";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { Badge } from "@/shared/components/ui/badge";
 import type { RoomStatus } from "../actions";
@@ -37,6 +38,8 @@ export function RoomCard({
   status,
   onDelete,
 }: RoomCardProps) {
+  const t = useTranslations("rooms");
+
   return (
     <div className="group relative rounded-lg border border-[var(--color-border)] bg-[var(--color-card)] p-4 transition-shadow hover:shadow-[var(--shadow-md)]">
       <div className="flex items-start justify-between">
@@ -72,15 +75,15 @@ export function RoomCard({
       <div className="mt-3">
         {status.isFree ? (
           <Badge className="bg-emerald-500/15 text-emerald-600 border-emerald-500/25">
-            Free
+            {t("status.free")}
           </Badge>
         ) : status.isEndingSoon ? (
           <Badge className="bg-amber-500/15 text-amber-600 border-amber-500/25">
-            Ending Soon
+            {t("status.endingSoon")}
           </Badge>
         ) : (
           <Badge className="bg-red-500/15 text-red-600 border-red-500/25">
-            Busy
+            {t("status.busy")}
           </Badge>
         )}
 
@@ -109,7 +112,10 @@ export function RoomCard({
           <div className="mt-2 flex items-center gap-1.5 text-xs text-[var(--color-muted-foreground)]">
             <CalendarClock className="h-3 w-3 shrink-0" />
             <span className="truncate">
-              Next: {status.nextEvent.title} at {formatTime(status.nextEvent.startTime)}
+              {t("nextEvent", {
+                title: status.nextEvent.title,
+                time: formatTime(status.nextEvent.startTime),
+              })}
             </span>
           </div>
         )}
@@ -118,7 +124,7 @@ export function RoomCard({
         {status.isFree && !status.nextEvent && (
           <div className="mt-2 flex items-center gap-1.5 text-xs text-[var(--color-muted-foreground)]">
             <Clock className="h-3 w-3 shrink-0" />
-            <span>No upcoming bookings today</span>
+            <span>{t("noUpcomingBookings")}</span>
           </div>
         )}
       </div>
@@ -157,7 +163,7 @@ export function RoomCard({
             className="inline-flex items-center gap-1.5 text-xs text-[var(--color-primary)] hover:underline"
           >
             <Monitor className="h-3 w-3" />
-            View Display
+            {t("viewDisplay")}
           </Link>
         ) : (
           <Link
@@ -165,7 +171,7 @@ export function RoomCard({
             className="inline-flex items-center gap-1.5 text-xs text-[var(--color-muted-foreground)] hover:text-[var(--color-primary)]"
           >
             <Monitor className="h-3 w-3" />
-            Create Display
+            {t("createDisplay")}
           </Link>
         )}
       </div>

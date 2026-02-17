@@ -1,6 +1,6 @@
 import prisma from "@/server/db/prisma";
 import { getProviderAdapter, decryptProviderCredentials } from "../providers";
-import { type ExternalEvent } from "../providers/types";
+import { type ExternalEvent, SyncAuthError, SyncRateLimitError } from "../providers/types";
 import { logger } from "@/server/lib/logger";
 import { type Prisma } from "@prisma/client";
 import { sseRegistry } from "@/server/sse/registry";
@@ -165,11 +165,22 @@ export async function syncCalendar(calendarId: string): Promise<SyncResult> {
   };
 }
 
-function computeNextSyncAt(syncIntervalSeconds: number, consecutiveErrors: number, hasError: boolean): Date {
-  if (!hasError) {
+function computeNextSyncAt(syncIntervalSeconds: number, consecutiveErrors: number, error?: unknown): Date {
+  if (!error) {
     return new Date(Date.now() + syncIntervalSeconds * 1000);
   }
-  // Exponential backoff: 1min, 2min, 4min, 8min, capped at 30min
+
+  // Auth errors: very long delay since retrying won't help without re-authentication
+  if (error instanceof SyncAuthError) {
+    return new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+  }
+
+  // Rate limit errors: respect the server's Retry-After value
+  if (error instanceof SyncRateLimitError) {
+    return new Date(Date.now() + error.retryAfterSeconds * 1000);
+  }
+
+  // Default: exponential backoff for transient errors (1min, 2min, 4min, 8min, capped at 30min)
   const backoffMs = Math.min(
     60_000 * Math.pow(2, consecutiveErrors),
     30 * 60 * 1000
@@ -196,13 +207,15 @@ export async function runSyncForCalendar(calendarId: string): Promise<SyncResult
         lastSyncAt: new Date(),
         lastSyncError: null,
         consecutiveErrors: 0,
-        nextSyncAt: computeNextSyncAt(calendar.syncIntervalSeconds, 0, false),
+        nextSyncAt: computeNextSyncAt(calendar.syncIntervalSeconds, 0),
       },
     });
 
     return result;
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorMessage = error instanceof SyncAuthError
+      ? "Re-authentication required"
+      : error instanceof Error ? error.message : String(error);
     logger.error("Calendar sync failed", { calendarId, error: errorMessage });
 
     const calendar = await prisma.calendar.findUniqueOrThrow({ where: { id: calendarId } });
@@ -214,7 +227,7 @@ export async function runSyncForCalendar(calendarId: string): Promise<SyncResult
         syncStatus: "ERROR",
         lastSyncError: errorMessage,
         consecutiveErrors: newConsecutiveErrors,
-        nextSyncAt: computeNextSyncAt(calendar.syncIntervalSeconds, newConsecutiveErrors, true),
+        nextSyncAt: computeNextSyncAt(calendar.syncIntervalSeconds, newConsecutiveErrors, error),
       },
     });
 

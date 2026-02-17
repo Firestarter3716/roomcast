@@ -5,6 +5,7 @@ import { useCurrentTime } from "../hooks/useCurrentTime";
 import { DisplayClock } from "../shared/DisplayClock";
 import { ProgressBar } from "../shared/ProgressBar";
 import { StatusBanner } from "../shared/StatusBanner";
+import { getDisplayTranslations } from "../shared/translations";
 import { type DisplayEvent } from "../hooks/useDisplaySSE";
 import { type RoomBookingConfig } from "@/features/displays/types";
 
@@ -34,6 +35,7 @@ interface RoomBookingViewProps {
   events: DisplayEvent[];
   config: RoomBookingConfig;
   roomName?: string;
+  roomLocation?: string;
   locale?: string;
   orientation?: string;
 }
@@ -45,11 +47,13 @@ export function RoomBookingView({
   events,
   config,
   roomName,
+  roomLocation,
   locale,
   orientation,
 }: RoomBookingViewProps) {
   const now = useCurrentTime(10000);
   const isPortrait = orientation === "PORTRAIT";
+  const t = getDisplayTranslations(locale || "de-DE");
 
   // Inject keyframes on mount
   useEffect(() => {
@@ -59,7 +63,7 @@ export function RoomBookingView({
   // --------------------------------------------------
   // Derive current / upcoming events
   // --------------------------------------------------
-  const { currentEvent, nextEvents, isFree, isEndingSoon } = useMemo(() => {
+  const { currentEvent, nextEvents, isFree, isEndingSoon, freeFromTime } = useMemo(() => {
     const nowMs = now.getTime();
     const current = events.find(
       (e) =>
@@ -74,13 +78,24 @@ export function RoomBookingView({
     const endingSoon = current
       ? new Date(current.endTime).getTime() - nowMs <= 15 * 60 * 1000
       : false;
+
+    // Calculate "free from" time: when the current meeting ends
+    let freeFrom: string | null = null;
+    if (current && !current.isAllDay) {
+      freeFrom = new Date(current.endTime).toLocaleTimeString(locale || "de-DE", {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    }
+
     return {
       currentEvent: current || allDay || null,
       nextEvents: upcoming,
       isFree: !current && !allDay,
       isEndingSoon: endingSoon,
+      freeFromTime: freeFrom,
     };
-  }, [events, now, config.futureEventCount]);
+  }, [events, now, config.futureEventCount, locale]);
 
   // --------------------------------------------------
   // Fade transition: track previous event id
@@ -105,9 +120,16 @@ export function RoomBookingView({
       minute: "2-digit",
     });
 
+  const dateString = now.toLocaleDateString(locale || "de-DE", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+
   /** Large status banner spanning full width */
   const statusBanner = (
-    <StatusBanner isFree={isFree} />
+    <StatusBanner isFree={isFree} locale={locale} />
   );
 
   /** Current meeting detail block */
@@ -140,7 +162,7 @@ export function RoomBookingView({
         <div
           style={{ marginTop: "0.25rem", opacity: 0.6, fontSize: "0.875rem" }}
         >
-          {currentEvent.attendeeCount} attendees
+          {currentEvent.attendeeCount} {t.attendees}
         </div>
       )}
 
@@ -153,7 +175,7 @@ export function RoomBookingView({
             fontWeight: 500,
           }}
         >
-          Ending soon
+          {t.status.endingSoon}
         </div>
       )}
 
@@ -167,7 +189,7 @@ export function RoomBookingView({
             opacity: 0.8,
           }}
         >
-          Occupied all day
+          {t.status.allDay}
         </div>
       ) : (
         <>
@@ -191,6 +213,20 @@ export function RoomBookingView({
     </div>
   ) : null;
 
+  /** "Free from HH:MM" indicator shown when room is busy */
+  const freeFromIndicator = !isFree && freeFromTime ? (
+    <div
+      style={{
+        marginTop: "0.75rem",
+        fontSize: "clamp(0.875rem, 1.5vw, 1.125rem)",
+        opacity: 0.6,
+        textAlign: "center",
+      }}
+    >
+      {t.status.freeFrom.replace("{time}", freeFromTime)}
+    </div>
+  ) : null;
+
   /** Upcoming events list */
   const upcomingList =
     nextEvents.length > 0 ? (
@@ -204,7 +240,7 @@ export function RoomBookingView({
             marginBottom: "0.75rem",
           }}
         >
-          Coming up
+          {t.comingUp}
         </div>
         {nextEvents.map((event) => (
           <div
@@ -248,25 +284,39 @@ export function RoomBookingView({
         }}
       >
         {/* Top: Large status banner spanning full width */}
-        <div style={{ marginBottom: "1.5rem" }}>{statusBanner}</div>
+        <div style={{ marginBottom: "1rem" }}>{statusBanner}</div>
 
-        {/* Room name */}
+        {/* Room name and location */}
         {roomName && (
-          <div
-            style={{
-              fontSize: "clamp(1rem, 2vw, 1.5rem)",
-              opacity: 0.7,
-              marginBottom: "1rem",
-              textAlign: "center",
-            }}
-          >
-            {roomName}
+          <div style={{ textAlign: "center", marginBottom: "0.5rem" }}>
+            <div
+              style={{
+                fontSize: "clamp(1rem, 2vw, 1.5rem)",
+                opacity: 0.7,
+              }}
+            >
+              {roomName}
+            </div>
+            {roomLocation && (
+              <div
+                style={{
+                  fontSize: "clamp(0.75rem, 1.2vw, 1rem)",
+                  opacity: 0.45,
+                  marginTop: "0.25rem",
+                }}
+              >
+                {roomLocation}
+              </div>
+            )}
           </div>
         )}
 
+        {/* Free from indicator */}
+        {freeFromIndicator}
+
         {/* Middle: Current meeting info */}
         {meetingDetail && (
-          <div style={{ marginBottom: "1.5rem" }}>{meetingDetail}</div>
+          <div style={{ marginTop: "1rem", marginBottom: "1.5rem" }}>{meetingDetail}</div>
         )}
 
         {/* Below: Upcoming events (compact), pushed toward bottom */}
@@ -276,7 +326,7 @@ export function RoomBookingView({
           </div>
         )}
 
-        {/* Bottom: Clock */}
+        {/* Bottom: Date + Clock */}
         <div
           style={{
             marginTop: upcomingList ? "1.5rem" : "auto",
@@ -284,6 +334,9 @@ export function RoomBookingView({
             paddingTop: "1rem",
           }}
         >
+          <div style={{ fontSize: "0.875rem", opacity: 0.5, marginBottom: "0.5rem" }}>
+            {dateString}
+          </div>
           <DisplayClock
             format={config.clockFormat}
             className="text-4xl font-light opacity-70"
@@ -335,16 +388,35 @@ export function RoomBookingView({
                 {roomName}
               </div>
             )}
+            {roomLocation && (
+              <div
+                style={{
+                  fontSize: "clamp(0.75rem, 1.2vw, 1rem)",
+                  opacity: 0.45,
+                  marginTop: "0.125rem",
+                }}
+              >
+                {roomLocation}
+              </div>
+            )}
           </div>
-          <DisplayClock
-            format={config.clockFormat}
-            className="text-3xl font-light opacity-70"
-            locale={locale}
-          />
+          <div style={{ textAlign: "right" }}>
+            <DisplayClock
+              format={config.clockFormat}
+              className="text-3xl font-light opacity-70"
+              locale={locale}
+            />
+            <div style={{ fontSize: "0.75rem", opacity: 0.45, marginTop: "0.25rem" }}>
+              {dateString}
+            </div>
+          </div>
         </div>
 
         {/* Status banner */}
         {statusBanner}
+
+        {/* Free from indicator */}
+        {freeFromIndicator}
 
         {/* Current meeting detail */}
         {meetingDetail && (

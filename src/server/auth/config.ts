@@ -3,6 +3,26 @@ import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import prisma from "@/server/db/prisma";
 
+// In-memory cache for session timeout setting (5-min TTL)
+let cachedTimeoutHours: number | null = null;
+let cacheExpiresAt = 0;
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
+async function getSessionTimeoutHours(): Promise<number> {
+  const now = Date.now();
+  if (cachedTimeoutHours !== null && now < cacheExpiresAt) {
+    return cachedTimeoutHours;
+  }
+
+  const settings = await prisma.systemSettings.findFirst({
+    select: { sessionTimeoutHours: true },
+  });
+
+  cachedTimeoutHours = settings?.sessionTimeoutHours ?? 8;
+  cacheExpiresAt = now + CACHE_TTL_MS;
+  return cachedTimeoutHours;
+}
+
 export const authConfig: NextAuthConfig = {
   providers: [
     Credentials({
@@ -53,11 +73,23 @@ export const authConfig: NextAuthConfig = {
 
       return true;
     },
-    jwt({ token, user }) {
+    async jwt({ token, user }) {
+      // New login — stamp the issue time
       if (user) {
         token.id = user.id;
         token.role = (user as { role: string }).role;
+        token.issuedAt = Date.now();
+        return token;
       }
+
+      // Subsequent requests — check session expiry
+      const timeoutHours = await getSessionTimeoutHours();
+      const elapsed = Date.now() - (token.issuedAt as number);
+      if (elapsed > timeoutHours * 3600 * 1000) {
+        // Session expired — return empty token to force re-login
+        return {} as typeof token;
+      }
+
       return token;
     },
     session({ session, token }) {

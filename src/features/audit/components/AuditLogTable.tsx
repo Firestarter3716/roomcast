@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import {
   ChevronLeft,
   ChevronRight,
@@ -35,24 +36,8 @@ interface AuditLogTableProps {
   totalPages: number;
 }
 
-const ENTITY_TYPES = [
-  { value: "", label: "All Entities" },
-  { value: "Calendar", label: "Calendar" },
-  { value: "Room", label: "Room" },
-  { value: "Display", label: "Display" },
-  { value: "User", label: "User" },
-  { value: "SystemSettings", label: "System Settings" },
-];
-
-const ACTIONS = [
-  { value: "", label: "All Actions" },
-  { value: "CREATE", label: "Create" },
-  { value: "UPDATE", label: "Update" },
-  { value: "DELETE", label: "Delete" },
-  { value: "SYNC", label: "Sync" },
-  { value: "LOGIN", label: "Login" },
-  { value: "TOKEN_REGENERATE", label: "Token Regenerate" },
-];
+const ENTITY_TYPE_KEYS = ["", "Calendar", "Room", "Display", "User", "SystemSettings"] as const;
+const ACTION_KEYS = ["", "CREATE", "UPDATE", "DELETE", "SYNC", "LOGIN", "TOKEN_REGENERATE"] as const;
 
 const ACTION_BADGE_STYLES: Record<string, string> = {
   CREATE:
@@ -92,6 +77,7 @@ function formatExactTime(iso: string): string {
 export function AuditLogTable({ logs, total, page, totalPages }: AuditLogTableProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const t = useTranslations("admin.audit");
   const [isPending, startTransition] = useTransition();
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const [isExporting, setIsExporting] = useState(false);
@@ -159,48 +145,58 @@ export function AuditLogTable({ logs, total, page, totalPages }: AuditLogTablePr
     }
   }
 
+  function getEntityTypeLabel(value: string): string {
+    if (!value) return t("allEntities");
+    return t(`entityTypes.${value}` as Parameters<typeof t>[0]);
+  }
+
+  function getActionLabel(value: string): string {
+    if (!value) return t("allActions");
+    return t(`actions.${value}` as Parameters<typeof t>[0]);
+  }
+
   return (
     <div className="space-y-4">
       {/* Filter Bar */}
       <div className="flex flex-wrap items-end gap-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-card)] p-4">
         <div className="flex items-center gap-2 text-sm font-medium text-[var(--color-muted-foreground)]">
           <Filter className="h-4 w-4" />
-          Filters
+          {t("filters")}
         </div>
 
         <div className="flex flex-1 flex-wrap items-end gap-3">
           <label className="flex flex-col gap-1">
-            <span className="text-xs text-[var(--color-muted-foreground)]">Entity Type</span>
+            <span className="text-xs text-[var(--color-muted-foreground)]">{t("entityType")}</span>
             <select
               value={currentFilters.entityType}
               onChange={(e) => updateFilters({ entityType: e.target.value })}
               className="rounded-md border border-[var(--color-border)] bg-[var(--color-background)] px-3 py-1.5 text-sm text-[var(--color-foreground)] outline-none focus:border-[var(--color-ring)]"
             >
-              {ENTITY_TYPES.map((et) => (
-                <option key={et.value} value={et.value}>
-                  {et.label}
+              {ENTITY_TYPE_KEYS.map((et) => (
+                <option key={et} value={et}>
+                  {getEntityTypeLabel(et)}
                 </option>
               ))}
             </select>
           </label>
 
           <label className="flex flex-col gap-1">
-            <span className="text-xs text-[var(--color-muted-foreground)]">Action</span>
+            <span className="text-xs text-[var(--color-muted-foreground)]">{t("action")}</span>
             <select
               value={currentFilters.action}
               onChange={(e) => updateFilters({ action: e.target.value })}
               className="rounded-md border border-[var(--color-border)] bg-[var(--color-background)] px-3 py-1.5 text-sm text-[var(--color-foreground)] outline-none focus:border-[var(--color-ring)]"
             >
-              {ACTIONS.map((a) => (
-                <option key={a.value} value={a.value}>
-                  {a.label}
+              {ACTION_KEYS.map((a) => (
+                <option key={a} value={a}>
+                  {getActionLabel(a)}
                 </option>
               ))}
             </select>
           </label>
 
           <label className="flex flex-col gap-1">
-            <span className="text-xs text-[var(--color-muted-foreground)]">From</span>
+            <span className="text-xs text-[var(--color-muted-foreground)]">{t("from")}</span>
             <input
               type="date"
               value={currentFilters.from}
@@ -210,7 +206,7 @@ export function AuditLogTable({ logs, total, page, totalPages }: AuditLogTablePr
           </label>
 
           <label className="flex flex-col gap-1">
-            <span className="text-xs text-[var(--color-muted-foreground)]">To</span>
+            <span className="text-xs text-[var(--color-muted-foreground)]">{t("to")}</span>
             <input
               type="date"
               value={currentFilters.to}
@@ -226,7 +222,7 @@ export function AuditLogTable({ logs, total, page, totalPages }: AuditLogTablePr
           className="inline-flex items-center gap-1.5 rounded-md border border-[var(--color-border)] px-3 py-1.5 text-sm text-[var(--color-muted-foreground)] transition-colors hover:text-[var(--color-foreground)] hover:border-[var(--color-border-hover)] disabled:opacity-50"
         >
           <Download className="h-3.5 w-3.5" />
-          {isExporting ? "Exporting..." : "Export CSV"}
+          {isExporting ? t("exporting") : t("export")}
         </button>
       </div>
 
@@ -236,22 +232,22 @@ export function AuditLogTable({ logs, total, page, totalPages }: AuditLogTablePr
           <thead>
             <tr className="border-b border-[var(--color-border)] bg-[var(--color-surface)]">
               <th className="px-4 py-3 text-left font-medium text-[var(--color-muted-foreground)]">
-                Timestamp
+                {t("timestamp")}
               </th>
               <th className="px-4 py-3 text-left font-medium text-[var(--color-muted-foreground)]">
-                User
+                {t("user")}
               </th>
               <th className="px-4 py-3 text-left font-medium text-[var(--color-muted-foreground)]">
-                Action
+                {t("action")}
               </th>
               <th className="px-4 py-3 text-left font-medium text-[var(--color-muted-foreground)]">
-                Entity
+                {t("entity")}
               </th>
               <th className="px-4 py-3 text-left font-medium text-[var(--color-muted-foreground)]">
-                Details
+                {t("details")}
               </th>
               <th className="px-4 py-3 text-left font-medium text-[var(--color-muted-foreground)]">
-                IP
+                {t("ip")}
               </th>
             </tr>
           </thead>
@@ -262,7 +258,7 @@ export function AuditLogTable({ logs, total, page, totalPages }: AuditLogTablePr
                   colSpan={6}
                   className="px-4 py-12 text-center text-[var(--color-muted-foreground)]"
                 >
-                  No audit logs found.
+                  {t("noLogs")}
                 </td>
               </tr>
             ) : (
@@ -295,7 +291,7 @@ export function AuditLogTable({ logs, total, page, totalPages }: AuditLogTablePr
                         </span>
                       ) : (
                         <span className="text-[var(--color-muted-foreground)]">
-                          System
+                          {t("system")}
                         </span>
                       )}
                     </td>
@@ -332,7 +328,7 @@ export function AuditLogTable({ logs, total, page, totalPages }: AuditLogTablePr
                             ) : (
                               <ChevronDown className="h-3 w-3" />
                             )}
-                            {isExpanded ? "Hide" : "Show"}
+                            {isExpanded ? t("hide") : t("show")}
                           </button>
                           {isExpanded && (
                             <pre className="mt-2 max-w-xs overflow-auto rounded-md bg-[var(--color-surface)] p-2 text-xs text-[var(--color-foreground)] font-mono">
@@ -370,8 +366,11 @@ export function AuditLogTable({ logs, total, page, totalPages }: AuditLogTablePr
       {totalPages > 1 && (
         <div className="flex items-center justify-between rounded-lg border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3">
           <span className="text-sm text-[var(--color-muted-foreground)]">
-            Showing {(page - 1) * 50 + 1}&ndash;{Math.min(page * 50, total)} of{" "}
-            {total} entries
+            {t("showing", {
+              start: (page - 1) * 50 + 1,
+              end: Math.min(page * 50, total),
+              total,
+            })}
           </span>
           <div className="flex items-center gap-2">
             <button
@@ -380,17 +379,17 @@ export function AuditLogTable({ logs, total, page, totalPages }: AuditLogTablePr
               className="inline-flex items-center gap-1 rounded-md border border-[var(--color-border)] px-3 py-1.5 text-sm text-[var(--color-foreground)] transition-colors hover:bg-[var(--color-secondary)] disabled:opacity-40 disabled:pointer-events-none"
             >
               <ChevronLeft className="h-4 w-4" />
-              Previous
+              {t("previous")}
             </button>
             <span className="text-sm text-[var(--color-muted-foreground)]">
-              Page {page} of {totalPages}
+              {t("page", { page, totalPages })}
             </span>
             <button
               onClick={() => updateFilters({ page: String(page + 1) })}
               disabled={page >= totalPages}
               className="inline-flex items-center gap-1 rounded-md border border-[var(--color-border)] px-3 py-1.5 text-sm text-[var(--color-foreground)] transition-colors hover:bg-[var(--color-secondary)] disabled:opacity-40 disabled:pointer-events-none"
             >
-              Next
+              {t("next")}
               <ChevronRight className="h-4 w-4" />
             </button>
           </div>
