@@ -2,11 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireAuth } from "@/server/auth/require-auth";
 import { getUser, updateUser, deleteUser } from "@/features/users/actions";
 import { handleApiError } from "@/shared/lib/api-error";
+import { rateLimitRoute } from "@/server/middleware/rate-limit";
 
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const limited = rateLimitRoute(request, "api:admin:users", 100, 60_000);
+  if (limited) return limited;
   const { error } = await requireAuth("ADMIN");
   if (error) return error;
   try {
@@ -23,6 +26,8 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const limited = rateLimitRoute(request, "api:admin:users", 100, 60_000);
+  if (limited) return limited;
   const { error } = await requireAuth("ADMIN");
   if (error) return error;
   try {
@@ -36,9 +41,11 @@ export async function PUT(
 }
 
 export async function DELETE(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const limited = rateLimitRoute(request, "api:admin:users", 100, 60_000);
+  if (limited) return limited;
   const { error } = await requireAuth("ADMIN");
   if (error) return error;
   try {

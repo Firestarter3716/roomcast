@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { RoomCard } from "./RoomCard";
 import { deleteRoom } from "../actions";
+import type { RoomStatus } from "../actions";
 import { toast } from "sonner";
 
 interface RoomItem {
@@ -14,6 +15,7 @@ interface RoomItem {
   calendar: { id: string; name: string; color: string };
   hasDisplay: boolean;
   displayId: string | null;
+  status: RoomStatus;
 }
 
 interface RoomListProps {

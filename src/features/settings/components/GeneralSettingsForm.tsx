@@ -22,6 +22,7 @@ interface GeneralSettingsFormProps {
 const LANGUAGE_OPTIONS = [
   { value: "de", label: "Deutsch" },
   { value: "en", label: "English" },
+  { value: "fr", label: "Fran\u00e7ais" },
 ];
 
 export function GeneralSettingsForm({ initialSettings }: GeneralSettingsFormProps) {

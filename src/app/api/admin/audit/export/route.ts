@@ -2,8 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireAuth } from "@/server/auth/require-auth";
 import { exportAuditLogsCsv } from "@/features/audit/actions";
 import { handleApiError } from "@/shared/lib/api-error";
+import { rateLimitRoute } from "@/server/middleware/rate-limit";
 
 export async function GET(request: NextRequest) {
+  const limited = rateLimitRoute(request, "api:admin:audit", 100, 60_000);
+  if (limited) return limited;
   const { error } = await requireAuth("ADMIN");
   if (error) return error;
   try {

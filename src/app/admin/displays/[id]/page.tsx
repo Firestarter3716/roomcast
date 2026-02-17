@@ -44,7 +44,7 @@ export default async function EditDisplayPage({ params }: EditDisplayPageProps) 
           {display.room && ` \u00B7 ${display.room.name}`}
         </p>
       </div>
-      <DisplayEditor displayId={display.id} layoutType={display.layoutType} initialConfig={safeConfig} />
+      <DisplayEditor displayId={display.id} layoutType={display.layoutType} initialConfig={safeConfig} orientation={display.orientation} roomName={display.room?.name} />
     </div>
   );
 }

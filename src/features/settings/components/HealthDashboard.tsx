@@ -1,6 +1,6 @@
 "use client";
 
-import { Calendar, CalendarDays, Monitor, Radio } from "lucide-react";
+import { Calendar, CalendarDays, Database, Monitor, Radio } from "lucide-react";
 
 interface SyncStatus {
   name: string;
@@ -9,11 +9,17 @@ interface SyncStatus {
   error: string | null;
 }
 
+interface DbStatus {
+  connected: boolean;
+  responseTimeMs: number;
+}
+
 interface HealthData {
   calendarCount: number;
   eventCount: number;
   displayCount: number;
   sseConnections: number;
+  dbStatus: DbStatus;
   syncStatuses: SyncStatus[];
 }
 
@@ -67,7 +73,47 @@ export function HealthDashboard({ healthData }: HealthDashboardProps) {
   return (
     <div className="space-y-8">
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        {/* Database Connection Status */}
+        <div
+          className="rounded-lg border p-5"
+          style={{
+            borderColor: healthData.dbStatus.connected
+              ? "var(--color-success)"
+              : "var(--color-destructive)",
+            backgroundColor: "var(--color-surface)",
+          }}
+        >
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-medium text-[var(--color-muted-foreground)]">
+              Database
+            </p>
+            <Database
+              className="h-5 w-5"
+              style={{
+                color: healthData.dbStatus.connected
+                  ? "var(--color-success)"
+                  : "var(--color-destructive)",
+              }}
+            />
+          </div>
+          <p
+            className="mt-2 text-xl font-semibold"
+            style={{
+              color: healthData.dbStatus.connected
+                ? "var(--color-success)"
+                : "var(--color-destructive)",
+            }}
+          >
+            {healthData.dbStatus.connected ? "Connected" : "Disconnected"}
+          </p>
+          {healthData.dbStatus.connected && (
+            <p className="mt-1 text-xs text-[var(--color-muted-foreground)]">
+              {healthData.dbStatus.responseTimeMs}ms response time
+            </p>
+          )}
+        </div>
+
         {STAT_CARDS.map((card) => {
           const Icon = card.icon;
           return (

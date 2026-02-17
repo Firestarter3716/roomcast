@@ -10,6 +10,17 @@ export async function GET() {
     const { error } = await requireAuth("ADMIN");
     if (error) return error;
 
+    // Database connectivity check with timing
+    let dbStatus: { connected: boolean; responseTimeMs: number };
+    try {
+      const dbStart = performance.now();
+      await prisma.$queryRaw`SELECT 1`;
+      const dbEnd = performance.now();
+      dbStatus = { connected: true, responseTimeMs: Math.round(dbEnd - dbStart) };
+    } catch {
+      dbStatus = { connected: false, responseTimeMs: -1 };
+    }
+
     const [calendarCount, eventCount, displayCount, sseStatus] = await Promise.all([
       prisma.calendar.count(),
       prisma.calendarEvent.count(),
@@ -23,8 +34,8 @@ export async function GET() {
     });
 
     return NextResponse.json({
-      status: "healthy",
-      database: "connected",
+      status: dbStatus.connected ? "healthy" : "degraded",
+      database: dbStatus,
       calendars: calendarCount,
       events: eventCount,
       displays: displayCount,

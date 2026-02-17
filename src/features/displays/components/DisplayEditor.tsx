@@ -3,7 +3,6 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { updateDisplayConfig } from "../actions";
 import { THEME_PALETTES, FONT_OPTIONS } from "../palettes";
-import { getFontFamily } from "@/shared/lib/fonts";
 import {
   type ThemeConfig,
   type BrandingConfig,
@@ -21,16 +20,19 @@ import {
 } from "../types";
 import { toast } from "sonner";
 import { Save, Palette, Layout, Image, Tag } from "lucide-react";
+import { DisplayPreview } from "./DisplayPreview";
 
 interface DisplayEditorProps {
   displayId: string;
   layoutType: string;
   initialConfig: DisplayConfig;
+  orientation?: string;
+  roomName?: string;
 }
 
 type EditorTab = "layout" | "theme" | "branding" | "background";
 
-export function DisplayEditor({ displayId, layoutType, initialConfig }: DisplayEditorProps) {
+export function DisplayEditor({ displayId, layoutType, initialConfig, orientation, roomName }: DisplayEditorProps) {
   const [config, setConfig] = useState<DisplayConfig>({
     theme: { ...DEFAULT_THEME, ...initialConfig?.theme },
     branding: { ...DEFAULT_BRANDING, ...initialConfig?.branding },
@@ -258,26 +260,16 @@ export function DisplayEditor({ displayId, layoutType, initialConfig }: DisplayE
       <div className="w-3/5">
         <div className="sticky top-4">
           <h3 className="mb-3 text-sm font-semibold text-[var(--color-foreground)]">Live Preview</h3>
-          <div className="relative overflow-hidden rounded-lg border border-[var(--color-border)]" style={{ aspectRatio: "16/9", fontFamily: getFontFamily(config.theme.fontFamily), fontSize: `${config.theme.baseFontSize}px` }}>
-            <div className="absolute inset-0" style={config.background.type === "solid" ? { backgroundColor: config.background.color } : config.background.type === "gradient" ? { background: `linear-gradient(${config.background.gradientAngle}deg, ${config.background.gradientStart}, ${config.background.gradientEnd})` } : { backgroundColor: config.theme.background }} />
-            <div className="relative z-10 flex h-full flex-col p-6" style={{ color: config.theme.foreground }}>
-              <div className="flex-1 flex flex-col justify-center items-center gap-3">
-                <div className="text-4xl font-bold" style={{ color: config.theme.free }}>FREE</div>
-                <div className="text-lg opacity-70">Conference Room A</div>
-                <div className="mt-4 w-full max-w-xs">
-                  <div className="rounded-md p-3 text-sm" style={{ backgroundColor: `${config.theme.primary}20`, borderLeft: `3px solid ${config.theme.primary}` }}>
-                    <div className="font-medium">Team Standup</div>
-                    <div className="text-xs opacity-70">10:00 - 10:30</div>
-                  </div>
-                  <div className="mt-2 rounded-md p-3 text-sm" style={{ backgroundColor: `${config.theme.secondary}20`, borderLeft: `3px solid ${config.theme.secondary}` }}>
-                    <div className="font-medium">Project Review</div>
-                    <div className="text-xs opacity-70">14:00 - 15:00</div>
-                  </div>
-                </div>
-              </div>
-              {config.branding.showPoweredBy && <div className="text-center text-xs opacity-40">Powered by RoomCast</div>}
-            </div>
-          </div>
+          <DisplayPreview
+            displayId={displayId}
+            layoutType={layoutType}
+            config={config}
+            orientation={orientation}
+            roomName={roomName}
+          />
+          <p className="mt-2 text-xs text-[var(--color-muted-foreground)]">
+            Preview is scaled to fit. The actual display renders at full resolution.
+          </p>
         </div>
       </div>
     </div>

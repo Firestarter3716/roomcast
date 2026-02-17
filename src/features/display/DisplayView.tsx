@@ -2,6 +2,7 @@
 
 import { useDisplaySSE, type DisplayEvent } from "./hooks/useDisplaySSE";
 import { DisplayShell } from "./shared/DisplayShell";
+import { EventErrorBoundary } from "./shared/EventErrorBoundary";
 import { RoomBookingView } from "./views/RoomBookingView";
 import { AgendaView } from "./views/AgendaView";
 import { DayGridView } from "./views/DayGridView";
@@ -29,6 +30,7 @@ interface DisplayViewProps {
   initialEvents: DisplayEvent[];
   roomName?: string;
   defaultLang?: string;
+  orientation?: string;
 }
 
 export function DisplayView({
@@ -38,9 +40,10 @@ export function DisplayView({
   initialEvents,
   roomName,
   defaultLang,
+  orientation,
 }: DisplayViewProps) {
   const locale = LOCALE_MAP[defaultLang || "de"] || "de-DE";
-  const { events, config: liveConfig, connected, error } = useDisplaySSE({ token });
+  const { events, config: liveConfig, connected, error, connectionMode } = useDisplaySSE({ token });
 
   const displayEvents = events.length > 0 ? events : initialEvents;
   const displayConfig: DisplayConfig = liveConfig
@@ -61,6 +64,7 @@ export function DisplayView({
             config={displayConfig.layout as RoomBookingConfig}
             roomName={roomName}
             locale={locale}
+            orientation={orientation}
           />
         );
       case "AGENDA":
@@ -119,7 +123,37 @@ export function DisplayView({
           {error}
         </div>
       )}
-      {!connected && !error && (
+      {connectionMode === "polling" && (
+        <div
+          style={{
+            position: "absolute",
+            top: "0.5rem",
+            right: "0.5rem",
+            zIndex: 100,
+            display: "flex",
+            alignItems: "center",
+            gap: "0.25rem",
+            padding: "0.25rem 0.5rem",
+            borderRadius: "0.375rem",
+            backgroundColor: "rgba(234, 179, 8, 0.15)",
+            fontSize: "0.625rem",
+            color: "#A16207",
+          }}
+          title="SSE unavailable. Using HTTP polling (30s refresh). Attempting SSE reconnect in background."
+        >
+          <div
+            style={{
+              width: "6px",
+              height: "6px",
+              borderRadius: "50%",
+              backgroundColor: "#EAB308",
+              flexShrink: 0,
+            }}
+          />
+          Polling
+        </div>
+      )}
+      {!connected && !error && connectionMode === "sse" && (
         <div
           style={{
             position: "absolute",
@@ -134,7 +168,9 @@ export function DisplayView({
           title="Reconnecting..."
         />
       )}
-      {renderView()}
+      <EventErrorBoundary>
+        {renderView()}
+      </EventErrorBoundary>
     </DisplayShell>
   );
 }

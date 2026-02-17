@@ -4,8 +4,13 @@ import { randomBytes } from "node:crypto";
 import prisma from "@/server/db/prisma";
 import bcrypt from "bcryptjs";
 import { sendEmail } from "@/server/lib/email";
+import { rateLimitAction } from "@/server/middleware/rate-limit";
 
-export async function requestPasswordReset(email: string): Promise<{ success: boolean }> {
+export async function requestPasswordReset(email: string): Promise<{ success: boolean; error?: string }> {
+  // Rate limit: 5 requests per minute per IP
+  const limited = await rateLimitAction("password-reset:request", 5, 60_000);
+  if (!limited.allowed) return { success: false, error: limited.error };
+
   // Always return success to prevent email enumeration
   const user = await prisma.user.findUnique({ where: { email } });
   if (!user) return { success: true };
@@ -42,6 +47,10 @@ export async function resetPasswordWithToken(
   token: string,
   newPassword: string
 ): Promise<{ success: boolean; error?: string }> {
+  // Rate limit: 5 requests per minute per IP
+  const limited = await rateLimitAction("password-reset:confirm", 5, 60_000);
+  if (!limited.allowed) return { success: false, error: limited.error };
+
   // Find valid token
   const verificationToken = await prisma.verificationToken.findFirst({
     where: { identifier: email, token, expires: { gt: new Date() } },

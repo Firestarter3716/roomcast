@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState, useEffect, useCallback } from "react";
 import { useCurrentTime } from "../hooks/useCurrentTime";
 import { type DisplayEvent } from "../hooks/useDisplaySSE";
 import { type WeekGridConfig } from "@/features/displays/types";
@@ -8,20 +8,62 @@ import { type WeekGridConfig } from "@/features/displays/types";
 const DAY_NAMES = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const HOURS_START = 7; const HOURS_END = 22; const TOTAL_HOURS = HOURS_END - HOURS_START;
 
+/** Returns ISO week number string "YYYY-Www" for stable week identity */
+function getISOWeekKey(date: Date): string {
+  const d = new Date(date);
+  d.setHours(0, 0, 0, 0);
+  // Thursday of the current week determines the year
+  d.setDate(d.getDate() + 3 - ((d.getDay() + 6) % 7));
+  const yearStart = new Date(d.getFullYear(), 0, 4);
+  const weekNum = 1 + Math.round(((d.getTime() - yearStart.getTime()) / 86400000 - 3 + ((yearStart.getDay() + 6) % 7)) / 7);
+  return `${d.getFullYear()}-W${String(weekNum).padStart(2, "0")}`;
+}
+
 interface WeekGridViewProps { events: DisplayEvent[]; config: WeekGridConfig; locale?: string; }
 
 export function WeekGridView({ events, config, locale }: WeekGridViewProps) {
   const now = useCurrentTime(60000);
+
+  // --- Monday 00:00 auto-rollover ---
+  // Track the current week key; when a new Monday arrives the key changes,
+  // which forces weekStart (and therefore the entire grid) to recompute.
+  const [weekKey, setWeekKey] = useState(() => getISOWeekKey(new Date()));
+
+  useEffect(() => {
+    const check = setInterval(() => {
+      const newKey = getISOWeekKey(new Date());
+      setWeekKey((prev) => (prev !== newKey ? newKey : prev));
+    }, 60_000);
+    return () => clearInterval(check);
+  }, []);
+
   const days = useMemo(() => DAY_NAMES.slice(0, config.showWeekends ? 7 : 5), [config.showWeekends]);
-  const weekStart = useMemo(() => { const d = new Date(now); const dow = d.getDay(); const diff = dow === 0 ? -6 : 1 - dow; d.setDate(d.getDate() + diff); d.setHours(0, 0, 0, 0); return d; }, [now]);
+
+  const weekStart = useMemo(() => {
+    // weekKey is included as a dependency so the week resets on Monday rollover
+    void weekKey;
+    const d = new Date(now);
+    const dow = d.getDay();
+    const diff = dow === 0 ? -6 : 1 - dow;
+    d.setDate(d.getDate() + diff);
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }, [now, weekKey]);
+
   const currentDayIndex = useMemo(() => { const d = now.getDay(); return d === 0 ? 6 : d - 1; }, [now]);
   const hours = useMemo(() => { const h = []; for (let i = HOURS_START; i < HOURS_END; i++) h.push(i); return h; }, []);
 
-  function getEventsForDay(dayIndex: number) {
+  // --- Current time indicator position (percentage) ---
+  const currentTimePercent = useMemo(() => {
+    const minutes = now.getHours() * 60 + now.getMinutes();
+    return ((minutes - HOURS_START * 60) / (TOTAL_HOURS * 60)) * 100;
+  }, [now]);
+
+  const getEventsForDay = useCallback((dayIndex: number) => {
     const dayStart = new Date(weekStart); dayStart.setDate(dayStart.getDate() + dayIndex);
     const dayEnd = new Date(dayStart); dayEnd.setDate(dayEnd.getDate() + 1);
     return events.filter((e) => { const s = new Date(e.startTime); return s >= dayStart && s < dayEnd && !e.isAllDay; });
-  }
+  }, [weekStart, events]);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", padding: "1rem" }}>
@@ -38,6 +80,13 @@ export function WeekGridView({ events, config, locale }: WeekGridViewProps) {
           return (
             <div key={dayIndex} style={{ flex: 1, position: "relative", borderLeft: "1px solid var(--display-muted)15", backgroundColor: isToday ? "var(--display-primary)08" : "transparent" }}>
               {hours.map((h) => (<div key={h} style={{ position: "absolute", top: `${((h - HOURS_START) / TOTAL_HOURS) * 100}%`, left: 0, right: 0, borderTop: "1px solid var(--display-muted)10" }} />))}
+              {/* Current time indicator -- only in today's column, within visible hour range */}
+              {isToday && currentTimePercent >= 0 && currentTimePercent <= 100 && (
+                <div style={{ position: "absolute", top: `${currentTimePercent}%`, left: "-4px", right: 0, zIndex: 10, pointerEvents: "none" }}>
+                  <div style={{ width: "8px", height: "8px", borderRadius: "50%", backgroundColor: "var(--display-primary)", transform: "translateY(-50%)" }} />
+                  <div style={{ position: "absolute", top: "50%", left: "8px", right: 0, height: "2px", backgroundColor: "var(--display-primary)", transform: "translateY(-50%)" }} />
+                </div>
+              )}
               {dayEvents.map((event) => {
                 const start = new Date(event.startTime); const end = new Date(event.endTime);
                 const startMin = start.getHours() * 60 + start.getMinutes(); const endMin = end.getHours() * 60 + end.getMinutes();

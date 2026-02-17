@@ -5,6 +5,17 @@ import { sseRegistry } from "@/server/sse/registry";
 export const dynamic = "force-dynamic";
 
 export default async function HealthPage() {
+  // Database connectivity check with timing
+  let dbStatus: { connected: boolean; responseTimeMs: number };
+  try {
+    const dbStart = performance.now();
+    await prisma.$queryRaw`SELECT 1`;
+    const dbEnd = performance.now();
+    dbStatus = { connected: true, responseTimeMs: Math.round(dbEnd - dbStart) };
+  } catch {
+    dbStatus = { connected: false, responseTimeMs: -1 };
+  }
+
   const [calendarCount, eventCount, displayCount, calendars] = await Promise.all([
     prisma.calendar.count(),
     prisma.calendarEvent.count(),
@@ -30,6 +41,7 @@ export default async function HealthPage() {
             eventCount,
             displayCount,
             sseConnections,
+            dbStatus,
             syncStatuses: calendars.map((c) => ({
               name: c.name,
               status: c.syncStatus,

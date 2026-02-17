@@ -5,6 +5,7 @@ import prisma from "@/server/db/prisma";
 import { createDisplaySchema, updateDisplaySchema, type CreateDisplayInput, type UpdateDisplayInput } from "./schemas";
 import { createAuditLog } from "@/server/middleware/audit";
 import { generateToken } from "@/shared/lib/utils";
+import { sanitizeObject } from "@/shared/lib/sanitize";
 import { type LayoutType, type Orientation, Prisma } from "@prisma/client";
 import {
   DEFAULT_THEME,
@@ -162,13 +163,14 @@ export async function updateDisplay(id: string, input: UpdateDisplayInput) {
 
 export async function updateDisplayConfig(id: string, config: Record<string, unknown>) {
   await requireActionAuth("EDITOR");
+  const sanitizedConfig = sanitizeObject(config);
   const display = await prisma.display.update({
     where: { id },
-    data: { config: config as Prisma.InputJsonValue },
+    data: { config: sanitizedConfig as Prisma.InputJsonValue },
   });
 
   // Notify connected display clients of config change
-  sseRegistry.notifyDisplayConfigUpdate(id, config);
+  sseRegistry.notifyDisplayConfigUpdate(id, sanitizedConfig);
 
   revalidatePath("/admin/displays");
   return display;
@@ -223,4 +225,62 @@ export async function deleteDisplay(id: string) {
   });
 
   revalidatePath("/admin/displays");
+}
+
+export async function getDisplayPreviewEvents(displayId: string) {
+  await requireActionAuth("VIEWER");
+
+  const display = await prisma.display.findUnique({
+    where: { id: displayId },
+    include: {
+      room: { select: { calendarId: true, name: true } },
+      displayCalendars: { select: { calendarId: true } },
+    },
+  });
+
+  if (!display) return { events: [], roomName: undefined };
+
+  const calendarIds: string[] = [];
+  if (display.room?.calendarId) calendarIds.push(display.room.calendarId);
+  for (const dc of display.displayCalendars) {
+    if (!calendarIds.includes(dc.calendarId)) calendarIds.push(dc.calendarId);
+  }
+
+  if (calendarIds.length === 0) {
+    return { events: [], roomName: display.room?.name };
+  }
+
+  const now = new Date();
+  const dayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const dayEnd = new Date(dayStart);
+  dayEnd.setDate(dayEnd.getDate() + 7);
+
+  const events = await prisma.calendarEvent.findMany({
+    where: {
+      calendarId: { in: calendarIds },
+      endTime: { gte: dayStart },
+      startTime: { lte: dayEnd },
+    },
+    orderBy: { startTime: "asc" },
+    include: { calendar: { select: { color: true, name: true } } },
+  });
+
+  return {
+    events: events.map((e) => ({
+      id: e.id,
+      calendarId: e.calendarId,
+      calendarColor: e.calendar.color,
+      calendarName: e.calendar.name,
+      title: e.title,
+      description: e.description,
+      location: e.location,
+      organizer: e.organizer,
+      attendeeCount: e.attendeeCount,
+      startTime: e.startTime.toISOString(),
+      endTime: e.endTime.toISOString(),
+      isAllDay: e.isAllDay,
+      isRecurring: e.isRecurring,
+    })),
+    roomName: display.room?.name,
+  };
 }

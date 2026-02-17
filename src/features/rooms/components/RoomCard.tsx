@@ -1,8 +1,16 @@
 "use client";
 
-import { type Room, type Calendar } from "@prisma/client";
-import { DoorOpen, Pencil, Trash2, Monitor, Users } from "lucide-react";
+import { DoorOpen, Pencil, Trash2, Monitor, Users, Clock, CalendarClock } from "lucide-react";
 import Link from "next/link";
+import { Badge } from "@/shared/components/ui/badge";
+import type { RoomStatus } from "../actions";
+
+function formatTime(date: Date): string {
+  return new Date(date).toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
 
 interface RoomCardProps {
   id: string;
@@ -13,6 +21,7 @@ interface RoomCardProps {
   calendar: { id: string; name: string; color: string };
   hasDisplay: boolean;
   displayId: string | null;
+  status: RoomStatus;
   onDelete: (id: string) => void;
 }
 
@@ -25,6 +34,7 @@ export function RoomCard({
   calendar,
   hasDisplay,
   displayId,
+  status,
   onDelete,
 }: RoomCardProps) {
   return (
@@ -56,6 +66,61 @@ export function RoomCard({
             <Trash2 className="h-4 w-4" />
           </button>
         </div>
+      </div>
+
+      {/* Status section */}
+      <div className="mt-3">
+        {status.isFree ? (
+          <Badge className="bg-emerald-500/15 text-emerald-600 border-emerald-500/25">
+            Free
+          </Badge>
+        ) : status.isEndingSoon ? (
+          <Badge className="bg-amber-500/15 text-amber-600 border-amber-500/25">
+            Ending Soon
+          </Badge>
+        ) : (
+          <Badge className="bg-red-500/15 text-red-600 border-red-500/25">
+            Busy
+          </Badge>
+        )}
+
+        {/* Current event info + progress bar */}
+        {status.currentEvent && (
+          <div className="mt-2">
+            <p className="text-xs font-medium text-[var(--color-foreground)] truncate">
+              {status.currentEvent.title}
+            </p>
+            <p className="text-xs text-[var(--color-muted-foreground)]">
+              {formatTime(status.currentEvent.startTime)} &ndash; {formatTime(status.currentEvent.endTime)}
+            </p>
+            <div className="mt-1.5 h-1.5 w-full rounded-full bg-[var(--color-secondary)]">
+              <div
+                className={`h-full rounded-full transition-all ${
+                  status.isEndingSoon ? "bg-amber-500" : "bg-red-500"
+                }`}
+                style={{ width: `${status.progressPercent}%` }}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Next event */}
+        {status.nextEvent && (
+          <div className="mt-2 flex items-center gap-1.5 text-xs text-[var(--color-muted-foreground)]">
+            <CalendarClock className="h-3 w-3 shrink-0" />
+            <span className="truncate">
+              Next: {status.nextEvent.title} at {formatTime(status.nextEvent.startTime)}
+            </span>
+          </div>
+        )}
+
+        {/* Free with no upcoming events */}
+        {status.isFree && !status.nextEvent && (
+          <div className="mt-2 flex items-center gap-1.5 text-xs text-[var(--color-muted-foreground)]">
+            <Clock className="h-3 w-3 shrink-0" />
+            <span>No upcoming bookings today</span>
+          </div>
+        )}
       </div>
 
       <div className="mt-3 flex flex-wrap items-center gap-2">

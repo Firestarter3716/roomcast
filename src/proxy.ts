@@ -10,13 +10,30 @@ export default auth((req) => {
   response.headers.set("X-XSS-Protection", "1; mode=block");
   response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
 
+  // Content-Security-Policy
+  // frame-ancestors varies by route: 'none' by default, 'self' for admin (preview iframe)
+  const isDisplayRoute = req.nextUrl.pathname.startsWith("/display/");
+  const isAdminRoute = req.nextUrl.pathname.startsWith("/admin");
+
+  const cspDirectives = [
+    "default-src 'self'",
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+    "style-src 'self' 'unsafe-inline'",
+    "img-src 'self' data: https: blob:",
+    "font-src 'self' data:",
+    "connect-src 'self'",
+    `frame-ancestors ${isAdminRoute ? "'self'" : "'none'"}`,
+    "base-uri 'self'",
+    "form-action 'self'",
+  ];
+  response.headers.set("Content-Security-Policy", cspDirectives.join("; "));
+
   // Allow display pages to be framed (for preview in editor)
-  if (req.nextUrl.pathname.startsWith("/display/")) {
+  if (isDisplayRoute) {
     response.headers.set("X-Frame-Options", "SAMEORIGIN");
   }
 
   // Protect admin routes
-  const isAdminRoute = req.nextUrl.pathname.startsWith("/admin");
   const isApiAdmin = req.nextUrl.pathname.startsWith("/api/admin");
   const isLoggedIn = !!req.auth;
 
