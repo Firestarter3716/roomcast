@@ -1,6 +1,7 @@
 "use server";
 
 import prisma from "@/server/db/prisma";
+import { requireActionAuth } from "@/server/auth/require-auth";
 
 export async function getAuditLogs(filters?: {
   entityType?: string;
@@ -11,6 +12,7 @@ export async function getAuditLogs(filters?: {
   page?: number;
   perPage?: number;
 }) {
+  await requireActionAuth("ADMIN");
   const page = filters?.page ?? 1;
   const perPage = filters?.perPage ?? 50;
 
@@ -63,6 +65,7 @@ export async function exportAuditLogsCsv(filters?: {
   from?: string;
   to?: string;
 }) {
+  await requireActionAuth("ADMIN");
   const where: Record<string, unknown> = {};
   if (filters?.entityType) where.entityType = filters.entityType;
   if (filters?.action) where.action = filters.action;

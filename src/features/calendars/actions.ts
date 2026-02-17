@@ -7,8 +7,10 @@ import { encryptProviderCredentials, decryptProviderCredentials, getProviderAdap
 import { createAuditLog } from "@/server/middleware/audit";
 import { logger } from "@/server/lib/logger";
 import { type CalendarProvider, type Prisma } from "@prisma/client";
+import { requireActionAuth } from "@/server/auth/require-auth";
 
 export async function getCalendars() {
+  await requireActionAuth("VIEWER");
   const calendars = await prisma.calendar.findMany({
     orderBy: { createdAt: "desc" },
     include: {
@@ -36,6 +38,7 @@ export async function getCalendars() {
 }
 
 export async function getCalendar(id: string) {
+  await requireActionAuth("VIEWER");
   const calendar = await prisma.calendar.findUnique({
     where: { id },
     include: {
@@ -54,6 +57,7 @@ export async function getCalendar(id: string) {
 }
 
 export async function createCalendar(input: CreateCalendarInput) {
+  await requireActionAuth("EDITOR");
   const validated = createCalendarSchema.parse(input);
   const { credentials, ...calendarData } = validated;
 
@@ -83,6 +87,7 @@ export async function createCalendar(input: CreateCalendarInput) {
 }
 
 export async function updateCalendar(id: string, input: UpdateCalendarInput) {
+  await requireActionAuth("EDITOR");
   const validated = updateCalendarSchema.parse(input);
   const { credentials, ...updateData } = validated;
 
@@ -114,6 +119,7 @@ export async function updateCalendar(id: string, input: UpdateCalendarInput) {
 }
 
 export async function deleteCalendar(id: string) {
+  await requireActionAuth("EDITOR");
   const calendar = await prisma.calendar.findUnique({ where: { id } });
   if (!calendar) throw new Error("Calendar not found");
 
@@ -133,11 +139,13 @@ export async function testCalendarConnection(
   provider: CalendarProvider,
   credentials: Record<string, string>
 ) {
+  await requireActionAuth("EDITOR");
   const adapter = getProviderAdapter(provider);
   return adapter.testConnection(credentials);
 }
 
 export async function triggerCalendarSync(id: string) {
+  await requireActionAuth("EDITOR");
   const calendar = await prisma.calendar.findUnique({ where: { id } });
   if (!calendar) throw new Error("Calendar not found");
 

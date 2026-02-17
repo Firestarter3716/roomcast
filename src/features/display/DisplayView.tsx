@@ -84,6 +84,7 @@ export function DisplayView({
           <WeekGridView
             events={displayEvents}
             config={displayConfig.layout as WeekGridConfig}
+            locale={locale}
           />
         );
       case "INFO_DISPLAY":

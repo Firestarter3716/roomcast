@@ -3,8 +3,10 @@
 import { revalidatePath } from "next/cache";
 import prisma from "@/server/db/prisma";
 import { createAuditLog } from "@/server/middleware/audit";
+import { requireActionAuth } from "@/server/auth/require-auth";
 
 export async function getSystemSettings() {
+  await requireActionAuth("ADMIN");
   let settings = await prisma.systemSettings.findUnique({
     where: { id: "singleton" },
   });
@@ -29,6 +31,7 @@ export async function updateSystemSettings(data: {
   defaultLogoUrl?: string | null;
   sessionTimeoutHours?: number;
 }) {
+  await requireActionAuth("ADMIN");
   const settings = await prisma.systemSettings.upsert({
     where: { id: "singleton" },
     create: { id: "singleton", ...data },

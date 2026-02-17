@@ -10,8 +10,10 @@ import {
 } from "./schemas";
 import { createAuditLog } from "@/server/middleware/audit";
 import bcrypt from "bcryptjs";
+import { requireActionAuth } from "@/server/auth/require-auth";
 
 export async function getUsers() {
+  await requireActionAuth("ADMIN");
   return prisma.user.findMany({
     orderBy: { name: "asc" },
     select: {
@@ -26,6 +28,7 @@ export async function getUsers() {
 }
 
 export async function getUser(id: string) {
+  await requireActionAuth("ADMIN");
   return prisma.user.findUnique({
     where: { id },
     select: {
@@ -40,6 +43,7 @@ export async function getUser(id: string) {
 }
 
 export async function createUser(input: CreateUserInput) {
+  await requireActionAuth("ADMIN");
   const validated = createUserSchema.parse(input);
   const passwordHash = await bcrypt.hash(validated.password, 12);
 
@@ -64,6 +68,7 @@ export async function createUser(input: CreateUserInput) {
 }
 
 export async function updateUser(id: string, input: UpdateUserInput) {
+  await requireActionAuth("ADMIN");
   const validated = updateUserSchema.parse(input);
 
   const data: Record<string, unknown> = {};
@@ -91,6 +96,7 @@ export async function updateUser(id: string, input: UpdateUserInput) {
 }
 
 export async function deleteUser(id: string) {
+  await requireActionAuth("ADMIN");
   const user = await prisma.user.findUnique({ where: { id } });
   if (!user) throw new Error("User not found");
 
@@ -107,6 +113,7 @@ export async function deleteUser(id: string) {
 }
 
 export async function resetPassword(id: string, newPassword: string) {
+  await requireActionAuth("ADMIN");
   const passwordHash = await bcrypt.hash(newPassword, 12);
 
   const user = await prisma.user.update({

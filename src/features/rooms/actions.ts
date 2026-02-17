@@ -4,8 +4,10 @@ import { revalidatePath } from "next/cache";
 import prisma from "@/server/db/prisma";
 import { createRoomSchema, updateRoomSchema, type CreateRoomInput, type UpdateRoomInput } from "./schemas";
 import { createAuditLog } from "@/server/middleware/audit";
+import { requireActionAuth } from "@/server/auth/require-auth";
 
 export async function getRooms() {
+  await requireActionAuth("VIEWER");
   const rooms = await prisma.room.findMany({
     orderBy: { name: "asc" },
     include: {
@@ -27,6 +29,7 @@ export async function getRooms() {
 }
 
 export async function getRoom(id: string) {
+  await requireActionAuth("VIEWER");
   return prisma.room.findUnique({
     where: { id },
     include: {
@@ -38,6 +41,7 @@ export async function getRoom(id: string) {
 }
 
 export async function createRoom(input: CreateRoomInput) {
+  await requireActionAuth("EDITOR");
   const validated = createRoomSchema.parse(input);
 
   const room = await prisma.room.create({
@@ -64,6 +68,7 @@ export async function createRoom(input: CreateRoomInput) {
 }
 
 export async function updateRoom(id: string, input: UpdateRoomInput) {
+  await requireActionAuth("EDITOR");
   const validated = updateRoomSchema.parse(input);
 
   const room = await prisma.room.update({
@@ -91,6 +96,7 @@ export async function updateRoom(id: string, input: UpdateRoomInput) {
 }
 
 export async function deleteRoom(id: string) {
+  await requireActionAuth("EDITOR");
   const room = await prisma.room.findUnique({ where: { id } });
   if (!room) throw new Error("Room not found");
 
@@ -107,6 +113,7 @@ export async function deleteRoom(id: string) {
 }
 
 export async function getRoomStatus(roomId: string) {
+  await requireActionAuth("VIEWER");
   const room = await prisma.room.findUnique({
     where: { id: roomId },
     select: { calendarId: true },

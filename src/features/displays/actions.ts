@@ -13,8 +13,10 @@ import {
   getDefaultLayoutConfig,
 } from "./types";
 import { sseRegistry } from "@/server/sse/registry";
+import { requireActionAuth } from "@/server/auth/require-auth";
 
 export async function getDisplays() {
+  await requireActionAuth("VIEWER");
   const displays = await prisma.display.findMany({
     orderBy: { createdAt: "desc" },
     include: {
@@ -45,6 +47,7 @@ export async function getDisplays() {
 }
 
 export async function getDisplay(id: string) {
+  await requireActionAuth("VIEWER");
   const display = await prisma.display.findUnique({
     where: { id },
     include: {
@@ -83,6 +86,7 @@ export async function getDisplayByToken(token: string) {
 }
 
 export async function createDisplay(input: CreateDisplayInput) {
+  await requireActionAuth("EDITOR");
   const validated = createDisplaySchema.parse(input);
   const token = generateToken();
 
@@ -124,6 +128,7 @@ export async function createDisplay(input: CreateDisplayInput) {
 }
 
 export async function updateDisplay(id: string, input: UpdateDisplayInput) {
+  await requireActionAuth("EDITOR");
   const validated = updateDisplaySchema.parse(input);
   const { config, ...updateData } = validated;
 
@@ -156,6 +161,7 @@ export async function updateDisplay(id: string, input: UpdateDisplayInput) {
 }
 
 export async function updateDisplayConfig(id: string, config: Record<string, unknown>) {
+  await requireActionAuth("EDITOR");
   const display = await prisma.display.update({
     where: { id },
     data: { config: config as Prisma.InputJsonValue },
@@ -169,6 +175,7 @@ export async function updateDisplayConfig(id: string, config: Record<string, unk
 }
 
 export async function updateDisplayCalendars(id: string, calendarIds: string[]) {
+  await requireActionAuth("EDITOR");
   await prisma.$transaction([
     prisma.displayCalendar.deleteMany({ where: { displayId: id } }),
     ...calendarIds.map((calId) =>
@@ -182,6 +189,7 @@ export async function updateDisplayCalendars(id: string, calendarIds: string[]) 
 }
 
 export async function regenerateDisplayToken(id: string) {
+  await requireActionAuth("EDITOR");
   const token = generateToken();
 
   const display = await prisma.display.update({
@@ -201,6 +209,7 @@ export async function regenerateDisplayToken(id: string) {
 }
 
 export async function deleteDisplay(id: string) {
+  await requireActionAuth("EDITOR");
   const display = await prisma.display.findUnique({ where: { id } });
   if (!display) throw new Error("Display not found");
 

@@ -8,9 +8,9 @@ import { type WeekGridConfig } from "@/features/displays/types";
 const DAY_NAMES = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const HOURS_START = 7; const HOURS_END = 22; const TOTAL_HOURS = HOURS_END - HOURS_START;
 
-interface WeekGridViewProps { events: DisplayEvent[]; config: WeekGridConfig; }
+interface WeekGridViewProps { events: DisplayEvent[]; config: WeekGridConfig; locale?: string; }
 
-export function WeekGridView({ events, config }: WeekGridViewProps) {
+export function WeekGridView({ events, config, locale }: WeekGridViewProps) {
   const now = useCurrentTime(60000);
   const days = useMemo(() => DAY_NAMES.slice(0, config.showWeekends ? 7 : 5), [config.showWeekends]);
   const weekStart = useMemo(() => { const d = new Date(now); const dow = d.getDay(); const diff = dow === 0 ? -6 : 1 - dow; d.setDate(d.getDate() + diff); d.setHours(0, 0, 0, 0); return d; }, [now]);
