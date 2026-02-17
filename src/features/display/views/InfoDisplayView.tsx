@@ -1,0 +1,61 @@
+"use client";
+
+import { useMemo } from "react";
+import { useCurrentTime } from "../hooks/useCurrentTime";
+import { DisplayClock } from "../shared/DisplayClock";
+import { TickerTape } from "../shared/TickerTape";
+import { type DisplayEvent } from "../hooks/useDisplaySSE";
+import { type InfoDisplayConfig } from "@/features/displays/types";
+
+interface InfoDisplayViewProps { events: DisplayEvent[]; config: InfoDisplayConfig; }
+
+export function InfoDisplayView({ events, config }: InfoDisplayViewProps) {
+  const now = useCurrentTime(30000);
+  const todayEvents = useMemo(() => {
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate() + 1);
+    return events.filter((e) => { const s = new Date(e.startTime); return s >= today && s < tomorrow && new Date(e.endTime) > now; }).slice(0, 5);
+  }, [events, now]);
+
+  const upcomingEvents = useMemo(() => {
+    const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+    const futureEnd = new Date(tomorrow); futureEnd.setDate(futureEnd.getDate() + config.upcomingDaysCount);
+    return events.filter((e) => { const s = new Date(e.startTime); return s >= tomorrow && s < futureEnd; }).slice(0, 10);
+  }, [events, now, config.upcomingDaysCount]);
+
+  const dateString = now.toLocaleDateString("de-DE", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", padding: "2rem" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "2rem" }}>
+        <div>{config.showDate && <div style={{ fontSize: "clamp(0.875rem, 1.5vw, 1.25rem)", opacity: 0.7 }}>{dateString}</div>}</div>
+        {config.showClock && <DisplayClock format={config.clockFormat} className="text-5xl font-light" />}
+      </div>
+      <div style={{ flex: 1, display: "flex", gap: "2rem", minHeight: 0 }}>
+        {config.showTodayEvents && (
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: "0.1em", opacity: 0.5, marginBottom: "1rem" }}>Today</div>
+            {todayEvents.length === 0 ? <div style={{ opacity: 0.4, fontSize: "0.875rem" }}>No more events today</div> : todayEvents.map((event) => (
+              <div key={event.id} style={{ padding: "0.75rem", marginBottom: "0.5rem", borderRadius: "0.5rem", borderLeft: `3px solid ${event.calendarColor || "var(--display-primary)"}`, backgroundColor: `${event.calendarColor || "var(--display-primary)"}15` }}>
+                <div style={{ fontWeight: 600, fontSize: "0.9375rem" }}>{event.title}</div>
+                <div style={{ fontSize: "0.8125rem", opacity: 0.7, marginTop: "0.25rem" }}>
+                  {new Date(event.startTime).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" })} - {new Date(event.endTime).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" })}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+        <div style={{ flex: 1 }}>
+          <div style={{ fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: "0.1em", opacity: 0.5, marginBottom: "1rem" }}>Upcoming</div>
+          {upcomingEvents.length === 0 ? <div style={{ opacity: 0.4, fontSize: "0.875rem" }}>No upcoming events</div> : upcomingEvents.map((event) => (
+            <div key={event.id} style={{ display: "flex", gap: "1rem", padding: "0.5rem 0", borderBottom: "1px solid var(--display-muted)15" }}>
+              <div style={{ fontSize: "0.75rem", opacity: 0.6, width: "5rem", flexShrink: 0 }}>{new Date(event.startTime).toLocaleDateString("de-DE", { weekday: "short", day: "numeric", month: "short" })}</div>
+              <div><div style={{ fontSize: "0.875rem", fontWeight: 500 }}>{event.title}</div><div style={{ fontSize: "0.75rem", opacity: 0.6 }}>{new Date(event.startTime).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" })}</div></div>
+            </div>
+          ))}
+        </div>
+      </div>
+      {config.tickerEnabled && config.tickerMessages.length > 0 && <TickerTape messages={config.tickerMessages} speed={config.tickerSpeed} />}
+    </div>
+  );
+}
