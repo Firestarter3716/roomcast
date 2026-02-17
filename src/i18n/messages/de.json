@@ -1,0 +1,230 @@
+{
+  "common": {
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "delete": "Löschen",
+    "edit": "Bearbeiten",
+    "create": "Erstellen",
+    "confirm": "Bestätigen",
+    "loading": "Laden...",
+    "error": "Fehler",
+    "success": "Erfolgreich",
+    "back": "Zurück",
+    "search": "Suchen",
+    "noResults": "Keine Ergebnisse",
+    "actions": "Aktionen",
+    "close": "Schließen",
+    "yes": "Ja",
+    "no": "Nein",
+    "required": "Pflichtfeld",
+    "optional": "Optional"
+  },
+  "nav": {
+    "calendars": "Kalender",
+    "rooms": "Räume",
+    "displays": "Displays",
+    "admin": "Admin",
+    "settings": "Einstellungen",
+    "logout": "Abmelden"
+  },
+  "auth": {
+    "login": "Anmelden",
+    "email": "E-Mail",
+    "password": "Passwort",
+    "loginTitle": "Anmelden",
+    "loginSubtitle": "Digital Signage Calendar Platform",
+    "invalidCredentials": "Ungültige Anmeldedaten",
+    "sessionExpired": "Ihre Sitzung ist abgelaufen"
+  },
+  "calendars": {
+    "title": "Kalender",
+    "subtitle": "Verwalten Sie Ihre externen Kalenderverbindungen",
+    "addCalendar": "Kalender hinzufügen",
+    "editCalendar": "Kalender bearbeiten",
+    "deleteCalendar": "Kalender löschen",
+    "deleteConfirm": "Möchten Sie diesen Kalender wirklich löschen? Alle zugehörigen Events werden ebenfalls gelöscht.",
+    "name": "Name",
+    "provider": "Anbieter",
+    "color": "Farbe",
+    "syncInterval": "Sync-Intervall",
+    "noCalendars": "Noch keine Kalender verbunden. Fügen Sie Ihren ersten Kalender hinzu.",
+    "providers": {
+      "EXCHANGE": "Microsoft Exchange",
+      "GOOGLE": "Google Calendar",
+      "CALDAV": "CalDAV",
+      "ICS": "ICS Feed"
+    },
+    "fields": {
+      "tenantId": "Tenant ID",
+      "clientId": "Client ID",
+      "clientSecret": "Client Secret",
+      "userEmail": "Benutzer-E-Mail (UPN)",
+      "resourceEmail": "Ressource-E-Mail",
+      "refreshToken": "Refresh Token",
+      "calendarId": "Kalender-ID",
+      "serverUrl": "Server-URL",
+      "username": "Benutzername",
+      "password": "Passwort",
+      "calendarPath": "Kalender-Pfad",
+      "feedUrl": "Feed-URL",
+      "authHeader": "Auth-Header"
+    },
+    "connectionTest": "Verbindung testen",
+    "connectionSuccess": "Verbindung OK — {count} Kalender gefunden",
+    "connectionError": "Verbindungsfehler: {message}",
+    "syncStatus": {
+      "IDLE": "Bereit",
+      "SYNCING": "Synchronisiert...",
+      "ERROR": "Fehler"
+    },
+    "lastSync": "Letzter Sync",
+    "manualSync": "Jetzt synchronisieren",
+    "syncIntervalOptions": {
+      "30": "30 Sekunden",
+      "60": "1 Minute",
+      "300": "5 Minuten",
+      "600": "10 Minuten",
+      "1800": "30 Minuten",
+      "3600": "1 Stunde",
+      "86400": "24 Stunden"
+    }
+  },
+  "rooms": {
+    "title": "Räume",
+    "subtitle": "Verwalten Sie Ihre Konferenzräume und Ressourcen",
+    "addRoom": "Raum erstellen",
+    "editRoom": "Raum bearbeiten",
+    "deleteRoom": "Raum löschen",
+    "deleteConfirm": "Möchten Sie diesen Raum wirklich löschen?",
+    "name": "Name",
+    "location": "Standort / Gebäude",
+    "capacity": "Kapazität (Personen)",
+    "equipment": "Ausstattung",
+    "calendar": "Kalender",
+    "resourceEmail": "Ressource-E-Mail",
+    "resourceId": "Ressource-ID",
+    "noRooms": "Noch keine Räume erstellt. Erstellen Sie Ihren ersten Raum.",
+    "status": {
+      "free": "Frei",
+      "busy": "Belegt"
+    },
+    "nextBooking": "Nächste Buchung",
+    "freeUntil": "Frei bis {time}",
+    "busyUntil": "Belegt bis {time}",
+    "createDisplay": "Display erstellen",
+    "equipmentTags": {
+      "beamer": "Beamer",
+      "whiteboard": "Whiteboard",
+      "videoconference": "Videokonferenz",
+      "phone": "Telefon",
+      "tv": "TV",
+      "webcam": "Webcam",
+      "microphone": "Mikrofon"
+    }
+  },
+  "displays": {
+    "title": "Displays",
+    "subtitle": "Konfigurieren Sie Ihre Digital Signage Anzeigen",
+    "addDisplay": "Display erstellen",
+    "editDisplay": "Display bearbeiten",
+    "deleteDisplay": "Display löschen",
+    "deleteConfirm": "Möchten Sie dieses Display wirklich löschen? Der Display-Link wird sofort ungültig.",
+    "noDisplays": "Noch keine Displays erstellt. Erstellen Sie Ihr erstes Display.",
+    "name": "Name",
+    "orientation": "Orientierung",
+    "layout": "Layout",
+    "token": "Token",
+    "displayUrl": "Display-URL",
+    "copyUrl": "URL kopieren",
+    "urlCopied": "URL kopiert!",
+    "regenerateToken": "Token neu generieren",
+    "regenerateConfirm": "Der alte Token wird sofort ungültig. Alle Displays mit diesem Link müssen aktualisiert werden.",
+    "qrCode": "QR-Code",
+    "downloadQr": "QR-Code herunterladen",
+    "orientations": {
+      "LANDSCAPE": "Querformat",
+      "PORTRAIT": "Hochformat",
+      "AUTO": "Automatisch"
+    },
+    "layouts": {
+      "ROOM_BOOKING": "Room Booking",
+      "AGENDA": "Agenda",
+      "DAY_GRID": "Tagesansicht",
+      "WEEK_GRID": "Wochenansicht",
+      "INFO_DISPLAY": "Info Display"
+    },
+    "wizard": {
+      "step1": "Grundeinstellungen",
+      "step2": "Layout wählen",
+      "step3": "Theme konfigurieren",
+      "next": "Weiter",
+      "previous": "Zurück",
+      "finish": "Fertigstellen"
+    },
+    "editor": {
+      "layoutOptions": "Layout-Optionen",
+      "theme": "Theme",
+      "branding": "Branding",
+      "background": "Hintergrund",
+      "preview": "Vorschau"
+    }
+  },
+  "admin": {
+    "title": "Administration",
+    "users": {
+      "title": "Benutzer",
+      "addUser": "Benutzer anlegen",
+      "editUser": "Benutzer bearbeiten",
+      "deleteUser": "Benutzer löschen",
+      "deleteConfirm": "Möchten Sie diesen Benutzer wirklich löschen?",
+      "name": "Name",
+      "email": "E-Mail",
+      "role": "Rolle",
+      "lastLogin": "Letzter Login",
+      "resetPassword": "Passwort zurücksetzen"
+    },
+    "roles": {
+      "ADMIN": "Administrator",
+      "EDITOR": "Editor",
+      "VIEWER": "Betrachter"
+    },
+    "health": {
+      "title": "System-Health",
+      "database": "Datenbank",
+      "connected": "Verbunden",
+      "disconnected": "Nicht verbunden",
+      "activeConnections": "Aktive Display-Verbindungen",
+      "syncOverview": "Sync-Übersicht"
+    },
+    "settings": {
+      "title": "Einstellungen",
+      "defaultLanguage": "Standard-Sprache",
+      "defaultTimezone": "Standard-Zeitzone",
+      "defaultFont": "Standard-Schriftart",
+      "defaultLogo": "Standard-Logo",
+      "sessionTimeout": "Sitzungs-Timeout (Stunden)"
+    },
+    "audit": {
+      "title": "Audit-Log",
+      "export": "Als CSV exportieren",
+      "user": "Benutzer",
+      "action": "Aktion",
+      "entity": "Objekt",
+      "timestamp": "Zeitpunkt",
+      "details": "Details"
+    }
+  },
+  "display": {
+    "status": {
+      "free": "FREI",
+      "busy": "BELEGT",
+      "endingSoon": "Endet bald",
+      "allDay": "Gesamten Tag belegt",
+      "freeFrom": "Frei ab {time}"
+    },
+    "noEvents": "Keine weiteren Termine",
+    "lunchBreak": "Mittagspause",
+    "notFound": "Display nicht gefunden",
+    "maintenance": "Wartung — Bitte versuchen Sie es später erneut"
+  }
+}

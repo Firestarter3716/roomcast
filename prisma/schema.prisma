@@ -1,0 +1,253 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  EDITOR
+  VIEWER
+}
+
+enum CalendarProvider {
+  EXCHANGE
+  GOOGLE
+  CALDAV
+  ICS
+}
+
+enum SyncStatus {
+  IDLE
+  SYNCING
+  ERROR
+}
+
+enum LayoutType {
+  ROOM_BOOKING
+  AGENDA
+  DAY_GRID
+  WEEK_GRID
+  INFO_DISPLAY
+}
+
+enum Orientation {
+  LANDSCAPE
+  PORTRAIT
+  AUTO
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  SYNC
+  LOGIN
+  TOKEN_REGENERATE
+}
+
+model User {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  name         String
+  passwordHash String?
+  role         Role      @default(VIEWER)
+  locale       String    @default("de")
+  lastLoginAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  accounts  Account[]
+  sessions  Session[]
+  auditLogs AuditLog[]
+
+  @@index([email])
+  @@map("users")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+model Calendar {
+  id                   String           @id @default(cuid())
+  name                 String
+  provider             CalendarProvider
+  color                String           @default("#3B82F6")
+  credentialsEncrypted Bytes
+  syncIntervalSeconds  Int              @default(300)
+  syncStatus           SyncStatus       @default(IDLE)
+  lastSyncAt           DateTime?
+  lastSyncError        String?          @db.Text
+  consecutiveErrors    Int              @default(0)
+  nextSyncAt           DateTime?
+  cachePastDays        Int              @default(30)
+  cacheFutureDays      Int              @default(90)
+  enabled              Boolean          @default(true)
+  createdAt            DateTime         @default(now())
+  updatedAt            DateTime         @updatedAt
+
+  events           CalendarEvent[]
+  rooms            Room[]
+  displayCalendars DisplayCalendar[]
+
+  @@index([syncStatus])
+  @@index([nextSyncAt])
+  @@map("calendars")
+}
+
+model CalendarEvent {
+  id            String   @id @default(cuid())
+  calendarId    String
+  externalId    String
+  title         String
+  description   String?  @db.Text
+  location      String?
+  organizer     String?
+  attendeeCount Int?
+  startTime     DateTime
+  endTime       DateTime
+  isAllDay      Boolean  @default(false)
+  isRecurring   Boolean  @default(false)
+  recurrenceId  String?
+  rawData       Json?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  calendar Calendar @relation(fields: [calendarId], references: [id], onDelete: Cascade)
+
+  @@unique([calendarId, externalId])
+  @@index([calendarId, startTime, endTime])
+  @@index([startTime])
+  @@index([endTime])
+  @@map("calendar_events")
+}
+
+model Room {
+  id            String   @id @default(cuid())
+  name          String
+  location      String?
+  capacity      Int?
+  equipment     String[]
+  calendarId    String
+  resourceEmail String?
+  resourceId    String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  calendar Calendar @relation(fields: [calendarId], references: [id])
+  displays Display[]
+
+  @@index([calendarId])
+  @@map("rooms")
+}
+
+model Display {
+  id           String      @id @default(cuid())
+  name         String
+  token        String      @unique
+  orientation  Orientation @default(LANDSCAPE)
+  layoutType   LayoutType
+  config       Json        @default("{}")
+  roomId       String?
+  ipWhitelist  String[]
+  defaultTheme String?
+  defaultLang  String?
+  refreshRate  Int         @default(30)
+  scaleMode    String?
+  enabled      Boolean     @default(true)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  room             Room?             @relation(fields: [roomId], references: [id], onDelete: SetNull)
+  displayCalendars DisplayCalendar[]
+
+  @@index([token])
+  @@map("displays")
+}
+
+model DisplayCalendar {
+  displayId  String
+  calendarId String
+
+  display  Display  @relation(fields: [displayId], references: [id], onDelete: Cascade)
+  calendar Calendar @relation(fields: [calendarId], references: [id], onDelete: Cascade)
+
+  @@id([displayId, calendarId])
+  @@map("display_calendars")
+}
+
+model AuditLog {
+  id         String      @id @default(cuid())
+  userId     String?
+  action     AuditAction
+  entityType String
+  entityId   String?
+  entityName String?
+  details    Json?
+  ipAddress  String?
+  createdAt  DateTime    @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([entityType, entityId])
+  @@index([userId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+model SystemSettings {
+  id                    String   @id @default("singleton")
+  defaultLocale         String   @default("de")
+  defaultTimezone       String   @default("Europe/Berlin")
+  defaultFont           String   @default("Inter")
+  defaultLogoUrl        String?
+  smtpHost              String?
+  smtpPort              Int?
+  smtpUser              String?
+  smtpPasswordEncrypted Bytes?
+  smtpFromAddress       String?
+  sessionTimeoutHours   Int      @default(8)
+  updatedAt             DateTime @updatedAt
+
+  @@map("system_settings")
+}

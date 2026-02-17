@@ -1,0 +1,76 @@
+/* ============================================
+   DISPLAY VIEW STYLES
+   Applied only on /display/[token] pages
+   ============================================ */
+
+.display-shell {
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  cursor: none;
+  user-select: none;
+  -webkit-user-select: none;
+  position: relative;
+}
+
+.display-shell * {
+  cursor: none;
+}
+
+/* ============================================
+   DISPLAY TYPOGRAPHY SCALE (clamp-based)
+   ============================================ */
+.display-shell {
+  --display-text-xs: clamp(0.625rem, calc(var(--display-base-size, 1rem) * 0.65), 1rem);
+  --display-text-sm: clamp(0.75rem, calc(var(--display-base-size, 1rem) * 0.8), 1.25rem);
+  --display-text-base: clamp(0.875rem, var(--display-base-size, 1rem), 1.5rem);
+  --display-text-lg: clamp(1rem, calc(var(--display-base-size, 1rem) * 1.25), 2rem);
+  --display-text-xl: clamp(1.25rem, calc(var(--display-base-size, 1rem) * 1.5), 2.5rem);
+  --display-text-2xl: clamp(1.5rem, calc(var(--display-base-size, 1rem) * 2), 3.5rem);
+  --display-text-3xl: clamp(2rem, calc(var(--display-base-size, 1rem) * 2.75), 5rem);
+  --display-text-hero: clamp(3rem, calc(var(--display-base-size, 1rem) * 4), 8rem);
+}
+
+/* ============================================
+   DISPLAY ANIMATIONS
+   ============================================ */
+@keyframes display-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes display-fade-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@keyframes display-slide-up {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes ticker-scroll {
+  from { transform: translateX(100%); }
+  to { transform: translateX(-100%); }
+}
+
+.display-transition-enter {
+  animation: display-fade-in var(--duration-normal, 250ms) var(--easing-default, ease-out);
+}
+
+.display-transition-exit {
+  animation: display-fade-out var(--duration-normal, 250ms) var(--easing-default, ease-out);
+}
+
+/* ============================================
+   REDUCED MOTION
+   ============================================ */
+@media (prefers-reduced-motion: reduce) {
+  .display-shell *,
+  .display-shell *::before,
+  .display-shell *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
