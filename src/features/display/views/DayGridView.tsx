@@ -5,9 +5,9 @@ import { useCurrentTime } from "../hooks/useCurrentTime";
 import { type DisplayEvent } from "../hooks/useDisplaySSE";
 import { type DayGridConfig } from "@/features/displays/types";
 
-interface DayGridViewProps { events: DisplayEvent[]; config: DayGridConfig; }
+interface DayGridViewProps { events: DisplayEvent[]; config: DayGridConfig; locale?: string; }
 
-export function DayGridView({ events, config }: DayGridViewProps) {
+export function DayGridView({ events, config, locale }: DayGridViewProps) {
   const now = useCurrentTime(60000);
   const totalHours = config.timeRangeEnd - config.timeRangeStart;
   const hours = useMemo(() => { const h = []; for (let i = config.timeRangeStart; i < config.timeRangeEnd; i++) h.push(i); return h; }, [config.timeRangeStart, config.timeRangeEnd]);
@@ -51,7 +51,7 @@ export function DayGridView({ events, config }: DayGridViewProps) {
             <div key={event.id} style={{ position: "absolute", top: pos.top, height: pos.height, left: "0.5rem", right: "0.5rem", borderRadius: "0.375rem", padding: "0.375rem 0.5rem", overflow: "hidden", backgroundColor: `${event.calendarColor || "var(--display-primary)"}30`, borderLeft: `3px solid ${event.calendarColor || "var(--display-primary)"}`, fontSize: "0.75rem" }}>
               <div style={{ fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{event.title}</div>
               <div style={{ opacity: 0.7, fontSize: "0.6875rem" }}>
-                {new Date(event.startTime).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" })} - {new Date(event.endTime).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" })}
+                {new Date(event.startTime).toLocaleTimeString(locale || "de-DE", { hour: "2-digit", minute: "2-digit" })} - {new Date(event.endTime).toLocaleTimeString(locale || "de-DE", { hour: "2-digit", minute: "2-digit" })}
               </div>
             </div>
           );

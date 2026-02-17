@@ -1,11 +1,15 @@
 import { NextResponse } from "next/server";
 import prisma from "@/server/db/prisma";
 import { sseRegistry } from "@/server/sse/registry";
+import { requireAuth } from "@/server/auth/require-auth";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
+    const { error } = await requireAuth("ADMIN");
+    if (error) return error;
+
     const [calendarCount, eventCount, displayCount, sseStatus] = await Promise.all([
       prisma.calendar.count(),
       prisma.calendarEvent.count(),

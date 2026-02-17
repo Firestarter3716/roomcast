@@ -5,9 +5,9 @@ import { useCurrentTime } from "../hooks/useCurrentTime";
 import { type DisplayEvent } from "../hooks/useDisplaySSE";
 import { type AgendaConfig } from "@/features/displays/types";
 
-interface AgendaViewProps { events: DisplayEvent[]; config: AgendaConfig; }
+interface AgendaViewProps { events: DisplayEvent[]; config: AgendaConfig; locale?: string; }
 
-export function AgendaView({ events, config }: AgendaViewProps) {
+export function AgendaView({ events, config, locale }: AgendaViewProps) {
   const now = useCurrentTime(30000);
   const filteredEvents = useMemo(() => {
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -36,7 +36,7 @@ export function AgendaView({ events, config }: AgendaViewProps) {
                 {config.showRoomName && event.location && <span style={{ fontSize: "0.75rem", opacity: 0.6 }}>{event.location}</span>}
               </div>
               <div style={{ fontSize: "0.8125rem", opacity: 0.7, marginTop: "0.25rem" }}>
-                {startTime.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" })} - {endTime.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" })}{event.organizer && ` \u00B7 ${event.organizer}`}
+                {startTime.toLocaleTimeString(locale || "de-DE", { hour: "2-digit", minute: "2-digit" })} - {endTime.toLocaleTimeString(locale || "de-DE", { hour: "2-digit", minute: "2-digit" })}{event.organizer && ` \u00B7 ${event.organizer}`}
               </div>
             </div>
           );

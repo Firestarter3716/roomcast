@@ -20,12 +20,15 @@ import {
   getDefaultLayoutConfig,
 } from "@/features/displays/types";
 
+const LOCALE_MAP: Record<string, string> = { de: "de-DE", en: "en-US", fr: "fr-FR" };
+
 interface DisplayViewProps {
   token: string;
   layoutType: string;
   initialConfig: DisplayConfig;
   initialEvents: DisplayEvent[];
   roomName?: string;
+  defaultLang?: string;
 }
 
 export function DisplayView({
@@ -34,7 +37,9 @@ export function DisplayView({
   initialConfig,
   initialEvents,
   roomName,
+  defaultLang,
 }: DisplayViewProps) {
+  const locale = LOCALE_MAP[defaultLang || "de"] || "de-DE";
   const { events, config: liveConfig, connected, error } = useDisplaySSE({ token });
 
   const displayEvents = events.length > 0 ? events : initialEvents;
@@ -55,6 +60,7 @@ export function DisplayView({
             events={displayEvents}
             config={displayConfig.layout as RoomBookingConfig}
             roomName={roomName}
+            locale={locale}
           />
         );
       case "AGENDA":
@@ -62,6 +68,7 @@ export function DisplayView({
           <AgendaView
             events={displayEvents}
             config={displayConfig.layout as AgendaConfig}
+            locale={locale}
           />
         );
       case "DAY_GRID":
@@ -69,6 +76,7 @@ export function DisplayView({
           <DayGridView
             events={displayEvents}
             config={displayConfig.layout as DayGridConfig}
+            locale={locale}
           />
         );
       case "WEEK_GRID":
@@ -83,6 +91,7 @@ export function DisplayView({
           <InfoDisplayView
             events={displayEvents}
             config={displayConfig.layout as InfoDisplayConfig}
+            locale={locale}
           />
         );
       default:

@@ -90,6 +90,7 @@ export default async function DisplayPage({ params }: DisplayPageProps) {
       initialConfig={config}
       initialEvents={serializedEvents}
       roomName={display.room?.name}
+      defaultLang={display.defaultLang ?? undefined}
     />
   );
 }
