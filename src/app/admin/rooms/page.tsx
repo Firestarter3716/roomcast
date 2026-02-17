@@ -1,21 +1,33 @@
-export default function RoomsPage() {
+import Link from "next/link";
+import { Plus } from "lucide-react";
+import { getRooms } from "@/features/rooms/actions";
+import { RoomList } from "@/features/rooms/components";
+
+export const dynamic = "force-dynamic";
+
+export default async function RoomsPage() {
+  const rooms = await getRooms();
+
   return (
     <div>
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-[var(--color-foreground)]">
-            Räume
+            Rooms
           </h1>
           <p className="mt-1 text-sm text-[var(--color-muted-foreground)]">
-            Verwalten Sie Ihre Konferenzräume und Ressourcen
+            Manage your conference rooms and resources
           </p>
         </div>
+        <Link
+          href="/admin/rooms/new"
+          className="inline-flex items-center gap-2 rounded-md bg-[var(--color-primary)] px-4 py-2.5 text-sm font-medium text-[var(--color-primary-foreground)] hover:bg-[var(--color-primary-hover)] transition-colors"
+        >
+          <Plus className="h-4 w-4" />
+          Create Room
+        </Link>
       </div>
-      <div className="mt-8 flex items-center justify-center rounded-lg border border-dashed border-[var(--color-border)] p-12">
-        <p className="text-[var(--color-muted-foreground)]">
-          Noch keine Räume erstellt. Erstellen Sie Ihren ersten Raum.
-        </p>
-      </div>
+      <RoomList rooms={rooms} />
     </div>
   );
 }

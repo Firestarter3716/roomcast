@@ -1,0 +1,159 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import prisma from "@/server/db/prisma";
+import { createRoomSchema, updateRoomSchema, type CreateRoomInput, type UpdateRoomInput } from "./schemas";
+import { createAuditLog } from "@/server/middleware/audit";
+
+export async function getRooms() {
+  const rooms = await prisma.room.findMany({
+    orderBy: { name: "asc" },
+    include: {
+      calendar: {
+        select: { id: true, name: true, color: true },
+      },
+      displays: {
+        select: { id: true },
+        take: 1,
+      },
+    },
+  });
+
+  return rooms.map((room) => ({
+    ...room,
+    hasDisplay: room.displays.length > 0,
+    displayId: room.displays[0]?.id ?? null,
+  }));
+}
+
+export async function getRoom(id: string) {
+  return prisma.room.findUnique({
+    where: { id },
+    include: {
+      calendar: {
+        select: { id: true, name: true, color: true },
+      },
+    },
+  });
+}
+
+export async function createRoom(input: CreateRoomInput) {
+  const validated = createRoomSchema.parse(input);
+
+  const room = await prisma.room.create({
+    data: {
+      name: validated.name,
+      location: validated.location || null,
+      capacity: validated.capacity ?? null,
+      equipment: validated.equipment,
+      calendarId: validated.calendarId,
+      resourceEmail: validated.resourceEmail || null,
+      resourceId: validated.resourceId || null,
+    },
+  });
+
+  await createAuditLog({
+    action: "CREATE",
+    entityType: "Room",
+    entityId: room.id,
+    entityName: room.name,
+  });
+
+  revalidatePath("/admin/rooms");
+  return room;
+}
+
+export async function updateRoom(id: string, input: UpdateRoomInput) {
+  const validated = updateRoomSchema.parse(input);
+
+  const room = await prisma.room.update({
+    where: { id },
+    data: {
+      name: validated.name,
+      location: validated.location || null,
+      capacity: validated.capacity ?? null,
+      equipment: validated.equipment,
+      calendarId: validated.calendarId,
+      resourceEmail: validated.resourceEmail || null,
+      resourceId: validated.resourceId || null,
+    },
+  });
+
+  await createAuditLog({
+    action: "UPDATE",
+    entityType: "Room",
+    entityId: room.id,
+    entityName: room.name,
+  });
+
+  revalidatePath("/admin/rooms");
+  return room;
+}
+
+export async function deleteRoom(id: string) {
+  const room = await prisma.room.findUnique({ where: { id } });
+  if (!room) throw new Error("Room not found");
+
+  await prisma.room.delete({ where: { id } });
+
+  await createAuditLog({
+    action: "DELETE",
+    entityType: "Room",
+    entityId: id,
+    entityName: room.name,
+  });
+
+  revalidatePath("/admin/rooms");
+}
+
+export async function getRoomStatus(roomId: string) {
+  const room = await prisma.room.findUnique({
+    where: { id: roomId },
+    select: { calendarId: true },
+  });
+
+  if (!room) return null;
+
+  const now = new Date();
+  const endOfDay = new Date(now);
+  endOfDay.setHours(23, 59, 59, 999);
+
+  const events = await prisma.calendarEvent.findMany({
+    where: {
+      calendarId: room.calendarId,
+      startTime: { lte: endOfDay },
+      endTime: { gte: now },
+    },
+    orderBy: { startTime: "asc" },
+    take: 5,
+  });
+
+  const currentEvent = events.find(
+    (e) => e.startTime <= now && e.endTime > now
+  ) ?? null;
+
+  const nextEvent = events.find(
+    (e) => e.startTime > now
+  ) ?? null;
+
+  const isFree = !currentEvent;
+  const isEndingSoon = currentEvent
+    ? (currentEvent.endTime.getTime() - now.getTime()) <= 15 * 60 * 1000
+    : false;
+
+  const progressPercent = currentEvent
+    ? Math.min(100, Math.max(0,
+        ((now.getTime() - currentEvent.startTime.getTime()) /
+          (currentEvent.endTime.getTime() - currentEvent.startTime.getTime())) *
+          100
+      ))
+    : 0;
+
+  return {
+    isFree,
+    currentEvent,
+    nextEvent,
+    isEndingSoon,
+    progressPercent,
+  };
+}
