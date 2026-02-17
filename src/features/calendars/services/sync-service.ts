@@ -3,6 +3,7 @@ import { getProviderAdapter, decryptProviderCredentials } from "../providers";
 import { type ExternalEvent } from "../providers/types";
 import { logger } from "@/server/lib/logger";
 import { type Prisma } from "@prisma/client";
+import { sseRegistry } from "@/server/sse/registry";
 
 export interface SyncResult {
   calendarId: string;
@@ -146,6 +147,15 @@ export async function syncCalendar(calendarId: string): Promise<SyncResult> {
     deleted: toDeleteIds.length,
     total: externalEvents.length,
   });
+
+  // Notify connected display clients via SSE
+  if (toCreate.length > 0 || toUpdate.length > 0 || toDeleteIds.length > 0) {
+    const updatedEvents = await prisma.calendarEvent.findMany({
+      where: { calendarId, startTime: { gte: start }, endTime: { lte: end } },
+      orderBy: { startTime: "asc" },
+    });
+    sseRegistry.notifyCalendarUpdate(calendarId, updatedEvents);
+  }
 
   return {
     calendarId,

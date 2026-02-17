@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "@/shared/styles/globals.css";
+import { Providers } from "@/shared/components/Providers";
 
 export const metadata: Metadata = {
   title: "RoomCast - Digital Signage Calendar Platform",
@@ -13,7 +14,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="de" suppressHydrationWarning>
-      <body className="min-h-screen antialiased">{children}</body>
+      <body className="min-h-screen antialiased">
+        <Providers>{children}</Providers>
+      </body>
     </html>
   );
 }

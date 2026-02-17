@@ -2,11 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { signOut, useSession } from "next-auth/react";
 import {
   Calendar,
   DoorOpen,
   Monitor,
   Settings,
+  LogOut,
 } from "lucide-react";
 
 const navItems = [
@@ -18,6 +20,11 @@ const navItems = [
 
 export function AdminNav() {
   const pathname = usePathname();
+  const { data: session } = useSession();
+
+  const userInitial = session?.user?.name?.[0]?.toUpperCase()
+    ?? session?.user?.email?.[0]?.toUpperCase()
+    ?? "?";
 
   return (
     <header className="sticky top-0 z-50 border-b border-[var(--color-border)] bg-[var(--color-background)]">
@@ -52,10 +59,22 @@ export function AdminNav() {
           })}
         </nav>
 
-        <div className="ml-auto flex items-center gap-2">
+        <div className="ml-auto flex items-center gap-3">
+          {session?.user && (
+            <span className="hidden text-sm text-[var(--color-muted-foreground)] sm:block">
+              {session.user.email}
+            </span>
+          )}
           <div className="h-8 w-8 rounded-full bg-[var(--color-primary)] flex items-center justify-center text-xs font-medium text-[var(--color-primary-foreground)]">
-            A
+            {userInitial}
           </div>
+          <button
+            onClick={() => signOut({ callbackUrl: "/login" })}
+            className="flex items-center gap-1.5 rounded-md px-2 py-1.5 text-sm text-[var(--color-muted-foreground)] transition-colors hover:bg-[var(--color-secondary)] hover:text-[var(--color-foreground)]"
+            title="Logout"
+          >
+            <LogOut className="h-4 w-4" />
+          </button>
         </div>
       </div>
     </header>

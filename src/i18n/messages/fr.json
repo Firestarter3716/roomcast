@@ -1,0 +1,230 @@
+{
+  "common": {
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "create": "Créer",
+    "confirm": "Confirmer",
+    "loading": "Chargement...",
+    "error": "Erreur",
+    "success": "Succès",
+    "back": "Retour",
+    "search": "Rechercher",
+    "noResults": "Aucun résultat",
+    "actions": "Actions",
+    "close": "Fermer",
+    "yes": "Oui",
+    "no": "Non",
+    "required": "Obligatoire",
+    "optional": "Facultatif"
+  },
+  "nav": {
+    "calendars": "Calendriers",
+    "rooms": "Salles",
+    "displays": "Écrans",
+    "admin": "Admin",
+    "settings": "Paramètres",
+    "logout": "Déconnexion"
+  },
+  "auth": {
+    "login": "Se connecter",
+    "email": "E-mail",
+    "password": "Mot de passe",
+    "loginTitle": "Connexion",
+    "loginSubtitle": "Plateforme d'affichage dynamique",
+    "invalidCredentials": "Identifiants invalides",
+    "sessionExpired": "Votre session a expiré"
+  },
+  "calendars": {
+    "title": "Calendriers",
+    "subtitle": "Gérez vos connexions calendrier externes",
+    "addCalendar": "Ajouter un calendrier",
+    "editCalendar": "Modifier le calendrier",
+    "deleteCalendar": "Supprimer le calendrier",
+    "deleteConfirm": "Voulez-vous vraiment supprimer ce calendrier ? Tous les événements associés seront également supprimés.",
+    "name": "Nom",
+    "provider": "Fournisseur",
+    "color": "Couleur",
+    "syncInterval": "Intervalle de synchronisation",
+    "noCalendars": "Aucun calendrier connecté. Ajoutez votre premier calendrier.",
+    "providers": {
+      "EXCHANGE": "Microsoft Exchange",
+      "GOOGLE": "Google Calendar",
+      "CALDAV": "CalDAV",
+      "ICS": "Flux ICS"
+    },
+    "fields": {
+      "tenantId": "Tenant ID",
+      "clientId": "Client ID",
+      "clientSecret": "Client Secret",
+      "userEmail": "E-mail utilisateur (UPN)",
+      "resourceEmail": "E-mail ressource",
+      "refreshToken": "Refresh Token",
+      "calendarId": "ID du calendrier",
+      "serverUrl": "URL du serveur",
+      "username": "Nom d'utilisateur",
+      "password": "Mot de passe",
+      "calendarPath": "Chemin du calendrier",
+      "feedUrl": "URL du flux",
+      "authHeader": "En-tête d'authentification"
+    },
+    "connectionTest": "Tester la connexion",
+    "connectionSuccess": "Connexion OK — {count} calendriers trouvés",
+    "connectionError": "Erreur de connexion : {message}",
+    "syncStatus": {
+      "IDLE": "Prêt",
+      "SYNCING": "Synchronisation...",
+      "ERROR": "Erreur"
+    },
+    "lastSync": "Dernière synchronisation",
+    "manualSync": "Synchroniser maintenant",
+    "syncIntervalOptions": {
+      "30": "30 secondes",
+      "60": "1 minute",
+      "300": "5 minutes",
+      "600": "10 minutes",
+      "1800": "30 minutes",
+      "3600": "1 heure",
+      "86400": "24 heures"
+    }
+  },
+  "rooms": {
+    "title": "Salles",
+    "subtitle": "Gérez vos salles de conférence et ressources",
+    "addRoom": "Créer une salle",
+    "editRoom": "Modifier la salle",
+    "deleteRoom": "Supprimer la salle",
+    "deleteConfirm": "Voulez-vous vraiment supprimer cette salle ?",
+    "name": "Nom",
+    "location": "Emplacement / Bâtiment",
+    "capacity": "Capacité (personnes)",
+    "equipment": "Équipement",
+    "calendar": "Calendrier",
+    "resourceEmail": "E-mail ressource",
+    "resourceId": "ID ressource",
+    "noRooms": "Aucune salle créée. Créez votre première salle.",
+    "status": {
+      "free": "Libre",
+      "busy": "Occupé"
+    },
+    "nextBooking": "Prochaine réservation",
+    "freeUntil": "Libre jusqu'à {time}",
+    "busyUntil": "Occupé jusqu'à {time}",
+    "createDisplay": "Créer un écran",
+    "equipmentTags": {
+      "beamer": "Vidéoprojecteur",
+      "whiteboard": "Tableau blanc",
+      "videoconference": "Visioconférence",
+      "phone": "Téléphone",
+      "tv": "TV",
+      "webcam": "Webcam",
+      "microphone": "Microphone"
+    }
+  },
+  "displays": {
+    "title": "Écrans",
+    "subtitle": "Configurez vos écrans d'affichage dynamique",
+    "addDisplay": "Créer un écran",
+    "editDisplay": "Modifier l'écran",
+    "deleteDisplay": "Supprimer l'écran",
+    "deleteConfirm": "Voulez-vous vraiment supprimer cet écran ? Le lien de l'écran sera immédiatement invalidé.",
+    "noDisplays": "Aucun écran créé. Créez votre premier écran.",
+    "name": "Nom",
+    "orientation": "Orientation",
+    "layout": "Disposition",
+    "token": "Jeton",
+    "displayUrl": "URL de l'écran",
+    "copyUrl": "Copier l'URL",
+    "urlCopied": "URL copiée !",
+    "regenerateToken": "Régénérer le jeton",
+    "regenerateConfirm": "L'ancien jeton sera immédiatement invalidé. Tous les écrans utilisant ce lien devront être mis à jour.",
+    "qrCode": "Code QR",
+    "downloadQr": "Télécharger le code QR",
+    "orientations": {
+      "LANDSCAPE": "Paysage",
+      "PORTRAIT": "Portrait",
+      "AUTO": "Automatique"
+    },
+    "layouts": {
+      "ROOM_BOOKING": "Réservation de salle",
+      "AGENDA": "Agenda",
+      "DAY_GRID": "Vue journalière",
+      "WEEK_GRID": "Vue hebdomadaire",
+      "INFO_DISPLAY": "Écran d'information"
+    },
+    "wizard": {
+      "step1": "Paramètres de base",
+      "step2": "Choisir la disposition",
+      "step3": "Configurer le thème",
+      "next": "Suivant",
+      "previous": "Précédent",
+      "finish": "Terminer"
+    },
+    "editor": {
+      "layoutOptions": "Options de disposition",
+      "theme": "Thème",
+      "branding": "Marque",
+      "background": "Arrière-plan",
+      "preview": "Aperçu"
+    }
+  },
+  "admin": {
+    "title": "Administration",
+    "users": {
+      "title": "Utilisateurs",
+      "addUser": "Ajouter un utilisateur",
+      "editUser": "Modifier l'utilisateur",
+      "deleteUser": "Supprimer l'utilisateur",
+      "deleteConfirm": "Voulez-vous vraiment supprimer cet utilisateur ?",
+      "name": "Nom",
+      "email": "E-mail",
+      "role": "Rôle",
+      "lastLogin": "Dernière connexion",
+      "resetPassword": "Réinitialiser le mot de passe"
+    },
+    "roles": {
+      "ADMIN": "Administrateur",
+      "EDITOR": "Éditeur",
+      "VIEWER": "Observateur"
+    },
+    "health": {
+      "title": "Santé du système",
+      "database": "Base de données",
+      "connected": "Connecté",
+      "disconnected": "Déconnecté",
+      "activeConnections": "Connexions d'écrans actives",
+      "syncOverview": "Vue d'ensemble de la synchronisation"
+    },
+    "settings": {
+      "title": "Paramètres",
+      "defaultLanguage": "Langue par défaut",
+      "defaultTimezone": "Fuseau horaire par défaut",
+      "defaultFont": "Police par défaut",
+      "defaultLogo": "Logo par défaut",
+      "sessionTimeout": "Délai d'expiration de session (heures)"
+    },
+    "audit": {
+      "title": "Journal d'audit",
+      "export": "Exporter en CSV",
+      "user": "Utilisateur",
+      "action": "Action",
+      "entity": "Entité",
+      "timestamp": "Horodatage",
+      "details": "Détails"
+    }
+  },
+  "display": {
+    "status": {
+      "free": "LIBRE",
+      "busy": "OCCUPÉ",
+      "endingSoon": "Se termine bientôt",
+      "allDay": "Occupé toute la journée",
+      "freeFrom": "Libre à partir de {time}"
+    },
+    "noEvents": "Plus d'événements",
+    "lunchBreak": "Pause déjeuner",
+    "notFound": "Écran introuvable",
+    "maintenance": "Maintenance — Veuillez réessayer plus tard"
+  }
+}

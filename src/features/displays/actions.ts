@@ -12,6 +12,7 @@ import {
   DEFAULT_BACKGROUND,
   getDefaultLayoutConfig,
 } from "./types";
+import { sseRegistry } from "@/server/sse/registry";
 
 export async function getDisplays() {
   const displays = await prisma.display.findMany({
@@ -159,6 +160,9 @@ export async function updateDisplayConfig(id: string, config: Record<string, unk
     where: { id },
     data: { config: config as Prisma.InputJsonValue },
   });
+
+  // Notify connected display clients of config change
+  sseRegistry.notifyDisplayConfigUpdate(id, config);
 
   revalidatePath("/admin/displays");
   return display;
