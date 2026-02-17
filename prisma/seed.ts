@@ -31,7 +31,7 @@ async function main() {
       id: "singleton",
       defaultLocale: "de",
       defaultTimezone: "Europe/Berlin",
-      defaultFont: "Inter",
+      defaultFont: "inter",
       sessionTimeoutHours: 8,
     },
   });

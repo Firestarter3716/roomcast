@@ -2,6 +2,7 @@
 
 import { useEffect, type ReactNode } from "react";
 import { type DisplayConfig, DEFAULT_THEME, DEFAULT_BRANDING, DEFAULT_BACKGROUND } from "@/features/displays/types";
+import { getFontFamily } from "@/shared/lib/fonts";
 
 interface DisplayShellProps {
   config: DisplayConfig;
@@ -56,7 +57,7 @@ export function DisplayShell({ config, isPreview = false, children }: DisplayShe
         width: "100vw",
         height: "100vh",
         overflow: "hidden",
-        fontFamily: theme.fontFamily,
+        fontFamily: getFontFamily(theme.fontFamily),
         fontSize: `${theme.baseFontSize}px`,
         color: theme.foreground,
         position: "relative",

@@ -12,6 +12,7 @@ RUN npm ci
 COPY . .
 RUN npx prisma generate
 RUN npm run build
+RUN npm run build:sync-worker
 
 # Stage 3: Production
 FROM node:20-alpine AS runner
@@ -28,6 +29,7 @@ COPY --from=build /app/.next/static ./.next/static
 COPY --from=build /app/prisma ./prisma
 COPY --from=build /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=build /app/node_modules/@prisma ./node_modules/@prisma
+COPY --from=build /app/dist ./dist
 
 USER nextjs
 

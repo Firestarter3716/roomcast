@@ -1,3 +1,10 @@
+@import "@fontsource-variable/inter";
+@import "@fontsource-variable/roboto-flex";
+@import "@fontsource-variable/dm-sans";
+@import "@fontsource/geist-sans";
+@import "@fontsource-variable/nunito";
+@import "@fontsource-variable/source-sans-3";
+
 @import "tailwindcss";
 @import "./tokens.css";
 

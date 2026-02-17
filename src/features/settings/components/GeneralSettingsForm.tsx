@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import { updateSystemSettings } from "../actions";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+import { FONT_OPTIONS } from "@/shared/lib/fonts";
 
 interface SettingsData {
   defaultLocale: string;
@@ -21,15 +22,6 @@ interface GeneralSettingsFormProps {
 const LANGUAGE_OPTIONS = [
   { value: "de", label: "Deutsch" },
   { value: "en", label: "English" },
-];
-
-const FONT_OPTIONS = [
-  { value: "Inter", label: "Inter" },
-  { value: "Roboto", label: "Roboto" },
-  { value: "DM Sans", label: "DM Sans" },
-  { value: "Geist", label: "Geist" },
-  { value: "Source Sans 3", label: "Source Sans 3" },
-  { value: "Noto Sans", label: "Noto Sans" },
 ];
 
 export function GeneralSettingsForm({ initialSettings }: GeneralSettingsFormProps) {

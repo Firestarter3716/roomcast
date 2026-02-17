@@ -10,6 +10,12 @@ services:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U roomcast -d roomcast"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
   app:
     build:
@@ -28,7 +34,8 @@ services:
       ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@roomcast.local}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-changeme}
     depends_on:
-      - db
+      db:
+        condition: service_healthy
 
   sync-worker:
     build:
@@ -41,7 +48,8 @@ services:
       DATABASE_URL: postgresql://roomcast:roomcast@db:5432/roomcast
       ENCRYPTION_SECRET: ${ENCRYPTION_SECRET:-change-me-in-production}
     depends_on:
-      - db
+      db:
+        condition: service_healthy
 
 volumes:
   pgdata:

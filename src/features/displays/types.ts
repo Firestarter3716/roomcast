@@ -99,7 +99,7 @@ export const DEFAULT_THEME: ThemeConfig = {
   free: "#22C55E",
   busy: "#EF4444",
   muted: "#94A3B8",
-  fontFamily: "Inter",
+  fontFamily: "inter",
   baseFontSize: 16,
 };
 

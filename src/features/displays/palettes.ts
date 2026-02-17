@@ -1,5 +1,7 @@
 import { type ThemeConfig } from "./types";
 
+export { FONT_OPTIONS } from "@/shared/lib/fonts";
+
 export interface ThemePalette {
   id: string;
   name: string;
@@ -21,7 +23,7 @@ export const THEME_PALETTES: ThemePalette[] = [
       free: "#22C55E",
       busy: "#EF4444",
       muted: "#94A3B8",
-      fontFamily: "Inter",
+      fontFamily: "inter",
       baseFontSize: 16,
     },
   },
@@ -38,7 +40,7 @@ export const THEME_PALETTES: ThemePalette[] = [
       free: "#16A34A",
       busy: "#DC2626",
       muted: "#64748B",
-      fontFamily: "Inter",
+      fontFamily: "inter",
       baseFontSize: 16,
     },
   },
@@ -55,7 +57,7 @@ export const THEME_PALETTES: ThemePalette[] = [
       free: "#34D399",
       busy: "#F87171",
       muted: "#94A3B8",
-      fontFamily: "Roboto",
+      fontFamily: "roboto",
       baseFontSize: 16,
     },
   },
@@ -72,17 +74,8 @@ export const THEME_PALETTES: ThemePalette[] = [
       free: "#4ADE80",
       busy: "#FF0000",
       muted: "#D4D4D4",
-      fontFamily: "DM Sans",
+      fontFamily: "dm-sans",
       baseFontSize: 18,
     },
   },
-];
-
-export const FONT_OPTIONS = [
-  { value: "Inter", label: "Inter" },
-  { value: "Roboto", label: "Roboto" },
-  { value: "DM Sans", label: "DM Sans" },
-  { value: "Geist", label: "Geist" },
-  { value: "system-ui", label: "System" },
-  { value: "monospace", label: "Monospace" },
 ];

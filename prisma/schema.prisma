@@ -239,7 +239,7 @@ model SystemSettings {
   id                    String   @id @default("singleton")
   defaultLocale         String   @default("de")
   defaultTimezone       String   @default("Europe/Berlin")
-  defaultFont           String   @default("Inter")
+  defaultFont           String   @default("inter")
   defaultLogoUrl        String?
   smtpHost              String?
   smtpPort              Int?

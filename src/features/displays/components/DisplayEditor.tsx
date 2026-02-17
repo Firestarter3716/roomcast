@@ -3,6 +3,7 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { updateDisplayConfig } from "../actions";
 import { THEME_PALETTES, FONT_OPTIONS } from "../palettes";
+import { getFontFamily } from "@/shared/lib/fonts";
 import {
   type ThemeConfig,
   type BrandingConfig,
@@ -257,7 +258,7 @@ export function DisplayEditor({ displayId, layoutType, initialConfig }: DisplayE
       <div className="w-3/5">
         <div className="sticky top-4">
           <h3 className="mb-3 text-sm font-semibold text-[var(--color-foreground)]">Live Preview</h3>
-          <div className="relative overflow-hidden rounded-lg border border-[var(--color-border)]" style={{ aspectRatio: "16/9", fontFamily: config.theme.fontFamily, fontSize: `${config.theme.baseFontSize}px` }}>
+          <div className="relative overflow-hidden rounded-lg border border-[var(--color-border)]" style={{ aspectRatio: "16/9", fontFamily: getFontFamily(config.theme.fontFamily), fontSize: `${config.theme.baseFontSize}px` }}>
             <div className="absolute inset-0" style={config.background.type === "solid" ? { backgroundColor: config.background.color } : config.background.type === "gradient" ? { background: `linear-gradient(${config.background.gradientAngle}deg, ${config.background.gradientStart}, ${config.background.gradientEnd})` } : { backgroundColor: config.theme.background }} />
             <div className="relative z-10 flex h-full flex-col p-6" style={{ color: config.theme.foreground }}>
               <div className="flex-1 flex flex-col justify-center items-center gap-3">
