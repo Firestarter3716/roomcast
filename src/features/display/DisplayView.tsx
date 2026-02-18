@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useDisplaySSE, type DisplayEvent } from "./hooks/useDisplaySSE";
-import { DisplayShell } from "./shared/DisplayShell";
+import { DisplayShell, type RoomStatus } from "./shared/DisplayShell";
+import { useCurrentTime } from "./hooks/useCurrentTime";
 import { EventErrorBoundary } from "./shared/EventErrorBoundary";
 import { ViewErrorBoundary } from "./shared/ViewErrorBoundary";
 import { RoomBookingView } from "./views/RoomBookingView";
@@ -33,6 +34,7 @@ interface DisplayOverrides {
   lang?: string;
   refresh?: number;
   scale?: string;
+  statusOverride?: string;
 }
 
 interface DisplayViewProps {
@@ -119,6 +121,31 @@ export function DisplayView({
 
   const displayEvents = events.length > 0 ? events : initialEvents;
 
+  // Compute room status for status-background mode
+  const now = useCurrentTime(10000);
+  const computedStatus: RoomStatus = useMemo(() => {
+    const nowMs = now.getTime();
+    const current = displayEvents.find(
+      (e) =>
+        !e.isAllDay &&
+        new Date(e.startTime).getTime() <= nowMs &&
+        new Date(e.endTime).getTime() > nowMs,
+    );
+    const allDay = displayEvents.find((e) => e.isAllDay);
+    if (!current && !allDay) return "free";
+    if (current && !current.isAllDay) {
+      const remaining = new Date(current.endTime).getTime() - nowMs;
+      if (remaining <= 15 * 60 * 1000) return "endingSoon";
+    }
+    return "busy";
+  }, [displayEvents, now]);
+
+  // Allow preview status override via query param
+  const roomStatus: RoomStatus =
+    overrides?.statusOverride === "free" || overrides?.statusOverride === "busy" || overrides?.statusOverride === "endingSoon"
+      ? overrides.statusOverride
+      : computedStatus;
+
   // Resolve theme palette override
   const themePaletteOverride = overrides?.theme
     ? THEME_PALETTES.find((p) => p.id === overrides.theme)?.theme
@@ -197,7 +224,7 @@ export function DisplayView({
         : undefined;
 
   return (
-    <DisplayShell config={displayConfig} style={scaleStyle} connectionStatus={connectionStatus}>
+    <DisplayShell config={displayConfig} style={scaleStyle} connectionStatus={connectionStatus} roomStatus={roomStatus}>
       <ViewErrorBoundary>
         <EventErrorBoundary>
           {renderView()}

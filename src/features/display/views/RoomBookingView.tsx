@@ -43,14 +43,30 @@ export function RoomBookingView({
 
   const { currentEvent, nextItems, isFree, isEndingSoon, freeFromTime } = useMemo(() => {
     const nowMs = now.getTime();
-    const current = events.find(
+    const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1).getTime();
+
+    // Filter to today's events only (RoomBookingView is a single-day view)
+    const todayEvents = events.filter((e) => {
+      if (e.isAllDay) {
+        // All-day events: check if they overlap today
+        const eStart = new Date(e.startTime).getTime();
+        const eEnd = new Date(e.endTime).getTime();
+        const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+        return eStart < todayEnd && eEnd > todayStart;
+      }
+      // Timed events: starts before end of today AND ends after start of today
+      const eStart = new Date(e.startTime).getTime();
+      return eStart < todayEnd;
+    });
+
+    const current = todayEvents.find(
       (e) =>
         !e.isAllDay &&
         new Date(e.startTime).getTime() <= nowMs &&
         new Date(e.endTime).getTime() > nowMs,
     );
-    const allDay = events.find((e) => e.isAllDay);
-    const upcoming = events
+    const allDay = todayEvents.find((e) => e.isAllDay);
+    const upcoming = todayEvents
       .filter((e) => !e.isAllDay && new Date(e.startTime).getTime() > nowMs)
       .slice(0, config.futureEventCount);
     const endingSoon = current
@@ -68,7 +84,6 @@ export function RoomBookingView({
 
     // Build upcoming items list, interleaving free slots if enabled
     const items: UpcomingItem[] = [];
-    const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1).getTime();
 
     function addHourlyFreeSlots(target: UpcomingItem[], from: number, to: number) {
       let slotStart = from;
@@ -91,8 +106,8 @@ export function RoomBookingView({
 
     if (config.showFreeSlots) {
       // Use ALL today's future events (not just the display limit) for accurate free slot calculation
-      const allTodayUpcoming = events
-        .filter((e) => !e.isAllDay && new Date(e.startTime).getTime() > nowMs && new Date(e.startTime).getTime() < todayEnd)
+      const allTodayUpcoming = todayEvents
+        .filter((e) => !e.isAllDay && new Date(e.startTime).getTime() > nowMs)
         .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
 
       // Starting point: end of current event or now

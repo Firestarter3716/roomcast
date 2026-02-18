@@ -5,12 +5,14 @@ import { type DisplayConfig, DEFAULT_THEME, DEFAULT_BRANDING, DEFAULT_BACKGROUND
 import { getFontFamily } from "@/shared/lib/fonts";
 
 type ConnectionStatus = "connected" | "polling" | "disconnected";
+export type RoomStatus = "free" | "busy" | "endingSoon";
 
 interface DisplayShellProps {
   config: DisplayConfig;
   isPreview?: boolean;
   style?: React.CSSProperties;
   connectionStatus?: ConnectionStatus;
+  roomStatus?: RoomStatus;
   children: ReactNode;
 }
 
@@ -20,7 +22,7 @@ const STATUS_COLORS: Record<ConnectionStatus, string> = {
   disconnected: "var(--color-destructive)",
 };
 
-export function DisplayShell({ config, isPreview = false, style, connectionStatus, children }: DisplayShellProps) {
+export function DisplayShell({ config, isPreview = false, style, connectionStatus, roomStatus, children }: DisplayShellProps) {
   const theme = { ...DEFAULT_THEME, ...config?.theme };
   const branding = { ...DEFAULT_BRANDING, ...config?.branding };
   const background = { ...DEFAULT_BACKGROUND, ...config?.background };
@@ -64,12 +66,25 @@ export function DisplayShell({ config, isPreview = false, style, connectionStatu
     };
   }, [isPreview]);
 
-  const bgStyle: React.CSSProperties =
-    background.type === "gradient"
-      ? { background: `linear-gradient(${background.gradientAngle}deg, ${background.gradientStart}, ${background.gradientEnd})` }
-      : background.type === "solid"
-      ? { backgroundColor: background.color }
-      : { backgroundColor: theme.background };
+  // Compute background: if statusBackground is enabled and we have a room status, use status colors
+  let bgStyle: React.CSSProperties;
+
+  if (theme.statusBackground && roomStatus) {
+    const statusBgColor =
+      roomStatus === "free" ? theme.free :
+      roomStatus === "endingSoon" ? (theme.endingSoon || "#B45309") :
+      theme.busy;
+    bgStyle = {
+      backgroundColor: statusBgColor,
+      transition: "background-color 0.8s ease",
+    };
+  } else if (background.type === "gradient") {
+    bgStyle = { background: `linear-gradient(${background.gradientAngle}deg, ${background.gradientStart}, ${background.gradientEnd})` };
+  } else if (background.type === "solid") {
+    bgStyle = { backgroundColor: background.color };
+  } else {
+    bgStyle = { backgroundColor: theme.background };
+  }
 
   return (
     <div
@@ -87,14 +102,14 @@ export function DisplayShell({ config, isPreview = false, style, connectionStatu
         "--display-fg": theme.foreground,
         "--display-primary": theme.primary,
         "--display-secondary": theme.secondary,
-        "--display-free": theme.free,
-        "--display-busy": theme.busy,
+        "--display-free": theme.statusBackground && roomStatus ? "#FFFFFF" : theme.free,
+        "--display-busy": theme.statusBackground && roomStatus ? "#FFFFFF" : theme.busy,
         "--display-muted": theme.muted,
         "--display-base-size": `${theme.baseFontSize}px`,
         ...style,
       } as React.CSSProperties}
     >
-      {background.type === "image" && background.imageUrl && (
+      {!theme.statusBackground && background.type === "image" && background.imageUrl && (
         <div style={{ position: "absolute", inset: 0, backgroundImage: `url(${background.imageUrl})`, backgroundSize: "cover", backgroundPosition: "center", opacity: background.imageOpacity, zIndex: 0 }} />
       )}
       <div style={{ position: "relative", zIndex: 1, width: "100%", height: "100%", display: "flex", flexDirection: "column", zoom: zoomLevel }}>

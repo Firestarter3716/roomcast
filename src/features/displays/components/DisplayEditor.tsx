@@ -54,6 +54,7 @@ export function DisplayEditor({ displayId, displayToken, layoutType, initialConf
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [previewKey, setPreviewKey] = useState(0);
   const [currentOrientation, setCurrentOrientation] = useState(orientation || "LANDSCAPE");
+  const [previewStatus, setPreviewStatus] = useState<"live" | "free" | "busy" | "endingSoon">("live");
   const previewContainerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(0);
 
@@ -325,39 +326,13 @@ export function DisplayEditor({ displayId, displayToken, layoutType, initialConf
         )}
 
         {activeTab === "theme" && (
-          <div role="tabpanel" aria-labelledby="tab-theme" className="space-y-4">
-            <h3 className="text-sm font-semibold text-[var(--color-foreground)]">Theme Preset</h3>
-            <div className="grid grid-cols-2 gap-2">
-              {THEME_PALETTES.map((palette) => (
-                <button key={palette.id} aria-pressed={config.theme.preset === palette.id} onClick={() => updateTheme(palette.theme)} className={`rounded-lg border p-3 text-left transition-colors ${config.theme.preset === palette.id ? "border-[var(--color-primary)] bg-[var(--color-primary)]/5" : "border-[var(--color-border)] hover:border-[var(--color-border-hover)]"}`}>
-                  <div className="flex gap-1 mb-2">
-                    {[palette.theme.background, palette.theme.primary, palette.theme.free, palette.theme.busy].map((c, i) => (
-                      <span key={i} className="h-4 w-4 rounded-full border border-white/20" style={{ backgroundColor: c }} />
-                    ))}
-                  </div>
-                  <p className="text-xs font-medium text-[var(--color-foreground)]">{palette.name}</p>
-                </button>
-              ))}
-            </div>
-            <h3 className="text-sm font-semibold text-[var(--color-foreground)] pt-2">Custom Colors</h3>
-            {(["background", "foreground", "primary", "secondary", "free", "busy", "muted"] as const).map((key) => (
-              <div key={key} className="flex items-center gap-3">
-                <input type="color" value={config.theme[key]} onChange={(e) => updateTheme({ [key]: e.target.value, preset: "custom" })} className="h-8 w-8 cursor-pointer rounded border border-[var(--color-border)]" aria-label={`${key} color picker`} />
-                <span className="text-xs text-[var(--color-muted-foreground)] capitalize w-20">{key}</span>
-                <input id={`editor-theme-${key}`} type="text" value={config.theme[key]} onChange={(e) => updateTheme({ [key]: e.target.value, preset: "custom" })} className="flex-1 rounded-md border border-[var(--color-input)] bg-[var(--color-background)] px-2 py-1 text-xs text-[var(--color-foreground)]" aria-label={`${key} color hex value`} />
-              </div>
-            ))}
-            <div>
-              <label htmlFor="editor-font-family" className={labelClass}>Font Family</label>
-              <select id="editor-font-family" value={config.theme.fontFamily} onChange={(e) => updateTheme({ fontFamily: e.target.value })} className={inputClass}>
-                {FONT_OPTIONS.map((f) => (<option key={f.value} value={f.value}>{f.label}</option>))}
-              </select>
-            </div>
-            <div>
-              <label htmlFor="editor-font-size" className={labelClass}>Base Font Size: {config.theme.baseFontSize}px</label>
-              <input id="editor-font-size" type="range" min="12" max="24" value={config.theme.baseFontSize} onChange={(e) => updateTheme({ baseFontSize: Number(e.target.value) })} className="w-full" />
-            </div>
-          </div>
+          <ThemePanel
+            config={config}
+            updateTheme={updateTheme}
+            labelClass={labelClass}
+            inputClass={inputClass}
+            checkboxClass={checkboxClass}
+          />
         )}
 
         {activeTab === "branding" && (
@@ -486,17 +461,38 @@ export function DisplayEditor({ displayId, displayToken, layoutType, initialConf
 
       <div className="w-full lg:w-3/5">
         <div className="sticky top-4">
-          <h3 className="mb-3 text-sm font-semibold text-[var(--color-foreground)]">
-            Live Preview
-            <span className="ml-2 text-xs font-normal text-[var(--color-muted-foreground)]">
-              {config.screen.width} x {config.screen.height}
-            </span>
-          </h3>
+          <div className="mb-3 flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-[var(--color-foreground)]">
+              Live Preview
+              <span className="ml-2 text-xs font-normal text-[var(--color-muted-foreground)]">
+                {config.screen.width} x {config.screen.height}
+              </span>
+            </h3>
+          </div>
+          <div className="mb-3 flex gap-1 rounded-lg bg-[var(--color-muted)]/10 p-1">
+            {([
+              { value: "live", label: "Live" },
+              { value: "free", label: "Free", color: "#22C55E" },
+              { value: "busy", label: "Busy", color: "#EF4444" },
+              { value: "endingSoon", label: "Ending Soon", color: "#F59E0B" },
+            ] as const).map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => { setPreviewStatus(opt.value); setPreviewKey((k) => k + 1); }}
+                className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${previewStatus === opt.value ? "bg-[var(--color-background)] text-[var(--color-foreground)] shadow-sm" : "text-[var(--color-muted-foreground)] hover:text-[var(--color-foreground)]"}`}
+              >
+                {"color" in opt && <span className="h-2 w-2 rounded-full" style={{ backgroundColor: opt.color }} />}
+                {opt.label}
+              </button>
+            ))}
+          </div>
           <div ref={previewContainerRef} className="w-full">
             {containerWidth > 0 && (() => {
               const screenW = config.screen.width || 1920;
               const screenH = config.screen.height || 1080;
               const scale = containerWidth / screenW;
+              const statusParam = previewStatus !== "live" ? `&status=${previewStatus}` : "";
               return (
                 <div
                   className="overflow-hidden rounded-lg border border-[var(--color-border)]"
@@ -508,7 +504,7 @@ export function DisplayEditor({ displayId, displayToken, layoutType, initialConf
                   <iframe
                     ref={iframeRef}
                     key={previewKey}
-                    src={`/display/${displayToken}?preview=1`}
+                    src={`/display/${displayToken}?preview=1${statusParam}`}
                     style={{
                       width: screenW,
                       height: screenH,
@@ -524,6 +520,92 @@ export function DisplayEditor({ displayId, displayToken, layoutType, initialConf
             })()}
           </div>
         </div>
+      </div>
+    </div>
+  );
+}
+
+function ThemePanel({ config, updateTheme, labelClass, inputClass, checkboxClass }: {
+  config: DisplayConfig;
+  updateTheme: (partial: Partial<ThemeConfig>) => void;
+  labelClass: string;
+  inputClass: string;
+  checkboxClass: string;
+}) {
+  const [customOpen, setCustomOpen] = useState(config.theme.preset === "custom");
+
+  return (
+    <div role="tabpanel" aria-labelledby="tab-theme" className="space-y-4">
+      <h3 className="text-sm font-semibold text-[var(--color-foreground)]">Theme Preset</h3>
+      <div className="grid grid-cols-2 gap-2">
+        {THEME_PALETTES.map((palette) => (
+          <button
+            key={palette.id}
+            aria-pressed={config.theme.preset === palette.id}
+            onClick={() => updateTheme(palette.theme)}
+            className={`rounded-lg border p-3 text-left transition-colors ${config.theme.preset === palette.id ? "border-[var(--color-primary)] bg-[var(--color-primary)]/5" : "border-[var(--color-border)] hover:border-[var(--color-border-hover)]"}`}
+          >
+            <div className="flex gap-1 mb-2">
+              {[palette.theme.background, palette.theme.free, palette.theme.endingSoon || "#F59E0B", palette.theme.busy].map((c, i) => (
+                <span key={i} className="h-4 w-4 rounded-full border border-white/20" style={{ backgroundColor: c }} />
+              ))}
+            </div>
+            <p className="text-xs font-medium text-[var(--color-foreground)]">{palette.name}</p>
+            <p className="text-[10px] text-[var(--color-muted-foreground)] mt-0.5">{palette.description}</p>
+          </button>
+        ))}
+      </div>
+
+      {config.theme.statusBackground && (
+        <div className="rounded-md border border-[var(--color-border)] bg-[var(--color-muted)]/5 p-3">
+          <p className="text-xs text-[var(--color-muted-foreground)]">
+            Status Background is active — the display background will change to green (free), orange (ending soon), or red (busy) based on room availability.
+          </p>
+        </div>
+      )}
+
+      <label className={checkboxClass}>
+        <input
+          type="checkbox"
+          checked={config.theme.statusBackground ?? false}
+          onChange={(e) => updateTheme({ statusBackground: e.target.checked, preset: "custom" })}
+        />
+        Status background (green/orange/red)
+      </label>
+
+      <div>
+        <label htmlFor="editor-font-family" className={labelClass}>Font Family</label>
+        <select id="editor-font-family" value={config.theme.fontFamily} onChange={(e) => updateTheme({ fontFamily: e.target.value })} className={inputClass}>
+          {FONT_OPTIONS.map((f) => (<option key={f.value} value={f.value}>{f.label}</option>))}
+        </select>
+      </div>
+      <div>
+        <label htmlFor="editor-font-size" className={labelClass}>Base Font Size: {config.theme.baseFontSize}px</label>
+        <input id="editor-font-size" type="range" min="12" max="24" value={config.theme.baseFontSize} onChange={(e) => updateTheme({ baseFontSize: Number(e.target.value) })} className="w-full" />
+      </div>
+
+      <div className="rounded-lg border border-[var(--color-border)]">
+        <button
+          type="button"
+          onClick={() => setCustomOpen(!customOpen)}
+          aria-expanded={customOpen}
+          className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm font-medium text-[var(--color-foreground)] hover:bg-[var(--color-muted)]/10 transition-colors rounded-lg"
+        >
+          <Palette className="h-4 w-4 text-[var(--color-muted-foreground)]" />
+          Custom Colors
+          {customOpen ? <ChevronDown className="ml-auto h-4 w-4 text-[var(--color-muted-foreground)]" /> : <ChevronRight className="ml-auto h-4 w-4 text-[var(--color-muted-foreground)]" />}
+        </button>
+        {customOpen && (
+          <div className="border-t border-[var(--color-border)] px-4 py-4 space-y-3">
+            {(["background", "foreground", "primary", "secondary", "free", "busy", "endingSoon", "muted"] as const).map((key) => (
+              <div key={key} className="flex items-center gap-3">
+                <input type="color" value={config.theme[key] || "#000000"} onChange={(e) => updateTheme({ [key]: e.target.value, preset: "custom" })} className="h-8 w-8 cursor-pointer rounded border border-[var(--color-border)]" aria-label={`${key} color picker`} />
+                <span className="text-xs text-[var(--color-muted-foreground)] capitalize w-24">{key === "endingSoon" ? "Ending Soon" : key}</span>
+                <input id={`editor-theme-${key}`} type="text" value={config.theme[key] || ""} onChange={(e) => updateTheme({ [key]: e.target.value, preset: "custom" })} className="flex-1 rounded-md border border-[var(--color-input)] bg-[var(--color-background)] px-2 py-1 text-xs text-[var(--color-foreground)]" aria-label={`${key} color hex value`} />
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

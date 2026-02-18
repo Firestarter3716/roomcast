@@ -100,6 +100,7 @@ export default async function DisplayPage({ params, searchParams }: DisplayPageP
     lang?: string;
     refresh?: number;
     scale?: string;
+    statusOverride?: string;
   } = {};
 
   const qTheme = typeof query.theme === "string" ? query.theme : undefined;
@@ -120,6 +121,11 @@ export default async function DisplayPage({ params, searchParams }: DisplayPageP
   const qScale = typeof query.scale === "string" ? query.scale : undefined;
   if (qScale === "fit" || qScale === "fill") {
     overrides.scale = qScale;
+  }
+
+  const qStatus = typeof query.status === "string" ? query.status : undefined;
+  if (qStatus === "free" || qStatus === "busy" || qStatus === "endingSoon") {
+    overrides.statusOverride = qStatus;
   }
 
   return (

@@ -13,16 +13,18 @@ export const ORIENTATION_OPTIONS = [
 ] as const;
 
 export interface ThemeConfig {
-  preset: "dark" | "light" | "corporate" | "high-contrast" | "custom";
+  preset: string;
   background: string;
   foreground: string;
   primary: string;
   secondary: string;
   free: string;
   busy: string;
+  endingSoon: string;
   muted: string;
   fontFamily: string;
   baseFontSize: number;
+  statusBackground: boolean;
 }
 
 export interface BrandingConfig {
@@ -123,9 +125,11 @@ export const DEFAULT_THEME: ThemeConfig = {
   secondary: "#64748B",
   free: "#22C55E",
   busy: "#EF4444",
+  endingSoon: "#F59E0B",
   muted: "#94A3B8",
   fontFamily: "inter",
   baseFontSize: 16,
+  statusBackground: false,
 };
 
 export const DEFAULT_BRANDING: BrandingConfig = {
