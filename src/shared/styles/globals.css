@@ -1,9 +1,4 @@
 @import "@fontsource-variable/inter";
-@import "@fontsource-variable/roboto-flex";
-@import "@fontsource-variable/dm-sans";
-@import "@fontsource/geist-sans";
-@import "@fontsource-variable/nunito";
-@import "@fontsource-variable/source-sans-3";
 
 @import "tailwindcss";
 @import "./tokens.css";
@@ -45,6 +40,16 @@
 
   --font-sans: var(--font-sans);
   --font-mono: var(--font-mono);
+
+  --shadow-sm: var(--shadow-sm);
+  --shadow-md: var(--shadow-md);
+  --shadow-lg: var(--shadow-lg);
+  --shadow-xl: var(--shadow-xl);
+
+  --color-surface-elevated: var(--color-surface-elevated);
+  --color-border-hover: var(--color-border-hover);
+  --color-info: var(--color-info);
+  --color-info-foreground: var(--color-info-foreground);
 }
 
 @layer base {
@@ -56,5 +61,17 @@
     background-color: var(--color-background);
     color: var(--color-foreground);
     font-family: var(--font-sans);
+  }
+}
+
+/* Respect reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

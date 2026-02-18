@@ -3,6 +3,18 @@
 import { useEffect, useState } from "react";
 import { Monitor } from "lucide-react";
 
+const ERROR_TEXT: Record<string, { title: string; message: string; retrying: (n: number) => string }> = {
+  de: { title: "Wartung", message: "Bitte versuchen Sie es später erneut", retrying: (n) => `Erneuter Versuch in ${n} Sekunde${n !== 1 ? "n" : ""}...` },
+  en: { title: "Maintenance", message: "Please try again later", retrying: (n) => `Retrying in ${n} second${n !== 1 ? "s" : ""}...` },
+  fr: { title: "Maintenance", message: "Veuillez réessayer plus tard", retrying: (n) => `Nouvelle tentative dans ${n} seconde${n !== 1 ? "s" : ""}...` },
+};
+
+function getErrorText(): { title: string; message: string; retrying: (n: number) => string } {
+  if (typeof navigator === "undefined") return ERROR_TEXT.en;
+  const lang = navigator.language?.split("-")[0]?.toLowerCase() ?? "en";
+  return ERROR_TEXT[lang] ?? ERROR_TEXT.en;
+}
+
 const RETRY_DELAYS = [5000, 10000, 30000, 60000];
 
 export default function DisplayError({
@@ -12,6 +24,7 @@ export default function DisplayError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const text = getErrorText();
   const [retryCount, setRetryCount] = useState(0);
   const [countdown, setCountdown] = useState(() => RETRY_DELAYS[0] / 1000);
 
@@ -42,10 +55,10 @@ export default function DisplayError({
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
-        minHeight: "100vh",
+        height: "100vh",
         padding: "2rem",
-        backgroundColor: "#0a0a0a",
-        color: "#ffffff",
+        backgroundColor: "#0f172a",
+        color: "#f8fafc",
         textAlign: "center",
         cursor: "none",
         userSelect: "none",
@@ -53,37 +66,37 @@ export default function DisplayError({
     >
       <Monitor
         size={56}
-        style={{ color: "#525252", marginBottom: "1.5rem" }}
+        style={{ color: "#94a3b8", marginBottom: "1.5rem" }}
       />
       <h1
         style={{
           fontSize: "1.5rem",
           fontWeight: 600,
           margin: 0,
-          color: "#ffffff",
+          color: "#f8fafc",
         }}
       >
-        Maintenance
+        {text.title}
       </h1>
       <p
         style={{
           fontSize: "0.875rem",
-          color: "#737373",
+          color: "#94a3b8",
           marginTop: "0.75rem",
           maxWidth: "20rem",
           lineHeight: 1.5,
         }}
       >
-        Please try again later
+        {text.message}
       </p>
       <div
         style={{
           marginTop: "2rem",
           fontSize: "0.75rem",
-          color: "#525252",
+          color: "#64748b",
         }}
       >
-        Retrying in {countdown} second{countdown !== 1 ? "s" : ""}...
+        {text.retrying(countdown)}
       </div>
     </div>
   );

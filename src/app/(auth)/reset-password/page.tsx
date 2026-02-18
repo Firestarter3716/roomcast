@@ -106,7 +106,7 @@ function SetNewPasswordForm({ email, token }: { email: string; token: string }) 
   if (success) {
     return (
       <div className="text-center">
-        <p className="text-sm text-green-500">Password reset successfully!</p>
+        <p className="text-sm text-[var(--color-success)]">Password reset successfully!</p>
         <a href="/login" className="mt-4 inline-block text-sm text-[var(--color-primary)] hover:underline">Sign in</a>
       </div>
     );
@@ -114,7 +114,7 @@ function SetNewPasswordForm({ email, token }: { email: string; token: string }) 
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      {error && <div className="rounded-md bg-red-50 p-3 text-sm text-red-600 dark:bg-red-950/50 dark:text-red-400">{error}</div>}
+      {error && <div role="alert" className="rounded-md bg-[var(--color-destructive)]/10 p-3 text-sm text-[var(--color-destructive)]">{error}</div>}
       <div>
         <label htmlFor="password" className="mb-1.5 block text-sm font-medium text-[var(--color-foreground)]">New Password</label>
         <input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full rounded-md border border-[var(--color-input)] bg-[var(--color-background)] px-3 py-2 text-sm text-[var(--color-foreground)] focus:border-[var(--color-ring)] focus:outline-none focus:ring-2 focus:ring-[var(--color-ring)]/20" required disabled={loading} minLength={8} />

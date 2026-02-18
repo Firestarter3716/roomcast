@@ -12,6 +12,8 @@ interface State {
 }
 
 export class EventErrorBoundary extends Component<Props, State> {
+  private recoveryTimer: ReturnType<typeof setTimeout> | null = null;
+
   constructor(props: Props) {
     super(props);
     this.state = { hasError: false };
@@ -23,6 +25,18 @@ export class EventErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error) {
     console.error("[EventErrorBoundary] Skipping broken event:", error.message);
+  }
+
+  componentDidUpdate(_prevProps: Props, prevState: State) {
+    if (this.state.hasError && !prevState.hasError) {
+      this.recoveryTimer = setTimeout(() => {
+        this.setState({ hasError: false });
+      }, 30_000);
+    }
+  }
+
+  componentWillUnmount() {
+    if (this.recoveryTimer) clearTimeout(this.recoveryTimer);
   }
 
   render() {

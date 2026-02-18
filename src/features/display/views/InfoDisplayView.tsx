@@ -8,25 +8,6 @@ import { getDisplayTranslations } from "../shared/translations";
 import { type DisplayEvent } from "../hooks/useDisplaySSE";
 import { type InfoDisplayConfig } from "@/features/displays/types";
 
-// ---------------------------------------------------------------------------
-// CSS keyframes injected once for the fade transition
-// ---------------------------------------------------------------------------
-const FADE_KEYFRAMES = `
-@keyframes displayFadeIn {
-  from { opacity: 0.3; }
-  to   { opacity: 1; }
-}
-`;
-
-let keyframesInjected = false;
-function ensureKeyframes() {
-  if (typeof document === "undefined" || keyframesInjected) return;
-  const style = document.createElement("style");
-  style.textContent = FADE_KEYFRAMES;
-  document.head.appendChild(style);
-  keyframesInjected = true;
-}
-
 interface InfoDisplayViewProps { events: DisplayEvent[]; config: InfoDisplayConfig; locale?: string; }
 
 export function InfoDisplayView({ events, config, locale }: InfoDisplayViewProps) {
@@ -35,11 +16,6 @@ export function InfoDisplayView({ events, config, locale }: InfoDisplayViewProps
   const tickerSeparator = config.tickerSeparator ?? " \u2022\u2022\u2022 ";
   const now = useCurrentTime(showSeconds ? 1000 : 30000);
   const t = getDisplayTranslations(locale || "de-DE");
-
-  // Inject keyframes on mount
-  useEffect(() => {
-    ensureKeyframes();
-  }, []);
 
   // Fade transition: track event changes
   const [fadeKey, setFadeKey] = useState(0);
@@ -67,7 +43,7 @@ export function InfoDisplayView({ events, config, locale }: InfoDisplayViewProps
   const dateString = now.toLocaleDateString(locale || "de-DE", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
 
   return (
-    <div key={fadeKey} style={{ display: "flex", flexDirection: "column", height: "100%", padding: "2rem", animation: "displayFadeIn 0.5s ease-in-out" }}>
+    <div key={fadeKey} style={{ display: "flex", flexDirection: "column", height: "100%", padding: "2rem", animation: "display-fade-in-subtle 0.5s ease-in-out" }}>
       <div style={{ display: "flex", justifyContent: clockPosition === "center" ? "center" : "space-between", alignItems: clockPosition === "center" ? "center" : "flex-start", marginBottom: "2rem", flexDirection: clockPosition === "center" ? "column" : "row", gap: clockPosition === "center" ? "0.5rem" : undefined }}>
         {clockPosition === "center" ? (
           <>
@@ -84,11 +60,11 @@ export function InfoDisplayView({ events, config, locale }: InfoDisplayViewProps
       <div style={{ flex: 1, display: "flex", gap: "2rem", minHeight: 0 }}>
         {config.showTodayEvents && (
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: "0.1em", opacity: 0.5, marginBottom: "1rem" }}>{t.today}</div>
-            {todayEvents.length === 0 ? <div style={{ opacity: 0.4, fontSize: "0.875rem" }}>{t.noEvents}</div> : todayEvents.map((event) => (
-              <div key={event.id} style={{ padding: "0.75rem", marginBottom: "0.5rem", borderRadius: "0.5rem", borderLeft: `3px solid ${event.calendarColor || "var(--display-primary)"}`, backgroundColor: `${event.calendarColor || "var(--display-primary)"}15` }}>
-                <div style={{ fontWeight: 600, fontSize: "0.9375rem" }}>{event.title}</div>
-                <div style={{ fontSize: "0.8125rem", opacity: 0.7, marginTop: "0.25rem" }}>
+            <div style={{ fontSize: "var(--display-text-xs, 0.75rem)", textTransform: "uppercase", letterSpacing: "0.1em", opacity: 0.5, marginBottom: "1rem" }}>{t.today}</div>
+            {todayEvents.length === 0 ? <div style={{ opacity: 0.4, fontSize: "var(--display-text-base, 0.875rem)" }}>{t.noEvents}</div> : todayEvents.map((event) => (
+              <div key={event.id} style={{ padding: "0.75rem", marginBottom: "0.5rem", borderRadius: "0.5rem", borderLeft: `3px solid ${event.calendarColor || "var(--display-primary)"}`, backgroundColor: `color-mix(in srgb, ${event.calendarColor || "var(--display-primary)"} 8%, transparent)` }}>
+                <div style={{ fontWeight: 600, fontSize: "var(--display-text-base, 0.9375rem)" }}>{event.title}</div>
+                <div style={{ fontSize: "var(--display-text-sm, 0.8125rem)", opacity: 0.7, marginTop: "0.25rem" }}>
                   {new Date(event.startTime).toLocaleTimeString(locale || "de-DE", { hour: "2-digit", minute: "2-digit" })} - {new Date(event.endTime).toLocaleTimeString(locale || "de-DE", { hour: "2-digit", minute: "2-digit" })}
                 </div>
               </div>
@@ -96,11 +72,11 @@ export function InfoDisplayView({ events, config, locale }: InfoDisplayViewProps
           </div>
         )}
         <div style={{ flex: 1 }}>
-          <div style={{ fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: "0.1em", opacity: 0.5, marginBottom: "1rem" }}>{t.upcoming}</div>
-          {upcomingEvents.length === 0 ? <div style={{ opacity: 0.4, fontSize: "0.875rem" }}>{t.noUpcomingEvents}</div> : upcomingEvents.map((event) => (
-            <div key={event.id} style={{ display: "flex", gap: "1rem", padding: "0.5rem 0", borderBottom: "1px solid var(--display-muted)15" }}>
-              <div style={{ fontSize: "0.75rem", opacity: 0.6, width: "5rem", flexShrink: 0 }}>{new Date(event.startTime).toLocaleDateString(locale || "de-DE", { weekday: "short", day: "numeric", month: "short" })}</div>
-              <div><div style={{ fontSize: "0.875rem", fontWeight: 500 }}>{event.title}</div><div style={{ fontSize: "0.75rem", opacity: 0.6 }}>{new Date(event.startTime).toLocaleTimeString(locale || "de-DE", { hour: "2-digit", minute: "2-digit" })}</div></div>
+          <div style={{ fontSize: "var(--display-text-xs, 0.75rem)", textTransform: "uppercase", letterSpacing: "0.1em", opacity: 0.5, marginBottom: "1rem" }}>{t.upcoming}</div>
+          {upcomingEvents.length === 0 ? <div style={{ opacity: 0.4, fontSize: "var(--display-text-base, 0.875rem)" }}>{t.noUpcomingEvents}</div> : upcomingEvents.map((event) => (
+            <div key={event.id} style={{ display: "flex", gap: "1rem", padding: "0.5rem 0", borderBottom: "1px solid color-mix(in srgb, var(--display-muted) 8%, transparent)" }}>
+              <div style={{ fontSize: "var(--display-text-xs, 0.75rem)", opacity: 0.6, width: "5rem", flexShrink: 0 }}>{new Date(event.startTime).toLocaleDateString(locale || "de-DE", { weekday: "short", day: "numeric", month: "short" })}</div>
+              <div><div style={{ fontSize: "var(--display-text-sm, 0.875rem)", fontWeight: 500 }}>{event.title}</div><div style={{ fontSize: "var(--display-text-xs, 0.75rem)", opacity: 0.6 }}>{new Date(event.startTime).toLocaleTimeString(locale || "de-DE", { hour: "2-digit", minute: "2-digit" })}</div></div>
             </div>
           ))}
         </div>

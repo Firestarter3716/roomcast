@@ -19,10 +19,10 @@ export default function SettingsLayout({
   const pathname = usePathname();
 
   return (
-    <div className="flex gap-8">
+    <div className="flex flex-col md:flex-row gap-6 md:gap-8">
       {/* Sidebar */}
-      <nav className="w-56 shrink-0">
-        <div className="sticky top-24 space-y-1">
+      <nav className="w-full md:w-56 shrink-0">
+        <div className="md:sticky md:top-24 flex md:flex-col gap-1 overflow-x-auto md:overflow-x-visible">
           {NAV_ITEMS.map((item) => {
             const Icon = item.icon;
             const isActive = pathname.startsWith(item.href);

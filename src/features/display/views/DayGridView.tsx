@@ -2,27 +2,9 @@
 
 import { useMemo, useRef, useState, useEffect, useCallback } from "react";
 import { useCurrentTime } from "../hooks/useCurrentTime";
+import { getDisplayTranslations } from "../shared/translations";
 import { type DisplayEvent } from "../hooks/useDisplaySSE";
 import { type DayGridConfig } from "@/features/displays/types";
-
-// ---------------------------------------------------------------------------
-// CSS keyframes injected once for the fade transition
-// ---------------------------------------------------------------------------
-const FADE_KEYFRAMES = `
-@keyframes displayFadeIn {
-  from { opacity: 0.3; }
-  to   { opacity: 1; }
-}
-`;
-
-let keyframesInjected = false;
-function ensureKeyframes() {
-  if (typeof document === "undefined" || keyframesInjected) return;
-  const style = document.createElement("style");
-  style.textContent = FADE_KEYFRAMES;
-  document.head.appendChild(style);
-  keyframesInjected = true;
-}
 
 interface DayGridViewProps { events: DisplayEvent[]; config: DayGridConfig; locale?: string; }
 
@@ -133,13 +115,9 @@ function computeOverlapLayout(events: DisplayEvent[]): LayoutEvent[] {
 
 export function DayGridView({ events, config, locale: localeProp }: DayGridViewProps) {
   const locale = localeProp || "de-DE";
+  const t = getDisplayTranslations(locale);
   const now = useCurrentTime(60000);
   const totalHours = config.timeRangeEnd - config.timeRangeStart;
-
-  // Inject keyframes on mount
-  useEffect(() => {
-    ensureKeyframes();
-  }, []);
 
   // Fade transition: track event changes
   const [fadeKey, setFadeKey] = useState(0);
@@ -222,7 +200,7 @@ export function DayGridView({ events, config, locale: localeProp }: DayGridViewP
     <div
       key={fadeKey}
       ref={scrollContainerRef}
-      style={{ height: "100%", overflowY: "auto", padding: "1.5rem", animation: "displayFadeIn 0.5s ease-in-out" }}
+      style={{ height: "100%", overflowY: "scroll", padding: "1.5rem", animation: "display-fade-in-subtle 0.5s ease-in-out", touchAction: "none" }}
     >
       {/* Date header */}
       <div
@@ -238,13 +216,13 @@ export function DayGridView({ events, config, locale: localeProp }: DayGridViewP
       <div style={{ display: "flex", position: "relative", minHeight: "100%" }}>
         {/* Hour labels column */}
         <div style={{ width: "4rem", flexShrink: 0, position: "relative" }}>
-          {hours.map((h) => (<div key={h} style={{ position: "absolute", top: `${((h - config.timeRangeStart) / totalHours) * 100}%`, fontSize: "0.75rem", opacity: 0.5, transform: "translateY(-50%)" }}>{String(h).padStart(2, "0")}:00</div>))}
+          {hours.map((h) => (<div key={h} style={{ position: "absolute", top: `${((h - config.timeRangeStart) / totalHours) * 100}%`, fontSize: "var(--display-text-xs, 0.75rem)", opacity: 0.5, transform: "translateY(-50%)" }}>{String(h).padStart(2, "0")}:00</div>))}
         </div>
 
         {/* Grid area */}
-        <div style={{ flex: 1, position: "relative", borderLeft: "1px solid var(--display-muted)33" }}>
+        <div style={{ flex: 1, position: "relative", borderLeft: "1px solid color-mix(in srgb, var(--display-muted) 20%, transparent)" }}>
           {/* Hour grid lines */}
-          {hours.map((h) => (<div key={h} style={{ position: "absolute", top: `${((h - config.timeRangeStart) / totalHours) * 100}%`, left: 0, right: 0, borderTop: "1px solid var(--display-muted)15" }} />))}
+          {hours.map((h) => (<div key={h} style={{ position: "absolute", top: `${((h - config.timeRangeStart) / totalHours) * 100}%`, left: 0, right: 0, borderTop: "1px solid color-mix(in srgb, var(--display-muted) 8%, transparent)" }} />))}
 
           {/* Current time indicator */}
           {config.showCurrentTimeLine && currentTimePercent >= 0 && currentTimePercent <= 100 && (
@@ -276,19 +254,24 @@ export function DayGridView({ events, config, locale: localeProp }: DayGridViewP
                   borderRadius: "0.375rem",
                   padding: "0.375rem 0.5rem",
                   overflow: "hidden",
-                  backgroundColor: `${event.calendarColor || "var(--display-primary)"}30`,
+                  backgroundColor: `color-mix(in srgb, ${event.calendarColor || "var(--display-primary)"} 19%, transparent)`,
                   borderLeft: `3px solid ${event.calendarColor || "var(--display-primary)"}`,
-                  fontSize: "0.75rem",
+                  fontSize: "var(--display-text-xs, 0.75rem)",
                   boxSizing: "border-box",
                 }}
               >
                 <div style={{ fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{event.title}</div>
-                <div style={{ opacity: 0.7, fontSize: "0.6875rem" }}>
+                <div style={{ opacity: 0.7, fontSize: "var(--display-text-xs, 0.6875rem)" }}>
                   {new Date(event.startTime).toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" })} - {new Date(event.endTime).toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" })}
                 </div>
               </div>
             );
           })}
+          {todayEvents.length === 0 && (
+            <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", opacity: 0.4, fontSize: "var(--display-text-base, 0.9375rem)" }}>
+              {t.noEventsToday}
+            </div>
+          )}
         </div>
       </div>
     </div>

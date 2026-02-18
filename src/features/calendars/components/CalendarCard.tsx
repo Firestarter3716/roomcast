@@ -39,7 +39,7 @@ export function CalendarCard({
   const tc = useTranslations("common");
 
   return (
-    <div className="group relative rounded-lg border border-[var(--color-border)] bg-[var(--color-card)] p-4 transition-shadow hover:shadow-[var(--shadow-md)]">
+    <div className="group relative rounded-lg border border-[var(--color-border)] bg-[var(--color-card)] p-5 transition-shadow hover:shadow-[var(--shadow-md)]">
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-3">
           <div
@@ -49,7 +49,7 @@ export function CalendarCard({
             <Calendar className="h-5 w-5" />
           </div>
           <div>
-            <h3 className="font-medium text-[var(--color-foreground)]">{name}</h3>
+            <h2 className="font-medium text-[var(--color-foreground)]">{name}</h2>
             <p className="text-xs text-[var(--color-muted-foreground)]">
               {t(`providers.${provider}`)}
             </p>
@@ -61,6 +61,7 @@ export function CalendarCard({
             onClick={() => onSync(id)}
             className="rounded-md p-1.5 text-[var(--color-muted-foreground)] hover:bg-[var(--color-secondary)] hover:text-[var(--color-foreground)] transition-colors"
             title={t("syncNow")}
+            aria-label="Sync calendar"
           >
             <RefreshCw className={`h-4 w-4 ${syncStatus === "SYNCING" ? "animate-spin" : ""}`} />
           </button>
@@ -68,6 +69,7 @@ export function CalendarCard({
             href={`/admin/calendars/${id}`}
             className="rounded-md p-1.5 text-[var(--color-muted-foreground)] hover:bg-[var(--color-secondary)] hover:text-[var(--color-foreground)] transition-colors"
             title={tc("edit")}
+            aria-label="Edit calendar"
           >
             <Pencil className="h-4 w-4" />
           </Link>
@@ -75,6 +77,7 @@ export function CalendarCard({
             onClick={() => onDelete(id)}
             className="rounded-md p-1.5 text-[var(--color-muted-foreground)] hover:bg-[var(--color-destructive)]/10 hover:text-[var(--color-destructive)] transition-colors"
             title={tc("delete")}
+            aria-label="Delete calendar"
           >
             <Trash2 className="h-4 w-4" />
           </button>

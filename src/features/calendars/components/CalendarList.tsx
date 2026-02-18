@@ -6,6 +6,7 @@ import { deleteCalendar, triggerCalendarSync } from "../actions";
 import { toast } from "sonner";
 import { type CalendarProvider, type SyncStatus } from "@prisma/client";
 import { ConfirmDialog } from "@/shared/components/ConfirmDialog";
+import { useTranslations } from "next-intl";
 
 interface CalendarItem {
   id: string;
@@ -26,13 +27,15 @@ interface CalendarListProps {
 
 export function CalendarList({ calendars }: CalendarListProps) {
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
+  const t = useTranslations("calendars");
+  const tc = useTranslations("common");
 
   async function handleSync(id: string) {
     try {
       await triggerCalendarSync(id);
-      toast.success("Sync triggered");
+      toast.success(t("syncNow"));
     } catch {
-      toast.error("Failed to trigger sync");
+      toast.error(t("saveFailed"));
     }
   }
 
@@ -45,16 +48,16 @@ export function CalendarList({ calendars }: CalendarListProps) {
     if (!deleteTarget) return;
     try {
       await deleteCalendar(deleteTarget.id);
-      toast.success("Calendar deleted");
+      toast.success(tc("success"));
     } catch {
-      toast.error("Failed to delete calendar");
+      toast.error(tc("error"));
     }
     setDeleteTarget(null);
   }
 
   if (calendars.length === 0) {
     return (
-      <div className="mt-8 flex items-center justify-center rounded-lg border border-dashed border-[var(--color-border)] p-12">
+      <div role="status" className="mt-8 flex items-center justify-center rounded-lg border border-dashed border-[var(--color-border)] p-12">
         <p className="text-[var(--color-muted-foreground)]">
           No calendars connected yet. Add your first calendar.
         </p>
@@ -78,9 +81,10 @@ export function CalendarList({ calendars }: CalendarListProps) {
       <ConfirmDialog
         open={!!deleteTarget}
         onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}
-        title="Delete Calendar"
-        description={`This will permanently delete the calendar '${deleteTarget?.name ?? ""}' and all cached events.`}
-        confirmLabel="Delete"
+        title={t("deleteCalendar")}
+        description={t("deleteConfirm")}
+        confirmLabel={tc("delete")}
+        cancelLabel={tc("cancel")}
         variant="destructive"
         onConfirm={handleDeleteConfirm}
       />

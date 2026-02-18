@@ -3,6 +3,18 @@
 import { Component, type ReactNode } from "react";
 import { Monitor } from "lucide-react";
 
+const ERROR_TEXT: Record<string, { title: string; recovering: string }> = {
+  de: { title: "Anzeigefehler", recovering: "Wiederherstellung läuft..." },
+  en: { title: "Display Error", recovering: "Attempting to recover..." },
+  fr: { title: "Erreur d'affichage", recovering: "Tentative de récupération..." },
+};
+
+function getErrorText(): { title: string; recovering: string } {
+  if (typeof navigator === "undefined") return ERROR_TEXT.en;
+  const lang = navigator.language?.split("-")[0]?.toLowerCase() ?? "en";
+  return ERROR_TEXT[lang] ?? ERROR_TEXT.en;
+}
+
 interface Props {
   children: ReactNode;
 }
@@ -56,6 +68,7 @@ export class ViewErrorBoundary extends Component<Props, State> {
 
   render() {
     if (this.state.hasError) {
+      const text = getErrorText();
       return (
         <div
           style={{
@@ -65,8 +78,8 @@ export class ViewErrorBoundary extends Component<Props, State> {
             justifyContent: "center",
             height: "100%",
             width: "100%",
-            backgroundColor: "var(--display-background)",
-            color: "var(--display-foreground)",
+            backgroundColor: "var(--display-bg)",
+            color: "var(--display-fg)",
             fontFamily: "inherit",
             gap: "1.5rem",
             padding: "2rem",
@@ -84,7 +97,7 @@ export class ViewErrorBoundary extends Component<Props, State> {
               opacity: 0.9,
             }}
           >
-            Display Error
+            {text.title}
           </div>
           <div
             style={{
@@ -92,7 +105,7 @@ export class ViewErrorBoundary extends Component<Props, State> {
               opacity: 0.5,
             }}
           >
-            Attempting to recover...
+            {text.recovering}
           </div>
         </div>
       );

@@ -158,16 +158,16 @@ export function DisplayEditor({ displayId, layoutType, initialConfig, orientatio
     { id: "background", label: "Background", icon: Image },
   ];
 
-  const inputClass = "w-full rounded-md border border-[var(--color-input)] bg-[var(--color-background)] px-3 py-2 text-sm text-[var(--color-foreground)] focus:border-[var(--color-ring)] focus:outline-none focus:ring-2 focus:ring-[var(--color-ring)]/20";
+  const inputClass = "w-full rounded-md border border-[var(--color-input)] bg-[var(--color-background)] px-3 py-2 text-sm text-[var(--color-foreground)] focus:border-[var(--color-ring)] focus:outline-none focus:ring-2 focus:ring-[var(--color-ring)]/40";
   const labelClass = "mb-1.5 block text-sm font-medium text-[var(--color-foreground)]";
   const checkboxClass = "flex items-center gap-2 text-sm text-[var(--color-foreground)]";
 
   return (
-    <div className="flex gap-6">
-      <div className="w-2/5 space-y-6">
-        <div className="flex gap-1 rounded-lg bg-[var(--color-muted)]/10 p-1">
+    <div className="flex flex-col lg:flex-row gap-6">
+      <div className="w-full lg:w-2/5 space-y-6">
+        <div role="tablist" className="flex gap-1 rounded-lg bg-[var(--color-muted)]/10 p-1">
           {tabs.map((tab) => (
-            <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`flex items-center gap-1.5 rounded-md px-3 py-2 text-xs font-medium transition-colors ${activeTab === tab.id ? "bg-[var(--color-background)] text-[var(--color-foreground)] shadow-sm" : "text-[var(--color-muted-foreground)] hover:text-[var(--color-foreground)]"}`}>
+            <button key={tab.id} role="tab" id={`tab-${tab.id}`} aria-selected={activeTab === tab.id} onClick={() => setActiveTab(tab.id)} className={`flex items-center gap-1.5 rounded-md px-3 py-2 text-xs font-medium transition-colors ${activeTab === tab.id ? "bg-[var(--color-background)] text-[var(--color-foreground)] shadow-sm" : "text-[var(--color-muted-foreground)] hover:text-[var(--color-foreground)]"}`}>
               <tab.icon className="h-3.5 w-3.5" />
               {tab.label}
             </button>
@@ -175,7 +175,7 @@ export function DisplayEditor({ displayId, layoutType, initialConfig, orientatio
         </div>
 
         {activeTab === "layout" && (
-          <div className="space-y-4">
+          <div role="tabpanel" aria-labelledby="tab-layout" className="space-y-4">
             <h3 className="text-sm font-semibold text-[var(--color-foreground)]">Layout Options</h3>
             {layoutType === "ROOM_BOOKING" && <RoomBookingOptions config={config.layout as RoomBookingConfig} onChange={updateLayout} labelClass={labelClass} checkboxClass={checkboxClass} inputClass={inputClass} />}
             {layoutType === "AGENDA" && <AgendaOptions config={config.layout as AgendaConfig} onChange={updateLayout} labelClass={labelClass} checkboxClass={checkboxClass} inputClass={inputClass} />}
@@ -186,11 +186,11 @@ export function DisplayEditor({ displayId, layoutType, initialConfig, orientatio
         )}
 
         {activeTab === "theme" && (
-          <div className="space-y-4">
+          <div role="tabpanel" aria-labelledby="tab-theme" className="space-y-4">
             <h3 className="text-sm font-semibold text-[var(--color-foreground)]">Theme Preset</h3>
             <div className="grid grid-cols-2 gap-2">
               {THEME_PALETTES.map((palette) => (
-                <button key={palette.id} onClick={() => updateTheme(palette.theme)} className={`rounded-lg border p-3 text-left transition-colors ${config.theme.preset === palette.id ? "border-[var(--color-primary)] bg-[var(--color-primary)]/5" : "border-[var(--color-border)] hover:border-[var(--color-border-hover)]"}`}>
+                <button key={palette.id} aria-pressed={config.theme.preset === palette.id} onClick={() => updateTheme(palette.theme)} className={`rounded-lg border p-3 text-left transition-colors ${config.theme.preset === palette.id ? "border-[var(--color-primary)] bg-[var(--color-primary)]/5" : "border-[var(--color-border)] hover:border-[var(--color-border-hover)]"}`}>
                   <div className="flex gap-1 mb-2">
                     {[palette.theme.background, palette.theme.primary, palette.theme.free, palette.theme.busy].map((c, i) => (
                       <span key={i} className="h-4 w-4 rounded-full border border-white/20" style={{ backgroundColor: c }} />
@@ -203,36 +203,36 @@ export function DisplayEditor({ displayId, layoutType, initialConfig, orientatio
             <h3 className="text-sm font-semibold text-[var(--color-foreground)] pt-2">Custom Colors</h3>
             {(["background", "foreground", "primary", "secondary", "free", "busy", "muted"] as const).map((key) => (
               <div key={key} className="flex items-center gap-3">
-                <input type="color" value={config.theme[key]} onChange={(e) => updateTheme({ [key]: e.target.value, preset: "custom" })} className="h-8 w-8 cursor-pointer rounded border border-[var(--color-border)]" />
+                <input type="color" value={config.theme[key]} onChange={(e) => updateTheme({ [key]: e.target.value, preset: "custom" })} className="h-8 w-8 cursor-pointer rounded border border-[var(--color-border)]" aria-label={`${key} color picker`} />
                 <span className="text-xs text-[var(--color-muted-foreground)] capitalize w-20">{key}</span>
-                <input type="text" value={config.theme[key]} onChange={(e) => updateTheme({ [key]: e.target.value, preset: "custom" })} className="flex-1 rounded-md border border-[var(--color-input)] bg-[var(--color-background)] px-2 py-1 text-xs text-[var(--color-foreground)]" />
+                <input id={`editor-theme-${key}`} type="text" value={config.theme[key]} onChange={(e) => updateTheme({ [key]: e.target.value, preset: "custom" })} className="flex-1 rounded-md border border-[var(--color-input)] bg-[var(--color-background)] px-2 py-1 text-xs text-[var(--color-foreground)]" aria-label={`${key} color hex value`} />
               </div>
             ))}
             <div>
-              <label className={labelClass}>Font Family</label>
-              <select value={config.theme.fontFamily} onChange={(e) => updateTheme({ fontFamily: e.target.value })} className={inputClass}>
+              <label htmlFor="editor-font-family" className={labelClass}>Font Family</label>
+              <select id="editor-font-family" value={config.theme.fontFamily} onChange={(e) => updateTheme({ fontFamily: e.target.value })} className={inputClass}>
                 {FONT_OPTIONS.map((f) => (<option key={f.value} value={f.value}>{f.label}</option>))}
               </select>
             </div>
             <div>
-              <label className={labelClass}>Base Font Size: {config.theme.baseFontSize}px</label>
-              <input type="range" min="12" max="24" value={config.theme.baseFontSize} onChange={(e) => updateTheme({ baseFontSize: Number(e.target.value) })} className="w-full" />
+              <label htmlFor="editor-font-size" className={labelClass}>Base Font Size: {config.theme.baseFontSize}px</label>
+              <input id="editor-font-size" type="range" min="12" max="24" value={config.theme.baseFontSize} onChange={(e) => updateTheme({ baseFontSize: Number(e.target.value) })} className="w-full" />
             </div>
           </div>
         )}
 
         {activeTab === "branding" && (
-          <div className="space-y-4">
+          <div role="tabpanel" aria-labelledby="tab-branding" className="space-y-4">
             <h3 className="text-sm font-semibold text-[var(--color-foreground)]">Branding</h3>
             <div>
-              <label className={labelClass}>Logo URL</label>
-              <input type="text" value={config.branding.logoUrl} onChange={(e) => updateBranding({ logoUrl: e.target.value })} className={inputClass} placeholder="https://example.com/logo.svg" />
+              <label htmlFor="editor-logo-url" className={labelClass}>Logo URL</label>
+              <input id="editor-logo-url" type="text" value={config.branding.logoUrl} onChange={(e) => updateBranding({ logoUrl: e.target.value })} className={inputClass} placeholder="https://example.com/logo.svg" />
             </div>
             <div>
               <label className={labelClass}>Logo Position</label>
               <div className="flex gap-2">
                 {(["top-left", "top-center", "top-right"] as const).map((pos) => (
-                  <button key={pos} type="button" onClick={() => updateBranding({ logoPosition: pos })} className={`flex-1 rounded-md border px-3 py-2 text-xs transition-colors ${config.branding.logoPosition === pos ? "border-[var(--color-primary)] bg-[var(--color-primary)]/10 text-[var(--color-primary)]" : "border-[var(--color-border)] text-[var(--color-muted-foreground)]"}`}>
+                  <button key={pos} type="button" aria-pressed={config.branding.logoPosition === pos} onClick={() => updateBranding({ logoPosition: pos })} className={`flex-1 rounded-md border px-3 py-2 text-xs transition-colors ${config.branding.logoPosition === pos ? "border-[var(--color-primary)] bg-[var(--color-primary)]/10 text-[var(--color-primary)]" : "border-[var(--color-border)] text-[var(--color-muted-foreground)]"}`}>
                     {pos.replace("top-", "").charAt(0).toUpperCase() + pos.replace("top-", "").slice(1)}
                   </button>
                 ))}
@@ -242,7 +242,7 @@ export function DisplayEditor({ displayId, layoutType, initialConfig, orientatio
               <label className={labelClass}>Logo Size</label>
               <div className="flex gap-2">
                 {(["small", "medium", "large"] as const).map((size) => (
-                  <button key={size} type="button" onClick={() => updateBranding({ logoSize: size })} className={`flex-1 rounded-md border px-3 py-2 text-xs transition-colors ${config.branding.logoSize === size ? "border-[var(--color-primary)] bg-[var(--color-primary)]/10 text-[var(--color-primary)]" : "border-[var(--color-border)] text-[var(--color-muted-foreground)]"}`}>
+                  <button key={size} type="button" aria-pressed={config.branding.logoSize === size} onClick={() => updateBranding({ logoSize: size })} className={`flex-1 rounded-md border px-3 py-2 text-xs transition-colors ${config.branding.logoSize === size ? "border-[var(--color-primary)] bg-[var(--color-primary)]/10 text-[var(--color-primary)]" : "border-[var(--color-border)] text-[var(--color-muted-foreground)]"}`}>
                     {size.charAt(0).toUpperCase() + size.slice(1)}
                   </button>
                 ))}
@@ -256,13 +256,13 @@ export function DisplayEditor({ displayId, layoutType, initialConfig, orientatio
         )}
 
         {activeTab === "background" && (
-          <div className="space-y-4">
+          <div role="tabpanel" aria-labelledby="tab-background" className="space-y-4">
             <h3 className="text-sm font-semibold text-[var(--color-foreground)]">Background</h3>
             <div>
               <label className={labelClass}>Type</label>
               <div className="flex gap-2">
                 {(["solid", "gradient", "image"] as const).map((t) => (
-                  <button key={t} type="button" onClick={() => updateBackground({ type: t })} className={`flex-1 rounded-md border px-3 py-2 text-xs transition-colors ${config.background.type === t ? "border-[var(--color-primary)] bg-[var(--color-primary)]/10 text-[var(--color-primary)]" : "border-[var(--color-border)] text-[var(--color-muted-foreground)]"}`}>
+                  <button key={t} type="button" aria-pressed={config.background.type === t} onClick={() => updateBackground({ type: t })} className={`flex-1 rounded-md border px-3 py-2 text-xs transition-colors ${config.background.type === t ? "border-[var(--color-primary)] bg-[var(--color-primary)]/10 text-[var(--color-primary)]" : "border-[var(--color-border)] text-[var(--color-muted-foreground)]"}`}>
                     {t.charAt(0).toUpperCase() + t.slice(1)}
                   </button>
                 ))}
@@ -270,37 +270,37 @@ export function DisplayEditor({ displayId, layoutType, initialConfig, orientatio
             </div>
             {config.background.type === "solid" && (
               <div className="flex items-center gap-3">
-                <input type="color" value={config.background.color} onChange={(e) => updateBackground({ color: e.target.value })} className="h-8 w-8 cursor-pointer rounded border border-[var(--color-border)]" />
-                <input type="text" value={config.background.color} onChange={(e) => updateBackground({ color: e.target.value })} className={inputClass} />
+                <input type="color" value={config.background.color} onChange={(e) => updateBackground({ color: e.target.value })} className="h-8 w-8 cursor-pointer rounded border border-[var(--color-border)]" aria-label="Background color picker" />
+                <input id="editor-bg-color" type="text" value={config.background.color} onChange={(e) => updateBackground({ color: e.target.value })} className={inputClass} aria-label="Background color hex value" />
               </div>
             )}
             {config.background.type === "gradient" && (
               <>
                 <div className="flex items-center gap-3">
-                  <label className="text-xs text-[var(--color-muted-foreground)] w-12">Start</label>
-                  <input type="color" value={config.background.gradientStart} onChange={(e) => updateBackground({ gradientStart: e.target.value })} className="h-8 w-8 cursor-pointer rounded border border-[var(--color-border)]" />
-                  <input type="text" value={config.background.gradientStart} onChange={(e) => updateBackground({ gradientStart: e.target.value })} className={inputClass} />
+                  <label htmlFor="editor-gradient-start" className="text-xs text-[var(--color-muted-foreground)] w-12">Start</label>
+                  <input type="color" value={config.background.gradientStart} onChange={(e) => updateBackground({ gradientStart: e.target.value })} className="h-8 w-8 cursor-pointer rounded border border-[var(--color-border)]" aria-label="Gradient start color picker" />
+                  <input id="editor-gradient-start" type="text" value={config.background.gradientStart} onChange={(e) => updateBackground({ gradientStart: e.target.value })} className={inputClass} />
                 </div>
                 <div className="flex items-center gap-3">
-                  <label className="text-xs text-[var(--color-muted-foreground)] w-12">End</label>
-                  <input type="color" value={config.background.gradientEnd} onChange={(e) => updateBackground({ gradientEnd: e.target.value })} className="h-8 w-8 cursor-pointer rounded border border-[var(--color-border)]" />
-                  <input type="text" value={config.background.gradientEnd} onChange={(e) => updateBackground({ gradientEnd: e.target.value })} className={inputClass} />
+                  <label htmlFor="editor-gradient-end" className="text-xs text-[var(--color-muted-foreground)] w-12">End</label>
+                  <input type="color" value={config.background.gradientEnd} onChange={(e) => updateBackground({ gradientEnd: e.target.value })} className="h-8 w-8 cursor-pointer rounded border border-[var(--color-border)]" aria-label="Gradient end color picker" />
+                  <input id="editor-gradient-end" type="text" value={config.background.gradientEnd} onChange={(e) => updateBackground({ gradientEnd: e.target.value })} className={inputClass} />
                 </div>
                 <div>
-                  <label className={labelClass}>Angle: {config.background.gradientAngle}&deg;</label>
-                  <input type="range" min="0" max="360" value={config.background.gradientAngle} onChange={(e) => updateBackground({ gradientAngle: Number(e.target.value) })} className="w-full" />
+                  <label htmlFor="editor-gradient-angle" className={labelClass}>Angle: {config.background.gradientAngle}&deg;</label>
+                  <input id="editor-gradient-angle" type="range" min="0" max="360" value={config.background.gradientAngle} onChange={(e) => updateBackground({ gradientAngle: Number(e.target.value) })} className="w-full" />
                 </div>
               </>
             )}
             {config.background.type === "image" && (
               <>
                 <div>
-                  <label className={labelClass}>Image URL</label>
-                  <input type="text" value={config.background.imageUrl} onChange={(e) => updateBackground({ imageUrl: e.target.value })} className={inputClass} placeholder="https://example.com/bg.jpg" />
+                  <label htmlFor="editor-image-url" className={labelClass}>Image URL</label>
+                  <input id="editor-image-url" type="text" value={config.background.imageUrl} onChange={(e) => updateBackground({ imageUrl: e.target.value })} className={inputClass} placeholder="https://example.com/bg.jpg" />
                 </div>
                 <div>
-                  <label className={labelClass}>Opacity: {Math.round(config.background.imageOpacity * 100)}%</label>
-                  <input type="range" min="0" max="1" step="0.05" value={config.background.imageOpacity} onChange={(e) => updateBackground({ imageOpacity: Number(e.target.value) })} className="w-full" />
+                  <label htmlFor="editor-image-opacity" className={labelClass}>Opacity: {Math.round(config.background.imageOpacity * 100)}%</label>
+                  <input id="editor-image-opacity" type="range" min="0" max="1" step="0.05" value={config.background.imageOpacity} onChange={(e) => updateBackground({ imageOpacity: Number(e.target.value) })} className="w-full" />
                 </div>
               </>
             )}
@@ -311,6 +311,7 @@ export function DisplayEditor({ displayId, layoutType, initialConfig, orientatio
           <button
             type="button"
             onClick={() => setSecurityOpen(!securityOpen)}
+            aria-expanded={securityOpen}
             className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm font-medium text-[var(--color-foreground)] hover:bg-[var(--color-muted)]/10 transition-colors rounded-lg"
           >
             <Shield className="h-4 w-4 text-[var(--color-muted-foreground)]" />
@@ -319,8 +320,9 @@ export function DisplayEditor({ displayId, layoutType, initialConfig, orientatio
           </button>
           {securityOpen && (
             <div className="border-t border-[var(--color-border)] px-4 py-4 space-y-2">
-              <label className={labelClass}>IP Whitelist (optional)</label>
+              <label htmlFor="editor-ip-whitelist" className={labelClass}>IP Whitelist (optional)</label>
               <textarea
+                id="editor-ip-whitelist"
                 value={ipWhitelistText}
                 onChange={(e) => {
                   setIpWhitelistText(e.target.value);
@@ -343,7 +345,7 @@ export function DisplayEditor({ displayId, layoutType, initialConfig, orientatio
         </button>
       </div>
 
-      <div className="w-3/5">
+      <div className="w-full lg:w-3/5">
         <div className="sticky top-4">
           <h3 className="mb-3 text-sm font-semibold text-[var(--color-foreground)]">Live Preview</h3>
           <DisplayPreview
@@ -369,8 +371,8 @@ function RoomBookingOptions({ config, onChange, labelClass, checkboxClass, input
       <label className={checkboxClass}><input type="checkbox" checked={config.showAttendeeCount} onChange={(e) => onChange({ showAttendeeCount: e.target.checked })} /> Show attendee count</label>
       <label className={checkboxClass}><input type="checkbox" checked={config.showProgressBar} onChange={(e) => onChange({ showProgressBar: e.target.checked })} /> Show progress bar</label>
       <label className={checkboxClass}><input type="checkbox" checked={config.showFreeSlots} onChange={(e) => onChange({ showFreeSlots: e.target.checked })} /> Show free time slots</label>
-      <div><label className={labelClass}>Upcoming events</label><input type="number" min="1" max="10" value={config.futureEventCount} onChange={(e) => onChange({ futureEventCount: Number(e.target.value) })} className={inputClass} /></div>
-      <div><label className={labelClass}>Clock format</label><select value={config.clockFormat} onChange={(e) => onChange({ clockFormat: e.target.value })} className={inputClass}><option value="24h">24-hour</option><option value="12h">12-hour</option></select></div>
+      <div><label htmlFor="editor-rb-future-events" className={labelClass}>Upcoming events</label><input id="editor-rb-future-events" type="number" min="1" max="10" value={config.futureEventCount} onChange={(e) => onChange({ futureEventCount: Number(e.target.value) })} className={inputClass} /></div>
+      <div><label htmlFor="editor-rb-clock-format" className={labelClass}>Clock format</label><select id="editor-rb-clock-format" value={config.clockFormat} onChange={(e) => onChange({ clockFormat: e.target.value })} className={inputClass}><option value="24h">24-hour</option><option value="12h">12-hour</option></select></div>
     </div>
   );
 }
@@ -379,20 +381,20 @@ function AgendaOptions({ config, onChange, labelClass, checkboxClass, inputClass
   return (
     <div className="space-y-3">
       <div className="grid grid-cols-2 gap-3">
-        <div><label className={labelClass}>Start hour</label><input type="number" min="0" max="23" value={config.timeRangeStart} onChange={(e) => onChange({ timeRangeStart: Number(e.target.value) })} className={inputClass} /></div>
-        <div><label className={labelClass}>End hour</label><input type="number" min="1" max="24" value={config.timeRangeEnd} onChange={(e) => onChange({ timeRangeEnd: Number(e.target.value) })} className={inputClass} /></div>
+        <div><label htmlFor="editor-agenda-start-hour" className={labelClass}>Start hour</label><input id="editor-agenda-start-hour" type="number" min="0" max="23" value={config.timeRangeStart} onChange={(e) => onChange({ timeRangeStart: Number(e.target.value) })} className={inputClass} /></div>
+        <div><label htmlFor="editor-agenda-end-hour" className={labelClass}>End hour</label><input id="editor-agenda-end-hour" type="number" min="1" max="24" value={config.timeRangeEnd} onChange={(e) => onChange({ timeRangeEnd: Number(e.target.value) })} className={inputClass} /></div>
       </div>
       <label className={checkboxClass}><input type="checkbox" checked={config.showRoomName} onChange={(e) => onChange({ showRoomName: e.target.checked })} /> Show room name</label>
       <label className={checkboxClass}><input type="checkbox" checked={config.highlightCurrent} onChange={(e) => onChange({ highlightCurrent: e.target.checked })} /> Highlight current event</label>
       <label className={checkboxClass}><input type="checkbox" checked={config.autoScroll} onChange={(e) => onChange({ autoScroll: e.target.checked })} /> Auto-scroll</label>
       {config.autoScroll && (
         <div>
-          <label className={labelClass}>Auto-scroll speed: {config.autoScrollSpeed ?? 1}</label>
-          <input type="range" min="1" max="10" step="1" value={config.autoScrollSpeed ?? 1} onChange={(e) => onChange({ autoScrollSpeed: Number(e.target.value) })} className="w-full" />
-          <div className="flex justify-between text-[10px] text-[var(--color-muted-foreground)]"><span>Slow</span><span>Fast</span></div>
+          <label htmlFor="editor-agenda-scroll-speed" className={labelClass}>Auto-scroll speed: {config.autoScrollSpeed ?? 1}</label>
+          <input id="editor-agenda-scroll-speed" type="range" min="1" max="10" step="1" value={config.autoScrollSpeed ?? 1} onChange={(e) => onChange({ autoScrollSpeed: Number(e.target.value) })} className="w-full" />
+          <div className="flex justify-between text-xs text-[var(--color-muted-foreground)]"><span>Slow</span><span>Fast</span></div>
         </div>
       )}
-      <div><label className={labelClass}>Max events</label><input type="number" min="5" max="50" value={config.maxEvents} onChange={(e) => onChange({ maxEvents: Number(e.target.value) })} className={inputClass} /></div>
+      <div><label htmlFor="editor-agenda-max-events" className={labelClass}>Max events</label><input id="editor-agenda-max-events" type="number" min="5" max="50" value={config.maxEvents} onChange={(e) => onChange({ maxEvents: Number(e.target.value) })} className={inputClass} /></div>
     </div>
   );
 }
@@ -401,8 +403,8 @@ function DayGridOptions({ config, onChange, labelClass, checkboxClass, inputClas
   return (
     <div className="space-y-3">
       <div className="grid grid-cols-2 gap-3">
-        <div><label className={labelClass}>Start hour</label><input type="number" min="0" max="23" value={config.timeRangeStart} onChange={(e) => onChange({ timeRangeStart: Number(e.target.value) })} className={inputClass} /></div>
-        <div><label className={labelClass}>End hour</label><input type="number" min="1" max="24" value={config.timeRangeEnd} onChange={(e) => onChange({ timeRangeEnd: Number(e.target.value) })} className={inputClass} /></div>
+        <div><label htmlFor="editor-daygrid-start-hour" className={labelClass}>Start hour</label><input id="editor-daygrid-start-hour" type="number" min="0" max="23" value={config.timeRangeStart} onChange={(e) => onChange({ timeRangeStart: Number(e.target.value) })} className={inputClass} /></div>
+        <div><label htmlFor="editor-daygrid-end-hour" className={labelClass}>End hour</label><input id="editor-daygrid-end-hour" type="number" min="1" max="24" value={config.timeRangeEnd} onChange={(e) => onChange({ timeRangeEnd: Number(e.target.value) })} className={inputClass} /></div>
       </div>
       <label className={checkboxClass}><input type="checkbox" checked={config.showCurrentTimeLine} onChange={(e) => onChange({ showCurrentTimeLine: e.target.checked })} /> Show current time line</label>
     </div>
@@ -425,29 +427,29 @@ function InfoDisplayOptions({ config, onChange, labelClass, checkboxClass, input
       <label className={checkboxClass}><input type="checkbox" checked={config.showClock} onChange={(e) => onChange({ showClock: e.target.checked })} /> Show clock</label>
       {config.showClock && (
         <>
-          <div><label className={labelClass}>Clock format</label><select value={config.clockFormat} onChange={(e) => onChange({ clockFormat: e.target.value })} className={inputClass}><option value="24h">24-hour</option><option value="12h">12-hour</option></select></div>
+          <div><label htmlFor="editor-info-clock-format" className={labelClass}>Clock format</label><select id="editor-info-clock-format" value={config.clockFormat} onChange={(e) => onChange({ clockFormat: e.target.value })} className={inputClass}><option value="24h">24-hour</option><option value="12h">12-hour</option></select></div>
           <label className={checkboxClass}><input type="checkbox" checked={config.showSeconds ?? false} onChange={(e) => onChange({ showSeconds: e.target.checked })} /> Show seconds</label>
-          <div><label className={labelClass}>Clock position</label><select value={config.clockPosition ?? "top-right"} onChange={(e) => onChange({ clockPosition: e.target.value })} className={inputClass}><option value="top-right">Top Right</option><option value="center">Center</option></select></div>
+          <div><label htmlFor="editor-info-clock-position" className={labelClass}>Clock position</label><select id="editor-info-clock-position" value={config.clockPosition ?? "top-right"} onChange={(e) => onChange({ clockPosition: e.target.value })} className={inputClass}><option value="top-right">Top Right</option><option value="center">Center</option></select></div>
         </>
       )}
       <label className={checkboxClass}><input type="checkbox" checked={config.showDate} onChange={(e) => onChange({ showDate: e.target.checked })} /> Show date</label>
       <label className={checkboxClass}><input type="checkbox" checked={config.showTodayEvents} onChange={(e) => onChange({ showTodayEvents: e.target.checked })} /> Show today&apos;s events</label>
-      <div><label className={labelClass}>Upcoming days</label><input type="number" min="1" max="14" value={config.upcomingDaysCount} onChange={(e) => onChange({ upcomingDaysCount: Number(e.target.value) })} className={inputClass} /></div>
+      <div><label htmlFor="editor-info-upcoming-days" className={labelClass}>Upcoming days</label><input id="editor-info-upcoming-days" type="number" min="1" max="14" value={config.upcomingDaysCount} onChange={(e) => onChange({ upcomingDaysCount: Number(e.target.value) })} className={inputClass} /></div>
       <label className={checkboxClass}><input type="checkbox" checked={config.tickerEnabled} onChange={(e) => onChange({ tickerEnabled: e.target.checked })} /> Enable ticker tape</label>
       {config.tickerEnabled && (
         <>
-          <div><label className={labelClass}>Ticker messages (one per line)</label><textarea value={(config.tickerMessages || []).join("\n")} onChange={(e) => onChange({ tickerMessages: e.target.value.split("\n").filter(Boolean) })} rows={3} className={inputClass} /></div>
+          <div><label htmlFor="editor-info-ticker-messages" className={labelClass}>Ticker messages (one per line)</label><textarea id="editor-info-ticker-messages" value={(config.tickerMessages || []).join("\n")} onChange={(e) => onChange({ tickerMessages: e.target.value.split("\n").filter(Boolean) })} rows={3} className={inputClass} /></div>
           <div>
-            <label className={labelClass}>Ticker speed: {tickerSpeedLabel}</label>
-            <select value={config.tickerSpeed <= 30 ? "30" : config.tickerSpeed <= 60 ? "60" : "120"} onChange={(e) => onChange({ tickerSpeed: Number(e.target.value) })} className={inputClass}>
+            <label htmlFor="editor-info-ticker-speed" className={labelClass}>Ticker speed: {tickerSpeedLabel}</label>
+            <select id="editor-info-ticker-speed" value={config.tickerSpeed <= 30 ? "30" : config.tickerSpeed <= 60 ? "60" : "120"} onChange={(e) => onChange({ tickerSpeed: Number(e.target.value) })} className={inputClass}>
               <option value="30">Slow</option>
               <option value="60">Medium</option>
               <option value="120">Fast</option>
             </select>
           </div>
           <div>
-            <label className={labelClass}>Ticker separator</label>
-            <input type="text" value={config.tickerSeparator ?? " \u2022\u2022\u2022 "} onChange={(e) => onChange({ tickerSeparator: e.target.value })} className={inputClass} placeholder="\u00b7 or | or \u2022\u2022\u2022" />
+            <label htmlFor="editor-info-ticker-separator" className={labelClass}>Ticker separator</label>
+            <input id="editor-info-ticker-separator" type="text" value={config.tickerSeparator ?? " \u2022\u2022\u2022 "} onChange={(e) => onChange({ tickerSeparator: e.target.value })} className={inputClass} placeholder="\u00b7 or | or \u2022\u2022\u2022" />
             <p className="mt-1 text-xs text-[var(--color-muted-foreground)]">Character(s) between ticker messages (e.g. &quot;\u00b7&quot; or &quot;|&quot;)</p>
           </div>
         </>

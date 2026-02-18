@@ -10,25 +10,6 @@ import { type DisplayEvent } from "../hooks/useDisplaySSE";
 import { type RoomBookingConfig } from "@/features/displays/types";
 
 // ---------------------------------------------------------------------------
-// CSS keyframes injected once for the fade transition
-// ---------------------------------------------------------------------------
-const FADE_KEYFRAMES = `
-@keyframes rbv-fade-in {
-  from { opacity: 0; }
-  to   { opacity: 1; }
-}
-`;
-
-let keyframesInjected = false;
-function ensureKeyframes() {
-  if (typeof document === "undefined" || keyframesInjected) return;
-  const style = document.createElement("style");
-  style.textContent = FADE_KEYFRAMES;
-  document.head.appendChild(style);
-  keyframesInjected = true;
-}
-
-// ---------------------------------------------------------------------------
 // Props
 // ---------------------------------------------------------------------------
 interface RoomBookingViewProps {
@@ -54,11 +35,6 @@ export function RoomBookingView({
   const now = useCurrentTime(10000);
   const isPortrait = orientation === "PORTRAIT";
   const t = getDisplayTranslations(locale || "de-DE");
-
-  // Inject keyframes on mount
-  useEffect(() => {
-    ensureKeyframes();
-  }, []);
 
   // --------------------------------------------------
   // Derive current / upcoming events
@@ -139,8 +115,8 @@ export function RoomBookingView({
       style={{
         padding: "1.5rem",
         borderRadius: "0.75rem",
-        backgroundColor: "var(--display-busy)15",
-        animation: "rbv-fade-in 0.5s ease-in-out",
+        backgroundColor: "color-mix(in srgb, var(--display-busy) 8%, transparent)",
+        animation: "display-fade-in 0.5s ease-out",
       }}
     >
       <div
@@ -250,7 +226,7 @@ export function RoomBookingView({
               alignItems: "center",
               gap: "1rem",
               padding: "0.75rem 0",
-              borderTop: "1px solid var(--display-muted)22",
+              borderTop: "1px solid color-mix(in srgb, var(--display-muted) 13%, transparent)",
             }}
           >
             <div
@@ -432,7 +408,7 @@ export function RoomBookingView({
           flexDirection: "column",
           justifyContent: "flex-start",
           paddingTop: "4rem",
-          overflowY: "auto",
+          overflowY: "hidden",
         }}
       >
         {upcomingList}

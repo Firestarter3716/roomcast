@@ -21,6 +21,7 @@ export interface DisplayTranslations {
   };
   noEvents: string;
   noEventsToday: string;
+  noEventsThisWeek: string;
   noFurtherEvents: string;
   noUpcomingEvents: string;
   lunchBreak: string;
@@ -42,6 +43,7 @@ const de: DisplayTranslations = {
   },
   noEvents: "Keine weiteren Termine",
   noEventsToday: "Keine Termine heute",
+  noEventsThisWeek: "Keine Termine diese Woche",
   noFurtherEvents: "Keine weiteren Termine heute",
   noUpcomingEvents: "Keine kommenden Termine",
   lunchBreak: "Mittagspause",
@@ -63,6 +65,7 @@ const en: DisplayTranslations = {
   },
   noEvents: "No more events",
   noEventsToday: "No events today",
+  noEventsThisWeek: "No events this week",
   noFurtherEvents: "No further events today",
   noUpcomingEvents: "No upcoming events",
   lunchBreak: "Lunch break",
@@ -84,6 +87,7 @@ const fr: DisplayTranslations = {
   },
   noEvents: "Plus d'\u00e9v\u00e9nements",
   noEventsToday: "Aucun \u00e9v\u00e9nement aujourd'hui",
+  noEventsThisWeek: "Aucun \u00e9v\u00e9nement cette semaine",
   noFurtherEvents: "Plus d'\u00e9v\u00e9nements aujourd'hui",
   noUpcomingEvents: "Aucun \u00e9v\u00e9nement \u00e0 venir",
   lunchBreak: "Pause d\u00e9jeuner",

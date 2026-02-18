@@ -70,15 +70,16 @@ export function GeneralSettingsForm({ initialSettings }: GeneralSettingsFormProp
   }
 
   const inputClass =
-    "w-full rounded-md border border-[var(--color-input)] bg-[var(--color-background)] px-3 py-2 text-sm text-[var(--color-foreground)] placeholder:text-[var(--color-muted-foreground)] focus:border-[var(--color-ring)] focus:outline-none focus:ring-2 focus:ring-[var(--color-ring)]/20";
+    "w-full rounded-md border border-[var(--color-input)] bg-[var(--color-background)] px-3 py-2 text-sm text-[var(--color-foreground)] placeholder:text-[var(--color-muted-foreground)] focus:border-[var(--color-ring)] focus:outline-none focus:ring-2 focus:ring-[var(--color-ring)]/40";
   const labelClass =
     "mb-1.5 block text-sm font-medium text-[var(--color-foreground)]";
 
   return (
-    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+    <form onSubmit={form.handleSubmit(onSubmit)}>
+      <fieldset disabled={saving} className="space-y-6 disabled:opacity-60">
       <div>
-        <label className={labelClass}>{t("defaultLanguage")}</label>
-        <select {...form.register("defaultLocale")} className={inputClass}>
+        <label htmlFor="settings-default-language" className={labelClass}>{t("defaultLanguage")}</label>
+        <select id="settings-default-language" {...form.register("defaultLocale")} className={inputClass}>
           {LANGUAGE_OPTIONS.map((opt) => (
             <option key={opt.value} value={opt.value}>
               {opt.label}
@@ -88,8 +89,8 @@ export function GeneralSettingsForm({ initialSettings }: GeneralSettingsFormProp
       </div>
 
       <div>
-        <label className={labelClass}>{t("defaultTimezone")}</label>
-        <select {...form.register("defaultTimezone")} className={inputClass}>
+        <label htmlFor="settings-timezone" className={labelClass}>{t("defaultTimezone")}</label>
+        <select id="settings-timezone" {...form.register("defaultTimezone")} className={inputClass}>
           {TIMEZONE_OPTIONS.map((tz) => (
             <option key={tz} value={tz}>
               {tz}
@@ -99,8 +100,8 @@ export function GeneralSettingsForm({ initialSettings }: GeneralSettingsFormProp
       </div>
 
       <div>
-        <label className={labelClass}>{t("defaultFont")}</label>
-        <select {...form.register("defaultFont")} className={inputClass}>
+        <label htmlFor="settings-default-font" className={labelClass}>{t("defaultFont")}</label>
+        <select id="settings-default-font" {...form.register("defaultFont")} className={inputClass}>
           {FONT_OPTIONS.map((opt) => (
             <option key={opt.value} value={opt.value}>
               {opt.label}
@@ -110,8 +111,9 @@ export function GeneralSettingsForm({ initialSettings }: GeneralSettingsFormProp
       </div>
 
       <div>
-        <label className={labelClass}>{t("defaultLogo")}</label>
+        <label htmlFor="settings-default-logo" className={labelClass}>{t("defaultLogo")}</label>
         <input
+          id="settings-default-logo"
           {...form.register("defaultLogoUrl")}
           className={inputClass}
           placeholder="https://example.com/logo.png"
@@ -122,8 +124,9 @@ export function GeneralSettingsForm({ initialSettings }: GeneralSettingsFormProp
       </div>
 
       <div>
-        <label className={labelClass}>{t("sessionTimeout")}</label>
+        <label htmlFor="settings-session-timeout" className={labelClass}>{t("sessionTimeout")}</label>
         <input
+          id="settings-session-timeout"
           {...form.register("sessionTimeoutHours", { valueAsNumber: true })}
           type="number"
           min="1"
@@ -146,6 +149,7 @@ export function GeneralSettingsForm({ initialSettings }: GeneralSettingsFormProp
           {t("saveSettings")}
         </button>
       </div>
+      </fieldset>
     </form>
   );
 }

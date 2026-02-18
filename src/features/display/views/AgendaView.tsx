@@ -8,25 +8,6 @@ import { type AgendaConfig } from "@/features/displays/types";
 import { AutoScroller } from "../shared/AutoScroller";
 
 // ---------------------------------------------------------------------------
-// CSS keyframes injected once for the fade transition
-// ---------------------------------------------------------------------------
-const FADE_KEYFRAMES = `
-@keyframes displayFadeIn {
-  from { opacity: 0.3; }
-  to   { opacity: 1; }
-}
-`;
-
-let keyframesInjected = false;
-function ensureKeyframes() {
-  if (typeof document === "undefined" || keyframesInjected) return;
-  const style = document.createElement("style");
-  style.textContent = FADE_KEYFRAMES;
-  document.head.appendChild(style);
-  keyframesInjected = true;
-}
-
-// ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
@@ -185,18 +166,18 @@ function EventCard({
         borderRadius: "0.5rem",
         borderLeft: `3px solid ${event.calendarColor || "var(--display-primary)"}`,
         backgroundColor: isCurrent
-          ? `${event.calendarColor || "var(--display-primary)"}20`
+          ? `color-mix(in srgb, ${event.calendarColor || "var(--display-primary)"} 12%, transparent)`
           : "transparent",
         opacity: isPast ? 0.5 : 1,
       }}
     >
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-        <span style={{ fontWeight: 600, fontSize: "0.9375rem" }}>{event.title}</span>
+        <span style={{ fontWeight: 600, fontSize: "var(--display-text-base, 0.9375rem)" }}>{event.title}</span>
         {config.showRoomName && event.location && (
-          <span style={{ fontSize: "0.75rem", opacity: 0.6 }}>{event.location}</span>
+          <span style={{ fontSize: "var(--display-text-xs, 0.75rem)", opacity: 0.6 }}>{event.location}</span>
         )}
       </div>
-      <div style={{ fontSize: "0.8125rem", opacity: 0.7, marginTop: "0.25rem" }}>
+      <div style={{ fontSize: "var(--display-text-sm, 0.8125rem)", opacity: 0.7, marginTop: "0.25rem" }}>
         {fmtTime(startTime, locale)} - {fmtTime(endTime, locale)}
         {event.organizer && ` \u00B7 ${event.organizer}`}
       </div>
@@ -211,8 +192,8 @@ function GapPlaceholder({ item }: { item: Extract<AgendaItem, { kind: "gap" }> }
         padding: "0.625rem 1rem",
         marginBottom: "0.5rem",
         borderRadius: "0.5rem",
-        border: "1px dashed var(--display-muted, #94A3B8)44",
-        backgroundColor: "var(--display-muted, #94A3B8)0A",
+        border: "1px dashed color-mix(in srgb, var(--display-muted, #94A3B8) 27%, transparent)",
+        backgroundColor: "color-mix(in srgb, var(--display-muted, #94A3B8) 4%, transparent)",
         display: "flex",
         alignItems: "center",
         gap: "0.5rem",
@@ -221,7 +202,7 @@ function GapPlaceholder({ item }: { item: Extract<AgendaItem, { kind: "gap" }> }
     >
       <span
         style={{
-          fontSize: "0.8125rem",
+          fontSize: "var(--display-text-sm, 0.8125rem)",
           fontStyle: "italic",
           color: "var(--display-muted, #94A3B8)",
         }}
@@ -231,7 +212,7 @@ function GapPlaceholder({ item }: { item: Extract<AgendaItem, { kind: "gap" }> }
       {item.subLabel && (
         <span
           style={{
-            fontSize: "0.75rem",
+            fontSize: "var(--display-text-xs, 0.75rem)",
             color: "var(--display-muted, #94A3B8)",
             opacity: 0.7,
           }}
@@ -278,11 +259,6 @@ export function AgendaView({ events, config, locale: localeProp }: AgendaViewPro
   const t = getDisplayTranslations(locale);
   const now = useCurrentTime(30_000);
   const dateKey = useDateKey();
-
-  // Inject keyframes on mount
-  useEffect(() => {
-    ensureKeyframes();
-  }, []);
 
   // Fade transition: track event changes
   const [fadeKey, setFadeKey] = useState(0);
@@ -340,7 +316,7 @@ export function AgendaView({ events, config, locale: localeProp }: AgendaViewPro
         height: "100%",
         padding: "1.5rem",
         overflow: "hidden",
-        animation: "displayFadeIn 0.5s ease-in-out",
+        animation: "display-fade-in-subtle 0.5s ease-in-out",
       }}
     >
       {/* Date header */}
@@ -363,7 +339,7 @@ export function AgendaView({ events, config, locale: localeProp }: AgendaViewPro
               key={h}
               style={{
                 height: `${100 / hours.length}%`,
-                fontSize: "0.75rem",
+                fontSize: "var(--display-text-xs, 0.75rem)",
                 opacity: 0.5,
                 display: "flex",
                 alignItems: "flex-start",
@@ -378,7 +354,7 @@ export function AgendaView({ events, config, locale: localeProp }: AgendaViewPro
         <div
           style={{
             flex: 1,
-            borderLeft: "1px solid var(--display-muted)33",
+            borderLeft: "1px solid color-mix(in srgb, var(--display-muted) 20%, transparent)",
             paddingLeft: "1rem",
             minHeight: 0,
             overflow: "hidden",
@@ -386,7 +362,7 @@ export function AgendaView({ events, config, locale: localeProp }: AgendaViewPro
         >
           <AutoScroller
             enabled={config.autoScroll}
-            speed={config.autoScrollSpeed * 30}
+            speed={config.autoScrollSpeed * 30} // px/s = config (1-10) x 30
             pauseAtBottomMs={3000}
           >
             {filteredEvents.length === 0 && (

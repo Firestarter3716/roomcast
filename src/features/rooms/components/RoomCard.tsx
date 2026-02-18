@@ -41,14 +41,14 @@ export function RoomCard({
   const t = useTranslations("rooms");
 
   return (
-    <div className="group relative rounded-lg border border-[var(--color-border)] bg-[var(--color-card)] p-4 transition-shadow hover:shadow-[var(--shadow-md)]">
+    <div className="group relative rounded-lg border border-[var(--color-border)] bg-[var(--color-card)] p-5 transition-shadow hover:shadow-[var(--shadow-md)]">
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--color-secondary)]">
             <DoorOpen className="h-5 w-5 text-[var(--color-foreground)]" />
           </div>
           <div>
-            <h3 className="font-medium text-[var(--color-foreground)]">{name}</h3>
+            <h2 className="font-medium text-[var(--color-foreground)]">{name}</h2>
             {location && (
               <p className="text-xs text-[var(--color-muted-foreground)]">{location}</p>
             )}
@@ -59,12 +59,14 @@ export function RoomCard({
           <Link
             href={`/admin/rooms/${id}`}
             className="rounded-md p-1.5 text-[var(--color-muted-foreground)] hover:bg-[var(--color-secondary)] hover:text-[var(--color-foreground)] transition-colors"
+            aria-label="Edit room"
           >
             <Pencil className="h-4 w-4" />
           </Link>
           <button
             onClick={() => onDelete(id)}
             className="rounded-md p-1.5 text-[var(--color-muted-foreground)] hover:bg-[var(--color-destructive)]/10 hover:text-[var(--color-destructive)] transition-colors"
+            aria-label="Delete room"
           >
             <Trash2 className="h-4 w-4" />
           </button>
@@ -74,15 +76,15 @@ export function RoomCard({
       {/* Status section */}
       <div className="mt-3">
         {status.isFree ? (
-          <Badge className="bg-emerald-500/15 text-emerald-600 border-emerald-500/25">
+          <Badge className="bg-[var(--color-free)]/15 text-[var(--color-free)] border-[var(--color-free)]/25">
             {t("status.free")}
           </Badge>
         ) : status.isEndingSoon ? (
-          <Badge className="bg-amber-500/15 text-amber-600 border-amber-500/25">
+          <Badge className="bg-[var(--color-warning)]/15 text-[var(--color-warning)] border-[var(--color-warning)]/25">
             {t("status.endingSoon")}
           </Badge>
         ) : (
-          <Badge className="bg-red-500/15 text-red-600 border-red-500/25">
+          <Badge className="bg-[var(--color-busy)]/15 text-[var(--color-busy)] border-[var(--color-busy)]/25">
             {t("status.busy")}
           </Badge>
         )}
@@ -96,10 +98,10 @@ export function RoomCard({
             <p className="text-xs text-[var(--color-muted-foreground)]">
               {formatTime(status.currentEvent.startTime)} &ndash; {formatTime(status.currentEvent.endTime)}
             </p>
-            <div className="mt-1.5 h-1.5 w-full rounded-full bg-[var(--color-secondary)]">
+            <div className="mt-1.5 h-1.5 w-full rounded-full bg-[var(--color-secondary)]" role="progressbar" aria-valuenow={status.progressPercent} aria-valuemin={0} aria-valuemax={100}>
               <div
                 className={`h-full rounded-full transition-all ${
-                  status.isEndingSoon ? "bg-amber-500" : "bg-red-500"
+                  status.isEndingSoon ? "bg-[var(--color-warning)]" : "bg-[var(--color-busy)]"
                 }`}
                 style={{ width: `${status.progressPercent}%` }}
               />

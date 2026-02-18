@@ -21,6 +21,7 @@ import {
   SheetFooter,
   SheetClose,
 } from "@/shared/components/ui/sheet";
+import { ThemeToggle } from "@/shared/components/ThemeToggle";
 
 export function AdminNav() {
   const pathname = usePathname();
@@ -59,7 +60,7 @@ export function AdminNav() {
         </Link>
 
         {/* Desktop nav */}
-        <nav className="hidden items-center gap-1 md:flex">
+        <nav className="hidden items-center gap-1 md:flex" aria-label="Main navigation">
           {navItems.map((item) => {
             const isActive =
               pathname === item.href || pathname.startsWith(item.href + "/");
@@ -89,6 +90,7 @@ export function AdminNav() {
               {session.user.email}
             </span>
           )}
+          <ThemeToggle />
           <div className="h-8 w-8 rounded-full bg-[var(--color-primary)] flex items-center justify-center text-xs font-medium text-[var(--color-primary-foreground)]">
             {userInitial}
           </div>
@@ -96,6 +98,7 @@ export function AdminNav() {
             onClick={() => signOut({ callbackUrl: "/login" })}
             className="hidden items-center gap-1.5 rounded-md px-2 py-1.5 text-sm text-[var(--color-muted-foreground)] transition-colors hover:bg-[var(--color-secondary)] hover:text-[var(--color-foreground)] md:flex"
             title={t("logout")}
+            aria-label="Log out"
           >
             <LogOut className="h-4 w-4" />
           </button>
@@ -114,7 +117,7 @@ export function AdminNav() {
             </SheetTitle>
           </SheetHeader>
 
-          <nav className="flex flex-col gap-1 px-3 py-4">
+          <nav className="flex flex-col gap-1 px-3 py-4" aria-label="Main navigation">
             {navItems.map((item) => {
               const isActive =
                 pathname === item.href || pathname.startsWith(item.href + "/");
@@ -149,6 +152,9 @@ export function AdminNav() {
                 </span>
               </div>
             )}
+            <div className="mb-2 flex items-center">
+              <ThemeToggle />
+            </div>
             <SheetClose asChild>
               <button
                 onClick={() => signOut({ callbackUrl: "/login" })}

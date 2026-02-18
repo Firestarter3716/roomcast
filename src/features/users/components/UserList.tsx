@@ -8,6 +8,7 @@ import { Pencil, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { type Role } from "@prisma/client";
 import { ConfirmDialog } from "@/shared/components/ConfirmDialog";
+import { useTranslations } from "next-intl";
 
 interface UserItem {
   id: string;
@@ -24,15 +25,15 @@ interface UserListProps {
 
 const roleBadgeColors: Record<Role, { bg: string; text: string }> = {
   ADMIN: {
-    bg: "var(--color-primary)/15",
+    bg: "color-mix(in srgb, var(--color-primary) 15%, transparent)",
     text: "var(--color-primary)",
   },
   EDITOR: {
-    bg: "var(--color-secondary)/15",
-    text: "var(--color-secondary)",
+    bg: "color-mix(in srgb, var(--color-secondary-foreground) 15%, transparent)",
+    text: "var(--color-secondary-foreground)",
   },
   VIEWER: {
-    bg: "var(--color-muted)/50",
+    bg: "color-mix(in srgb, var(--color-muted-foreground) 15%, transparent)",
     text: "var(--color-muted-foreground)",
   },
 };
@@ -49,22 +50,24 @@ function formatDate(date: Date | null): string {
 export function UserList({ users }: UserListProps) {
   const router = useRouter();
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
+  const t = useTranslations("admin.users");
+  const tc = useTranslations("common");
 
   async function handleDeleteConfirm() {
     if (!deleteTarget) return;
     try {
       await deleteUser(deleteTarget.id);
-      toast.success("User deleted");
+      toast.success(tc("success"));
       router.refresh();
     } catch {
-      toast.error("Failed to delete user");
+      toast.error(tc("error"));
     }
     setDeleteTarget(null);
   }
 
   if (users.length === 0) {
     return (
-      <div className="mt-8 flex items-center justify-center rounded-lg border border-dashed border-[var(--color-border)] p-12">
+      <div role="status" className="mt-8 flex items-center justify-center rounded-lg border border-dashed border-[var(--color-border)] p-12">
         <p className="text-[var(--color-muted-foreground)]">
           No users created yet. Create your first user.
         </p>
@@ -78,19 +81,19 @@ export function UserList({ users }: UserListProps) {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-[var(--color-border)] bg-[var(--color-muted)]/30">
-              <th className="px-4 py-3 text-left font-medium text-[var(--color-muted-foreground)]">
+              <th scope="col" className="px-4 py-3 text-left font-medium text-[var(--color-muted-foreground)]">
                 Name
               </th>
-              <th className="px-4 py-3 text-left font-medium text-[var(--color-muted-foreground)]">
+              <th scope="col" className="px-4 py-3 text-left font-medium text-[var(--color-muted-foreground)]">
                 Email
               </th>
-              <th className="px-4 py-3 text-left font-medium text-[var(--color-muted-foreground)]">
+              <th scope="col" className="px-4 py-3 text-left font-medium text-[var(--color-muted-foreground)]">
                 Role
               </th>
-              <th className="px-4 py-3 text-left font-medium text-[var(--color-muted-foreground)]">
+              <th scope="col" className="px-4 py-3 text-left font-medium text-[var(--color-muted-foreground)]">
                 Last Login
               </th>
-              <th className="px-4 py-3 text-right font-medium text-[var(--color-muted-foreground)]">
+              <th scope="col" className="px-4 py-3 text-right font-medium text-[var(--color-muted-foreground)]">
                 Actions
               </th>
             </tr>
@@ -151,9 +154,10 @@ export function UserList({ users }: UserListProps) {
       <ConfirmDialog
         open={!!deleteTarget}
         onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}
-        title="Delete User"
-        description={`This will permanently delete the user '${deleteTarget?.name ?? ""}'.`}
-        confirmLabel="Delete"
+        title={t("deleteUser")}
+        description={t("deleteConfirm")}
+        confirmLabel={tc("delete")}
+        cancelLabel={tc("cancel")}
         variant="destructive"
         onConfirm={handleDeleteConfirm}
       />

@@ -46,12 +46,12 @@ function formatRelativeTime(isoString: string | null): string {
 
 function StatusBadge({ status }: { status: string }) {
   const config: Record<string, { bg: string; text: string; label: string; animate?: boolean }> = {
-    IDLE: { bg: "var(--color-success)", text: "#fff", label: "Idle" },
-    SYNCING: { bg: "var(--color-primary)", text: "#fff", label: "Syncing", animate: true },
-    ERROR: { bg: "var(--color-destructive)", text: "#fff", label: "Error" },
+    IDLE: { bg: "color-mix(in srgb, var(--color-success) 15%, transparent)", text: "var(--color-success)", label: "Idle" },
+    SYNCING: { bg: "color-mix(in srgb, var(--color-primary) 15%, transparent)", text: "var(--color-primary)", label: "Syncing", animate: true },
+    ERROR: { bg: "color-mix(in srgb, var(--color-destructive) 15%, transparent)", text: "var(--color-destructive)", label: "Error" },
   };
 
-  const c = config[status] ?? { bg: "var(--color-muted)", text: "var(--color-muted-foreground)", label: status };
+  const c = config[status] ?? { bg: "color-mix(in srgb, var(--color-muted-foreground) 15%, transparent)", text: "var(--color-muted-foreground)", label: status };
 
   return (
     <span
@@ -76,7 +76,7 @@ export function HealthDashboard({ healthData }: HealthDashboardProps) {
   return (
     <div className="space-y-8">
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
         {/* Database Connection Status */}
         <div
           className="rounded-lg border p-5"
@@ -148,16 +148,16 @@ export function HealthDashboard({ healthData }: HealthDashboardProps) {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-[var(--color-border)] bg-[var(--color-muted)]/30">
-                  <th className="px-4 py-3 text-left font-medium text-[var(--color-muted-foreground)]">
+                  <th scope="col" className="px-4 py-3 text-left font-medium text-[var(--color-muted-foreground)]">
                     {t("syncName")}
                   </th>
-                  <th className="px-4 py-3 text-left font-medium text-[var(--color-muted-foreground)]">
+                  <th scope="col" className="px-4 py-3 text-left font-medium text-[var(--color-muted-foreground)]">
                     {t("syncStatus")}
                   </th>
-                  <th className="px-4 py-3 text-left font-medium text-[var(--color-muted-foreground)]">
+                  <th scope="col" className="px-4 py-3 text-left font-medium text-[var(--color-muted-foreground)]">
                     {t("lastSync")}
                   </th>
-                  <th className="px-4 py-3 text-left font-medium text-[var(--color-muted-foreground)]">
+                  <th scope="col" className="px-4 py-3 text-left font-medium text-[var(--color-muted-foreground)]">
                     {t("syncError")}
                   </th>
                 </tr>
@@ -189,7 +189,7 @@ export function HealthDashboard({ healthData }: HealthDashboardProps) {
       )}
 
       {healthData.syncStatuses.length === 0 && (
-        <div className="flex items-center justify-center rounded-lg border border-dashed border-[var(--color-border)] p-12">
+        <div role="status" className="flex items-center justify-center rounded-lg border border-dashed border-[var(--color-border)] p-12">
           <p className="text-[var(--color-muted-foreground)]">
             {t("noCalendars")}
           </p>

@@ -218,18 +218,23 @@ export function CalendarForm({ mode, initialData }: CalendarFormProps) {
     }
   }
 
-  const inputClass = "w-full rounded-md border border-[var(--color-input)] bg-[var(--color-background)] px-3 py-2 text-sm text-[var(--color-foreground)] placeholder:text-[var(--color-muted-foreground)] focus:border-[var(--color-ring)] focus:outline-none focus:ring-2 focus:ring-[var(--color-ring)]/20";
+  const inputClass = "w-full rounded-md border border-[var(--color-input)] bg-[var(--color-background)] px-3 py-2 text-sm text-[var(--color-foreground)] placeholder:text-[var(--color-muted-foreground)] focus:border-[var(--color-ring)] focus:outline-none focus:ring-2 focus:ring-[var(--color-ring)]/40";
   const labelClass = "mb-1.5 block text-sm font-medium text-[var(--color-foreground)]";
   const secondaryBtnClass = "inline-flex items-center gap-2 rounded-md border border-[var(--color-border)] bg-[var(--color-background)] px-3 py-2 text-sm font-medium text-[var(--color-foreground)] hover:bg-[var(--color-secondary)] transition-colors disabled:opacity-50";
 
+  // Discriminated union errors need a cast since TS can't narrow FieldErrors by provider
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const credErrors = form.formState.errors.credentials as Record<string, any> | undefined;
+
   return (
-    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+    <form onSubmit={form.handleSubmit(onSubmit)}>
+      <fieldset disabled={saving} className="space-y-6 disabled:opacity-60">
       {/* Name */}
       <div>
-        <label className={labelClass}>{t("name")}</label>
-        <input {...form.register("name")} className={inputClass} placeholder="My Calendar" />
+        <label htmlFor="cal-name" className={labelClass}>{t("name")}</label>
+        <input id="cal-name" aria-invalid={!!form.formState.errors.name} {...form.register("name")} className={inputClass} placeholder="My Calendar" />
         {form.formState.errors.name && (
-          <p className="mt-1 text-xs text-[var(--color-destructive)]">{form.formState.errors.name.message}</p>
+          <p role="alert" className="mt-1 text-xs text-[var(--color-destructive)]">{form.formState.errors.name.message}</p>
         )}
       </div>
 
@@ -241,6 +246,7 @@ export function CalendarForm({ mode, initialData }: CalendarFormProps) {
             <button
               key={p}
               type="button"
+              aria-pressed={provider === p}
               onClick={() => {
                 form.setValue("credentials.provider", p as "EXCHANGE" | "GOOGLE" | "CALDAV" | "ICS", { shouldValidate: true });
                 // Reset discovery state when switching providers
@@ -264,24 +270,39 @@ export function CalendarForm({ mode, initialData }: CalendarFormProps) {
         {provider === "EXCHANGE" && (
           <>
             <div>
-              <label className={labelClass}>{t("fields.tenantId")}</label>
-              <input {...form.register("credentials.tenantId")} className={inputClass} placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" />
+              <label htmlFor="cal-exchange-tenantId" className={labelClass}>{t("fields.tenantId")}</label>
+              <input id="cal-exchange-tenantId" aria-invalid={!!credErrors?.tenantId} {...form.register("credentials.tenantId")} className={inputClass} placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" />
+              {credErrors?.tenantId && (
+                <p role="alert" className="mt-1 text-xs text-[var(--color-destructive)]">{credErrors?.tenantId.message}</p>
+              )}
             </div>
             <div>
-              <label className={labelClass}>{t("fields.clientId")}</label>
-              <input {...form.register("credentials.clientId")} className={inputClass} placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" />
+              <label htmlFor="cal-exchange-clientId" className={labelClass}>{t("fields.clientId")}</label>
+              <input id="cal-exchange-clientId" aria-invalid={!!credErrors?.clientId} {...form.register("credentials.clientId")} className={inputClass} placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" />
+              {credErrors?.clientId && (
+                <p role="alert" className="mt-1 text-xs text-[var(--color-destructive)]">{credErrors?.clientId.message}</p>
+              )}
             </div>
             <div>
-              <label className={labelClass}>{t("fields.clientSecret")}</label>
-              <input {...form.register("credentials.clientSecret")} type="password" className={inputClass} />
+              <label htmlFor="cal-exchange-clientSecret" className={labelClass}>{t("fields.clientSecret")}</label>
+              <input id="cal-exchange-clientSecret" aria-invalid={!!credErrors?.clientSecret} {...form.register("credentials.clientSecret")} type="password" className={inputClass} />
+              {credErrors?.clientSecret && (
+                <p role="alert" className="mt-1 text-xs text-[var(--color-destructive)]">{credErrors?.clientSecret.message}</p>
+              )}
             </div>
             <div>
-              <label className={labelClass}>{t("fields.userEmail")}</label>
-              <input {...form.register("credentials.userEmail")} type="email" className={inputClass} placeholder="user@company.com" />
+              <label htmlFor="cal-exchange-userEmail" className={labelClass}>{t("fields.userEmail")}</label>
+              <input id="cal-exchange-userEmail" aria-invalid={!!credErrors?.userEmail} {...form.register("credentials.userEmail")} type="email" className={inputClass} placeholder="user@company.com" />
+              {credErrors?.userEmail && (
+                <p role="alert" className="mt-1 text-xs text-[var(--color-destructive)]">{credErrors?.userEmail.message}</p>
+              )}
             </div>
             <div>
-              <label className={labelClass}>{t("fields.resourceEmail")} <span className="text-[var(--color-muted-foreground)]">({tc("optional")})</span></label>
-              <input {...form.register("credentials.resourceEmail")} type="email" className={inputClass} placeholder="room@company.com" />
+              <label htmlFor="cal-exchange-resourceEmail" className={labelClass}>{t("fields.resourceEmail")} <span className="text-[var(--color-muted-foreground)]">({tc("optional")})</span></label>
+              <input id="cal-exchange-resourceEmail" aria-invalid={!!credErrors?.resourceEmail} {...form.register("credentials.resourceEmail")} type="email" className={inputClass} placeholder="room@company.com" />
+              {credErrors?.resourceEmail && (
+                <p role="alert" className="mt-1 text-xs text-[var(--color-destructive)]">{credErrors?.resourceEmail.message}</p>
+              )}
             </div>
           </>
         )}
@@ -289,12 +310,18 @@ export function CalendarForm({ mode, initialData }: CalendarFormProps) {
         {provider === "GOOGLE" && (
           <>
             <div>
-              <label className={labelClass}>{t("fields.clientId")}</label>
-              <input {...form.register("credentials.clientId")} className={inputClass} placeholder="xxxx.apps.googleusercontent.com" />
+              <label htmlFor="cal-google-clientId" className={labelClass}>{t("fields.clientId")}</label>
+              <input id="cal-google-clientId" aria-invalid={!!credErrors?.clientId} {...form.register("credentials.clientId")} className={inputClass} placeholder="xxxx.apps.googleusercontent.com" />
+              {credErrors?.clientId && (
+                <p role="alert" className="mt-1 text-xs text-[var(--color-destructive)]">{credErrors?.clientId.message}</p>
+              )}
             </div>
             <div>
-              <label className={labelClass}>{t("fields.clientSecret")}</label>
-              <input {...form.register("credentials.clientSecret")} type="password" className={inputClass} />
+              <label htmlFor="cal-google-clientSecret" className={labelClass}>{t("fields.clientSecret")}</label>
+              <input id="cal-google-clientSecret" aria-invalid={!!credErrors?.clientSecret} {...form.register("credentials.clientSecret")} type="password" className={inputClass} />
+              {credErrors?.clientSecret && (
+                <p role="alert" className="mt-1 text-xs text-[var(--color-destructive)]">{credErrors?.clientSecret.message}</p>
+              )}
             </div>
 
             {/* OAuth Authorize Button */}
@@ -323,13 +350,18 @@ export function CalendarForm({ mode, initialData }: CalendarFormProps) {
             </div>
 
             <div>
-              <label className={labelClass}>{t("fields.refreshToken")}</label>
+              <label htmlFor="cal-google-refreshToken" className={labelClass}>{t("fields.refreshToken")}</label>
               <input
+                id="cal-google-refreshToken"
+                aria-invalid={!!credErrors?.refreshToken}
                 {...form.register("credentials.refreshToken")}
                 type="password"
                 className={inputClass}
                 placeholder={t("google.refreshTokenPlaceholder")}
               />
+              {credErrors?.refreshToken && (
+                <p role="alert" className="mt-1 text-xs text-[var(--color-destructive)]">{credErrors?.refreshToken.message}</p>
+              )}
               <p className="mt-1 text-xs text-[var(--color-muted-foreground)]">
                 {t("google.refreshTokenHint")}
               </p>
@@ -337,11 +369,13 @@ export function CalendarForm({ mode, initialData }: CalendarFormProps) {
 
             {/* Calendar Selection */}
             <div>
-              <label className={labelClass}>{t("google.calendar")}</label>
+              <label htmlFor="cal-google-calendarId" className={labelClass}>{t("google.calendar")}</label>
               <div className="flex gap-2">
                 <div className="flex-1">
                   {googleCalendars.length > 0 ? (
                     <select
+                      id="cal-google-calendarId"
+                      aria-invalid={!!credErrors?.calendarId}
                       className={inputClass}
                       value={form.watch("credentials.calendarId" as "credentials.provider") as string || ""}
                       onChange={(e) => { (form.setValue as (name: string, value: string, options?: { shouldValidate?: boolean }) => void)("credentials.calendarId", e.target.value, { shouldValidate: true }); }}
@@ -355,6 +389,8 @@ export function CalendarForm({ mode, initialData }: CalendarFormProps) {
                     </select>
                   ) : (
                     <input
+                      id="cal-google-calendarId"
+                      aria-invalid={!!credErrors?.calendarId}
                       {...form.register("credentials.calendarId")}
                       className={inputClass}
                       placeholder="primary"
@@ -376,6 +412,9 @@ export function CalendarForm({ mode, initialData }: CalendarFormProps) {
                   {t("google.loadCalendars")}
                 </button>
               </div>
+              {credErrors?.calendarId && (
+                <p role="alert" className="mt-1 text-xs text-[var(--color-destructive)]">{credErrors?.calendarId.message}</p>
+              )}
               {googleCalendars.length > 0 && (
                 <p className="mt-1 text-xs text-[var(--color-muted-foreground)]">
                   {t("google.calendarsAvailable", { count: googleCalendars.length })}
@@ -388,25 +427,35 @@ export function CalendarForm({ mode, initialData }: CalendarFormProps) {
         {provider === "CALDAV" && (
           <>
             <div>
-              <label className={labelClass}>{t("fields.serverUrl")}</label>
-              <input {...form.register("credentials.serverUrl")} className={inputClass} placeholder="https://nextcloud.example.com/remote.php/dav" />
+              <label htmlFor="cal-caldav-serverUrl" className={labelClass}>{t("fields.serverUrl")}</label>
+              <input id="cal-caldav-serverUrl" aria-invalid={!!credErrors?.serverUrl} {...form.register("credentials.serverUrl")} className={inputClass} placeholder="https://nextcloud.example.com/remote.php/dav" />
+              {credErrors?.serverUrl && (
+                <p role="alert" className="mt-1 text-xs text-[var(--color-destructive)]">{credErrors?.serverUrl.message}</p>
+              )}
             </div>
             <div>
-              <label className={labelClass}>{t("fields.username")}</label>
-              <input {...form.register("credentials.username")} className={inputClass} />
+              <label htmlFor="cal-caldav-username" className={labelClass}>{t("fields.username")}</label>
+              <input id="cal-caldav-username" aria-invalid={!!credErrors?.username} {...form.register("credentials.username")} className={inputClass} />
+              {credErrors?.username && (
+                <p role="alert" className="mt-1 text-xs text-[var(--color-destructive)]">{credErrors?.username.message}</p>
+              )}
             </div>
             <div>
-              <label className={labelClass}>{t("fields.password")}</label>
-              <input {...form.register("credentials.password")} type="password" className={inputClass} />
+              <label htmlFor="cal-caldav-password" className={labelClass}>{t("fields.password")}</label>
+              <input id="cal-caldav-password" aria-invalid={!!credErrors?.password} {...form.register("credentials.password")} type="password" className={inputClass} />
+              {credErrors?.password && (
+                <p role="alert" className="mt-1 text-xs text-[var(--color-destructive)]">{credErrors?.password.message}</p>
+              )}
             </div>
 
             {/* CalDAV Calendar Discovery */}
             <div>
-              <label className={labelClass}>{t("fields.calendarPath")} <span className="text-[var(--color-muted-foreground)]">({tc("optional")})</span></label>
+              <label htmlFor="cal-caldav-calendarPath" className={labelClass}>{t("fields.calendarPath")} <span className="text-[var(--color-muted-foreground)]">({tc("optional")})</span></label>
               <div className="flex gap-2">
                 <div className="flex-1">
                   {caldavCalendars.length > 0 ? (
                     <select
+                      id="cal-caldav-calendarPath"
                       className={inputClass}
                       value={form.watch("credentials.calendarPath" as "credentials.provider") as string || ""}
                       onChange={(e) => { (form.setValue as (name: string, value: string, options?: { shouldValidate?: boolean }) => void)("credentials.calendarPath", e.target.value, { shouldValidate: true }); }}
@@ -420,6 +469,7 @@ export function CalendarForm({ mode, initialData }: CalendarFormProps) {
                     </select>
                   ) : (
                     <input
+                      id="cal-caldav-calendarPath"
                       {...form.register("credentials.calendarPath")}
                       className={inputClass}
                       placeholder="/calendars/user/default/"
@@ -457,12 +507,15 @@ export function CalendarForm({ mode, initialData }: CalendarFormProps) {
         {provider === "ICS" && (
           <>
             <div>
-              <label className={labelClass}>{t("fields.feedUrl")}</label>
-              <input {...form.register("credentials.feedUrl")} className={inputClass} placeholder="https://example.com/calendar.ics" />
+              <label htmlFor="cal-ics-feedUrl" className={labelClass}>{t("fields.feedUrl")}</label>
+              <input id="cal-ics-feedUrl" aria-invalid={!!credErrors?.feedUrl} {...form.register("credentials.feedUrl")} className={inputClass} placeholder="https://example.com/calendar.ics" />
+              {credErrors?.feedUrl && (
+                <p role="alert" className="mt-1 text-xs text-[var(--color-destructive)]">{credErrors?.feedUrl.message}</p>
+              )}
             </div>
             <div>
-              <label className={labelClass}>{t("fields.authHeader")} <span className="text-[var(--color-muted-foreground)]">({tc("optional")})</span></label>
-              <input {...form.register("credentials.authHeader")} className={inputClass} placeholder="Bearer token..." />
+              <label htmlFor="cal-ics-authHeader" className={labelClass}>{t("fields.authHeader")} <span className="text-[var(--color-muted-foreground)]">({tc("optional")})</span></label>
+              <input id="cal-ics-authHeader" {...form.register("credentials.authHeader")} className={inputClass} placeholder="Bearer token..." />
             </div>
           </>
         )}
@@ -500,6 +553,7 @@ export function CalendarForm({ mode, initialData }: CalendarFormProps) {
                 form.watch("color") === c ? "border-[var(--color-foreground)] scale-110" : "border-transparent"
               }`}
               style={{ backgroundColor: c }}
+              aria-label={`Select color ${c}`}
             />
           ))}
         </div>
@@ -507,8 +561,9 @@ export function CalendarForm({ mode, initialData }: CalendarFormProps) {
 
       {/* Sync Interval */}
       <div>
-        <label className={labelClass}>{t("syncInterval")}</label>
+        <label htmlFor="cal-syncInterval" className={labelClass}>{t("syncInterval")}</label>
         <select
+          id="cal-syncInterval"
           {...form.register("syncIntervalSeconds", { valueAsNumber: true })}
           className={inputClass}
         >
@@ -538,6 +593,7 @@ export function CalendarForm({ mode, initialData }: CalendarFormProps) {
           {tc("cancel")}
         </button>
       </div>
+      </fieldset>
     </form>
   );
 }

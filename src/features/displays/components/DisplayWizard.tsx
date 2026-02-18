@@ -680,15 +680,15 @@ function DisplayWizardInner({ calendars, rooms }: DisplayWizardProps) {
   const stepLabels = ["Setup", "Layout", "Confirmation"];
 
   const inputClass =
-    "w-full rounded-md border border-[var(--color-input)] bg-[var(--color-background)] px-3 py-2 text-sm text-[var(--color-foreground)] placeholder:text-[var(--color-muted-foreground)] focus:border-[var(--color-ring)] focus:outline-none focus:ring-2 focus:ring-[var(--color-ring)]/20";
+    "w-full rounded-md border border-[var(--color-input)] bg-[var(--color-background)] px-3 py-2 text-sm text-[var(--color-foreground)] placeholder:text-[var(--color-muted-foreground)] focus:border-[var(--color-ring)] focus:outline-none focus:ring-2 focus:ring-[var(--color-ring)]/40";
   const labelClass = "mb-1.5 block text-sm font-medium text-[var(--color-foreground)]";
 
   return (
     <div className="space-y-8">
       {/* Step indicator */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-4" role="list" aria-label="Wizard steps">
         {[1, 2, 3].map((s) => (
-          <div key={s} className="flex items-center gap-2">
+          <div key={s} className="flex items-center gap-2" role="listitem" aria-current={step === s ? "step" : undefined}>
             <div
               className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium transition-colors ${
                 step > s
@@ -720,14 +720,16 @@ function DisplayWizardInner({ calendars, rooms }: DisplayWizardProps) {
       {step === 1 && (
         <div className="space-y-6">
           <div>
-            <label className={labelClass}>Display Name</label>
+            <label htmlFor="wizard-name" className={labelClass}>Display Name</label>
             <input
+              id="wizard-name"
               {...form.register("name")}
               className={inputClass}
               placeholder="Lobby Display"
+              aria-invalid={!!form.formState.errors.name}
             />
             {form.formState.errors.name && (
-              <p className="mt-1 text-xs text-[var(--color-destructive)]">
+              <p role="alert" className="mt-1 text-xs text-[var(--color-destructive)]">
                 {form.formState.errors.name.message}
               </p>
             )}
@@ -740,6 +742,7 @@ function DisplayWizardInner({ calendars, rooms }: DisplayWizardProps) {
                 <button
                   key={opt.value}
                   type="button"
+                  aria-pressed={selectedOrientation === opt.value}
                   onClick={() => form.setValue("orientation", opt.value)}
                   className={`rounded-lg border p-4 text-center transition-colors ${
                     selectedOrientation === opt.value
@@ -759,8 +762,9 @@ function DisplayWizardInner({ calendars, rooms }: DisplayWizardProps) {
           </div>
 
           <div>
-            <label className={labelClass}>Assign to Room</label>
+            <label htmlFor="wizard-room" className={labelClass}>Assign to Room</label>
             <select
+              id="wizard-room"
               {...form.register("roomId")}
               className={inputClass}
             >
@@ -837,6 +841,7 @@ function DisplayWizardInner({ calendars, rooms }: DisplayWizardProps) {
               <button
                 key={opt.value}
                 type="button"
+                aria-pressed={selectedLayout === opt.value}
                 onClick={() => form.setValue("layoutType", opt.value)}
                 className={`rounded-lg border p-5 text-left transition-colors ${
                   selectedLayout === opt.value
@@ -874,7 +879,7 @@ function DisplayWizardInner({ calendars, rooms }: DisplayWizardProps) {
                     isSelected={selectedLayout === opt.value}
                   />
                 </div>
-                <p className="mt-2 text-[10px] font-medium text-[var(--color-muted-foreground)] italic text-center">
+                <p className="mt-2 text-xs font-medium text-[var(--color-muted-foreground)] italic text-center">
                   {ORIENTATION_HINTS[opt.value]}
                 </p>
               </button>
@@ -882,7 +887,7 @@ function DisplayWizardInner({ calendars, rooms }: DisplayWizardProps) {
           </div>
 
           {selectedLayout === "ROOM_BOOKING" && !selectedRoomId && (
-            <p className="text-xs text-[var(--color-destructive)]">
+            <p role="alert" className="text-xs text-[var(--color-destructive)]">
               Room Booking layout requires a room. Go back and assign a room first.
             </p>
           )}

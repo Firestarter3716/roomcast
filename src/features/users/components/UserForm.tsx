@@ -64,43 +64,48 @@ export function UserForm({ mode, initialData }: UserFormProps) {
   }
 
   const inputClass =
-    "w-full rounded-md border border-[var(--color-input)] bg-[var(--color-background)] px-3 py-2 text-sm text-[var(--color-foreground)] placeholder:text-[var(--color-muted-foreground)] focus:border-[var(--color-ring)] focus:outline-none focus:ring-2 focus:ring-[var(--color-ring)]/20";
+    "w-full rounded-md border border-[var(--color-input)] bg-[var(--color-background)] px-3 py-2 text-sm text-[var(--color-foreground)] placeholder:text-[var(--color-muted-foreground)] focus:border-[var(--color-ring)] focus:outline-none focus:ring-2 focus:ring-[var(--color-ring)]/40";
   const labelClass =
     "mb-1.5 block text-sm font-medium text-[var(--color-foreground)]";
 
   return (
-    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+    <form onSubmit={form.handleSubmit(onSubmit)}>
+      <fieldset disabled={saving} className="space-y-6 disabled:opacity-60">
       <div>
-        <label className={labelClass}>{t("name")}</label>
+        <label htmlFor="user-name" className={labelClass}>{t("name")}</label>
         <input
+          id="user-name"
+          aria-invalid={!!form.formState.errors.name}
           {...form.register("name")}
           className={inputClass}
           placeholder="John Doe"
         />
         {form.formState.errors.name && (
-          <p className="mt-1 text-xs text-[var(--color-destructive)]">
+          <p role="alert" className="mt-1 text-xs text-[var(--color-destructive)]">
             {form.formState.errors.name.message}
           </p>
         )}
       </div>
 
       <div>
-        <label className={labelClass}>{t("email")}</label>
+        <label htmlFor="user-email" className={labelClass}>{t("email")}</label>
         <input
+          id="user-email"
+          aria-invalid={!!form.formState.errors.email}
           {...form.register("email")}
           type="email"
           className={inputClass}
           placeholder="john@example.com"
         />
         {form.formState.errors.email && (
-          <p className="mt-1 text-xs text-[var(--color-destructive)]">
+          <p role="alert" className="mt-1 text-xs text-[var(--color-destructive)]">
             {form.formState.errors.email.message}
           </p>
         )}
       </div>
 
       <div>
-        <label className={labelClass}>
+        <label htmlFor="user-password" className={labelClass}>
           {t("password")}
           {mode === "edit" && (
             <span className="ml-1.5 font-normal text-[var(--color-muted-foreground)]">
@@ -109,6 +114,8 @@ export function UserForm({ mode, initialData }: UserFormProps) {
           )}
         </label>
         <input
+          id="user-password"
+          aria-invalid={!!form.formState.errors.password}
           {...form.register("password")}
           type="password"
           className={inputClass}
@@ -117,15 +124,15 @@ export function UserForm({ mode, initialData }: UserFormProps) {
           }
         />
         {form.formState.errors.password && (
-          <p className="mt-1 text-xs text-[var(--color-destructive)]">
+          <p role="alert" className="mt-1 text-xs text-[var(--color-destructive)]">
             {form.formState.errors.password.message}
           </p>
         )}
       </div>
 
       <div>
-        <label className={labelClass}>{t("role")}</label>
-        <select {...form.register("role")} className={inputClass}>
+        <label htmlFor="user-role" className={labelClass}>{t("role")}</label>
+        <select id="user-role" aria-invalid={!!form.formState.errors.role} {...form.register("role")} className={inputClass}>
           {ROLE_KEYS.map((role) => (
             <option key={role} value={role}>
               {tr(role)}
@@ -133,7 +140,7 @@ export function UserForm({ mode, initialData }: UserFormProps) {
           ))}
         </select>
         {form.formState.errors.role && (
-          <p className="mt-1 text-xs text-[var(--color-destructive)]">
+          <p role="alert" className="mt-1 text-xs text-[var(--color-destructive)]">
             {form.formState.errors.role.message}
           </p>
         )}
@@ -156,6 +163,7 @@ export function UserForm({ mode, initialData }: UserFormProps) {
           {tc("cancel")}
         </button>
       </div>
+      </fieldset>
     </form>
   );
 }

@@ -32,7 +32,16 @@ export function DisplayQRCode({ token, displayName, size = 200 }: DisplayQRCodeP
     link.click();
   }
 
-  if (!dataUrl) return null;
+  if (!dataUrl) {
+    return (
+      <div className="flex flex-col items-center gap-3">
+        <div
+          className="rounded-lg border border-[var(--color-border)] bg-[var(--color-muted)]/10 animate-pulse"
+          style={{ width: size, height: size }}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col items-center gap-3">

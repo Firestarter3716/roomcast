@@ -1,3 +1,9 @@
+@import "@fontsource-variable/roboto-flex";
+@import "@fontsource-variable/dm-sans";
+@import "@fontsource/geist-sans";
+@import "@fontsource-variable/nunito";
+@import "@fontsource-variable/source-sans-3";
+
 /* ============================================
    DISPLAY VIEW STYLES
    Applied only on /display/[token] pages
@@ -39,6 +45,11 @@
   to { opacity: 1; }
 }
 
+@keyframes display-fade-in-subtle {
+  from { opacity: 0.3; }
+  to { opacity: 1; }
+}
+
 @keyframes display-fade-out {
   from { opacity: 1; }
   to { opacity: 0; }
@@ -49,9 +60,9 @@
   to { transform: translateY(0); opacity: 1; }
 }
 
-@keyframes ticker-scroll {
-  from { transform: translateX(100%); }
-  to { transform: translateX(-100%); }
+@keyframes display-ticker {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
 }
 
 .display-transition-enter {

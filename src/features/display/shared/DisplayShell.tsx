@@ -15,9 +15,9 @@ interface DisplayShellProps {
 }
 
 const STATUS_COLORS: Record<ConnectionStatus, string> = {
-  connected: "#22c55e",
-  polling: "#f59e0b",
-  disconnected: "#ef4444",
+  connected: "var(--color-success)",
+  polling: "var(--color-warning)",
+  disconnected: "var(--color-destructive)",
 };
 
 export function DisplayShell({ config, isPreview = false, style, connectionStatus, children }: DisplayShellProps) {
@@ -98,7 +98,7 @@ export function DisplayShell({ config, isPreview = false, style, connectionStatu
       <div style={{ position: "relative", zIndex: 1, width: "100%", height: "100%", display: "flex", flexDirection: "column" }}>
         {branding.logoUrl && (
           <div style={{ display: "flex", justifyContent: branding.logoPosition === "top-center" ? "center" : branding.logoPosition === "top-right" ? "flex-end" : "flex-start", padding: "1rem 1.5rem 0" }}>
-            <img src={branding.logoUrl} alt="" style={{ height: branding.logoSize === "small" ? "1.5rem" : branding.logoSize === "large" ? "3rem" : "2rem" }} onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+            <img src={branding.logoUrl} alt="Display logo" style={{ height: branding.logoSize === "small" ? "1.5rem" : branding.logoSize === "large" ? "3rem" : "2rem" }} onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
           </div>
         )}
         <div style={{ flex: 1, minHeight: 0 }}>{children}</div>
@@ -109,6 +109,7 @@ export function DisplayShell({ config, isPreview = false, style, connectionStatu
       {connectionStatus && (
         <div
           aria-label={`Connection: ${connectionStatus}`}
+          title={`Connection: ${connectionStatus}`}
           style={{
             position: "fixed",
             bottom: 12,
@@ -117,8 +118,8 @@ export function DisplayShell({ config, isPreview = false, style, connectionStatu
             height: 8,
             borderRadius: "50%",
             backgroundColor: STATUS_COLORS[connectionStatus],
-            opacity: 0.5,
-            zIndex: 9999,
+            opacity: connectionStatus === "disconnected" ? 0.9 : 0.5,
+            zIndex: 9999 /* --z-max */,
             transition: "background-color 0.3s ease, opacity 0.3s ease",
             pointerEvents: "none",
           }}

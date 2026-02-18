@@ -133,7 +133,7 @@ function LoginForm() {
         </div>
 
         {error && (
-          <div className="mb-4 rounded-md bg-red-50 p-3 text-sm text-red-600 dark:bg-red-950/50 dark:text-red-400">
+          <div role="alert" className="mb-4 rounded-md bg-[var(--color-destructive)]/10 p-3 text-sm text-[var(--color-destructive)]">
             {error}
           </div>
         )}

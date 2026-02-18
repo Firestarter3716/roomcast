@@ -81,27 +81,28 @@ export function RoomForm({ mode, calendars, initialData }: RoomFormProps) {
     }
   }
 
-  const inputClass = "w-full rounded-md border border-[var(--color-input)] bg-[var(--color-background)] px-3 py-2 text-sm text-[var(--color-foreground)] placeholder:text-[var(--color-muted-foreground)] focus:border-[var(--color-ring)] focus:outline-none focus:ring-2 focus:ring-[var(--color-ring)]/20";
+  const inputClass = "w-full rounded-md border border-[var(--color-input)] bg-[var(--color-background)] px-3 py-2 text-sm text-[var(--color-foreground)] placeholder:text-[var(--color-muted-foreground)] focus:border-[var(--color-ring)] focus:outline-none focus:ring-2 focus:ring-[var(--color-ring)]/40";
   const labelClass = "mb-1.5 block text-sm font-medium text-[var(--color-foreground)]";
 
   return (
-    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+    <form onSubmit={form.handleSubmit(onSubmit)}>
+      <fieldset disabled={saving} className="space-y-6 disabled:opacity-60">
       <div>
-        <label className={labelClass}>{t("name")}</label>
-        <input {...form.register("name")} className={inputClass} placeholder="Conference Room A" />
+        <label htmlFor="room-name" className={labelClass}>{t("name")}</label>
+        <input id="room-name" aria-invalid={!!form.formState.errors.name} {...form.register("name")} className={inputClass} placeholder="Conference Room A" />
         {form.formState.errors.name && (
-          <p className="mt-1 text-xs text-[var(--color-destructive)]">{form.formState.errors.name.message}</p>
+          <p role="alert" className="mt-1 text-xs text-[var(--color-destructive)]">{form.formState.errors.name.message}</p>
         )}
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
-          <label className={labelClass}>{t("location")}</label>
-          <input {...form.register("location")} className={inputClass} placeholder="Floor 3, Building A" />
+          <label htmlFor="room-location" className={labelClass}>{t("location")}</label>
+          <input id="room-location" {...form.register("location")} className={inputClass} placeholder="Floor 3, Building A" />
         </div>
         <div>
-          <label className={labelClass}>{t("capacity")}</label>
-          <input {...form.register("capacity", { valueAsNumber: true })} type="number" min="1" className={inputClass} placeholder="10" />
+          <label htmlFor="room-capacity" className={labelClass}>{t("capacity")}</label>
+          <input id="room-capacity" {...form.register("capacity", { valueAsNumber: true })} type="number" min="1" className={inputClass} placeholder="10" />
         </div>
       </div>
 
@@ -112,6 +113,7 @@ export function RoomForm({ mode, calendars, initialData }: RoomFormProps) {
             <button
               key={opt.value}
               type="button"
+              aria-pressed={selectedEquipment.includes(opt.value)}
               onClick={() => toggleEquipment(opt.value)}
               className={`rounded-md border px-3 py-1.5 text-sm transition-colors ${
                 selectedEquipment.includes(opt.value)
@@ -126,8 +128,8 @@ export function RoomForm({ mode, calendars, initialData }: RoomFormProps) {
       </div>
 
       <div>
-        <label className={labelClass}>{t("calendar")}</label>
-        <select {...form.register("calendarId")} className={inputClass}>
+        <label htmlFor="room-calendarId" className={labelClass}>{t("calendar")}</label>
+        <select id="room-calendarId" aria-invalid={!!form.formState.errors.calendarId} {...form.register("calendarId")} className={inputClass}>
           <option value="">{t("selectCalendar")}</option>
           {calendars.map((cal) => (
             <option key={cal.id} value={cal.id}>
@@ -136,18 +138,18 @@ export function RoomForm({ mode, calendars, initialData }: RoomFormProps) {
           ))}
         </select>
         {form.formState.errors.calendarId && (
-          <p className="mt-1 text-xs text-[var(--color-destructive)]">{form.formState.errors.calendarId.message}</p>
+          <p role="alert" className="mt-1 text-xs text-[var(--color-destructive)]">{form.formState.errors.calendarId.message}</p>
         )}
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
-          <label className={labelClass}>{t("resourceEmail")} <span className="text-[var(--color-muted-foreground)]">(Exchange)</span></label>
-          <input {...form.register("resourceEmail")} type="email" className={inputClass} placeholder="room@company.com" />
+          <label htmlFor="room-resourceEmail" className={labelClass}>{t("resourceEmail")} <span className="text-[var(--color-muted-foreground)]">(Exchange)</span></label>
+          <input id="room-resourceEmail" {...form.register("resourceEmail")} type="email" className={inputClass} placeholder="room@company.com" />
         </div>
         <div>
-          <label className={labelClass}>{t("resourceId")} <span className="text-[var(--color-muted-foreground)]">(Google)</span></label>
-          <input {...form.register("resourceId")} className={inputClass} />
+          <label htmlFor="room-resourceId" className={labelClass}>{t("resourceId")} <span className="text-[var(--color-muted-foreground)]">(Google)</span></label>
+          <input id="room-resourceId" {...form.register("resourceId")} className={inputClass} />
         </div>
       </div>
 
@@ -168,6 +170,7 @@ export function RoomForm({ mode, calendars, initialData }: RoomFormProps) {
           {tc("cancel")}
         </button>
       </div>
+      </fieldset>
     </form>
   );
 }

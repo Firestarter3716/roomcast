@@ -24,6 +24,7 @@ import {
 } from "@/features/displays/types";
 import { THEME_PALETTES } from "@/features/displays/palettes";
 
+import "@/shared/styles/display.css";
 const LOCALE_MAP: Record<string, string> = { de: "de-DE", en: "en-US", fr: "fr-FR" };
 
 interface DisplayOverrides {

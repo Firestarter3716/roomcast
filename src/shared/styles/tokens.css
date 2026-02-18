@@ -1,6 +1,10 @@
 :root {
   /* ============================================
      SPACING SCALE (4px base)
+     Note: Components use Tailwind spacing utilities
+     (p-4, gap-2, etc.) which map to the same values.
+     These tokens are available for custom CSS or
+     future design system extensions.
      ============================================ */
   --space-0: 0;
   --space-0-5: 0.125rem;
@@ -38,6 +42,9 @@
 
   /* ============================================
      MOTION
+     Note: Admin UI uses Tailwind transitions.
+     Display views use display.css animations.
+     These tokens are available for custom CSS.
      ============================================ */
   --duration-micro: 150ms;
   --duration-normal: 250ms;
@@ -46,7 +53,23 @@
   --easing-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 
   /* ============================================
+     Z-INDEX SCALE
+     ============================================ */
+  --z-base: 0;
+  --z-raised: 10;
+  --z-dropdown: 100;
+  --z-sticky: 200;
+  --z-overlay: 300;
+  --z-modal: 400;
+  --z-toast: 500;
+  --z-max: 9999;
+
+  /* ============================================
      TYPOGRAPHY
+     Note: Components use Tailwind text utilities
+     (text-sm, font-medium, etc.) for equivalent values.
+     --font-sans and --font-mono are bridged to Tailwind
+     via @theme inline in globals.css.
      ============================================ */
   --font-sans: 'Inter Variable', 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
   --font-mono: ui-monospace, 'Cascadia Code', 'Source Code Pro', monospace;

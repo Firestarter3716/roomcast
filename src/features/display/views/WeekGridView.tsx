@@ -2,28 +2,11 @@
 
 import { useMemo, useState, useEffect, useRef, useCallback } from "react";
 import { useCurrentTime } from "../hooks/useCurrentTime";
+import { getDisplayTranslations } from "../shared/translations";
 import { type DisplayEvent } from "../hooks/useDisplaySSE";
 import { type WeekGridConfig } from "@/features/displays/types";
 
-// ---------------------------------------------------------------------------
-// CSS keyframes injected once for the fade transition
-// ---------------------------------------------------------------------------
-const FADE_KEYFRAMES = `
-@keyframes displayFadeIn {
-  from { opacity: 0.3; }
-  to   { opacity: 1; }
-}
-`;
-
-let keyframesInjected = false;
-function ensureKeyframes() {
-  if (typeof document === "undefined" || keyframesInjected) return;
-  const style = document.createElement("style");
-  style.textContent = FADE_KEYFRAMES;
-  document.head.appendChild(style);
-  keyframesInjected = true;
-}
-
+// TODO: Make configurable via WeekGridConfig.timeRangeStart / timeRangeEnd
 const HOURS_START = 7; const HOURS_END = 22; const TOTAL_HOURS = HOURS_END - HOURS_START;
 
 /**
@@ -58,11 +41,7 @@ interface WeekGridViewProps { events: DisplayEvent[]; config: WeekGridConfig; lo
 
 export function WeekGridView({ events, config, locale }: WeekGridViewProps) {
   const now = useCurrentTime(60000);
-
-  // Inject keyframes on mount
-  useEffect(() => {
-    ensureKeyframes();
-  }, []);
+  const t = getDisplayTranslations(locale || "de-DE");
 
   // Fade transition: track event changes
   const [fadeKey, setFadeKey] = useState(0);
@@ -119,20 +98,20 @@ export function WeekGridView({ events, config, locale }: WeekGridViewProps) {
   }, [weekStart, events]);
 
   return (
-    <div key={fadeKey} style={{ display: "flex", flexDirection: "column", height: "100%", padding: "1rem", animation: "displayFadeIn 0.5s ease-in-out" }}>
+    <div key={fadeKey} style={{ display: "flex", flexDirection: "column", height: "100%", padding: "1rem", animation: "display-fade-in-subtle 0.5s ease-in-out" }}>
       <div style={{ display: "flex", paddingLeft: "3rem" }}>
-        {days.map((day, i) => (<div key={day} style={{ flex: 1, textAlign: "center", padding: "0.5rem", fontSize: "0.8125rem", fontWeight: 600, opacity: config.showCurrentDayHighlight && i === currentDayIndex ? 1 : 0.7, color: config.showCurrentDayHighlight && i === currentDayIndex ? "var(--display-primary)" : "inherit" }}>{day}</div>))}
+        {days.map((day, i) => (<div key={day} style={{ flex: 1, textAlign: "center", padding: "0.5rem", fontSize: "var(--display-text-sm, 0.8125rem)", fontWeight: 600, opacity: config.showCurrentDayHighlight && i === currentDayIndex ? 1 : 0.7, color: config.showCurrentDayHighlight && i === currentDayIndex ? "var(--display-primary)" : "inherit" }}>{day}</div>))}
       </div>
       <div style={{ flex: 1, display: "flex", position: "relative", overflow: "hidden" }}>
         <div style={{ width: "3rem", flexShrink: 0, position: "relative" }}>
-          {hours.map((h) => (<div key={h} style={{ position: "absolute", top: `${((h - HOURS_START) / TOTAL_HOURS) * 100}%`, fontSize: "0.625rem", opacity: 0.4, transform: "translateY(-50%)", right: "0.5rem" }}>{String(h).padStart(2, "0")}</div>))}
+          {hours.map((h) => (<div key={h} style={{ position: "absolute", top: `${((h - HOURS_START) / TOTAL_HOURS) * 100}%`, fontSize: "var(--display-text-xs, 0.625rem)", opacity: 0.4, transform: "translateY(-50%)", right: "0.5rem" }}>{String(h).padStart(2, "0")}</div>))}
         </div>
         {days.map((_, dayIndex) => {
           const dayEvents = getEventsForDay(dayIndex);
           const isToday = config.showCurrentDayHighlight && dayIndex === currentDayIndex;
           return (
-            <div key={dayIndex} style={{ flex: 1, position: "relative", borderLeft: "1px solid var(--display-muted)15", backgroundColor: isToday ? "var(--display-primary)08" : "transparent" }}>
-              {hours.map((h) => (<div key={h} style={{ position: "absolute", top: `${((h - HOURS_START) / TOTAL_HOURS) * 100}%`, left: 0, right: 0, borderTop: "1px solid var(--display-muted)10" }} />))}
+            <div key={dayIndex} style={{ flex: 1, position: "relative", borderLeft: "1px solid color-mix(in srgb, var(--display-muted) 8%, transparent)", backgroundColor: isToday ? "color-mix(in srgb, var(--display-primary) 3%, transparent)" : "transparent" }}>
+              {hours.map((h) => (<div key={h} style={{ position: "absolute", top: `${((h - HOURS_START) / TOTAL_HOURS) * 100}%`, left: 0, right: 0, borderTop: "1px solid color-mix(in srgb, var(--display-muted) 6%, transparent)" }} />))}
               {/* Current time indicator -- only in today's column, within visible hour range */}
               {isToday && currentTimePercent >= 0 && currentTimePercent <= 100 && (
                 <div style={{ position: "absolute", top: `${currentTimePercent}%`, left: "-4px", right: 0, zIndex: 10, pointerEvents: "none" }}>
@@ -145,11 +124,16 @@ export function WeekGridView({ events, config, locale }: WeekGridViewProps) {
                 const startMin = start.getHours() * 60 + start.getMinutes(); const endMin = end.getHours() * 60 + end.getMinutes();
                 const top = Math.max(0, ((startMin - HOURS_START * 60) / (TOTAL_HOURS * 60)) * 100);
                 const height = Math.max(2, ((endMin - startMin) / (TOTAL_HOURS * 60)) * 100);
-                return (<div key={event.id} style={{ position: "absolute", top: `${top}%`, height: `${height}%`, left: "2px", right: "2px", borderRadius: "0.25rem", padding: "0.125rem 0.25rem", overflow: "hidden", backgroundColor: `${event.calendarColor || "var(--display-primary)"}40`, borderLeft: `2px solid ${event.calendarColor || "var(--display-primary)"}`, fontSize: "0.625rem" }}><div style={{ fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{event.title}</div></div>);
+                return (<div key={event.id} style={{ position: "absolute", top: `${top}%`, height: `${height}%`, left: "2px", right: "2px", borderRadius: "0.25rem", padding: "0.125rem 0.25rem", overflow: "hidden", backgroundColor: `color-mix(in srgb, ${event.calendarColor || "var(--display-primary)"} 25%, transparent)`, borderLeft: `2px solid ${event.calendarColor || "var(--display-primary)"}`, fontSize: "var(--display-text-xs, 0.625rem)" }}><div style={{ fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{event.title}</div></div>);
               })}
             </div>
           );
         })}
+        {events.length === 0 && (
+          <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", opacity: 0.4, fontSize: "var(--display-text-base, 0.9375rem)", zIndex: 5 }}>
+            {t.noEventsThisWeek}
+          </div>
+        )}
       </div>
     </div>
   );
