@@ -7,23 +7,27 @@ import {
   type ThemeConfig,
   type BrandingConfig,
   type BackgroundConfig,
+  type ScreenConfig,
   type DisplayConfig,
   type RoomBookingConfig,
   type AgendaConfig,
   type DayGridConfig,
   type WeekGridConfig,
   type InfoDisplayConfig,
+  ORIENTATION_OPTIONS,
+  RESOLUTION_PRESETS,
   DEFAULT_THEME,
   DEFAULT_BRANDING,
   DEFAULT_BACKGROUND,
+  DEFAULT_SCREEN,
   getDefaultLayoutConfig,
 } from "../types";
 import { toast } from "sonner";
-import { Save, Palette, Layout, Image, Tag, Shield, ChevronDown, ChevronRight } from "lucide-react";
-import { DisplayPreview } from "./DisplayPreview";
+import { Save, Palette, Layout, Image, Tag, Shield, ChevronDown, ChevronRight, Monitor, Smartphone } from "lucide-react";
 
 interface DisplayEditorProps {
   displayId: string;
+  displayToken: string;
   layoutType: string;
   initialConfig: DisplayConfig;
   orientation?: string;
@@ -33,11 +37,12 @@ interface DisplayEditorProps {
 
 type EditorTab = "layout" | "theme" | "branding" | "background";
 
-export function DisplayEditor({ displayId, layoutType, initialConfig, orientation, roomName, initialIpWhitelist }: DisplayEditorProps) {
+export function DisplayEditor({ displayId, displayToken, layoutType, initialConfig, orientation, roomName, initialIpWhitelist }: DisplayEditorProps) {
   const [config, setConfig] = useState<DisplayConfig>({
     theme: { ...DEFAULT_THEME, ...initialConfig?.theme },
     branding: { ...DEFAULT_BRANDING, ...initialConfig?.branding },
     background: { ...DEFAULT_BACKGROUND, ...initialConfig?.background },
+    screen: { ...DEFAULT_SCREEN, ...initialConfig?.screen },
     layout: { ...getDefaultLayoutConfig(layoutType), ...initialConfig?.layout },
   });
   const [activeTab, setActiveTab] = useState<EditorTab>("layout");
@@ -46,12 +51,65 @@ export function DisplayEditor({ displayId, layoutType, initialConfig, orientatio
   const [securityOpen, setSecurityOpen] = useState((initialIpWhitelist ?? []).length > 0);
   const [ipWhitelistText, setIpWhitelistText] = useState((initialIpWhitelist ?? []).join("\n"));
   const ipSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const [previewKey, setPreviewKey] = useState(0);
+  const [currentOrientation, setCurrentOrientation] = useState(orientation || "LANDSCAPE");
+  const previewContainerRef = useRef<HTMLDivElement>(null);
+  const [containerWidth, setContainerWidth] = useState(0);
+
+  useEffect(() => {
+    const el = previewContainerRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver((entries) => {
+      setContainerWidth(entries[0].contentRect.width);
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  async function changeOrientation(value: string) {
+    const prev = currentOrientation;
+    setCurrentOrientation(value);
+    // Swap resolution width/height when switching between landscape and portrait
+    const isNowPortrait = value === "PORTRAIT";
+    const wasPortrait = prev === "PORTRAIT";
+    if (isNowPortrait !== wasPortrait) {
+      const { width, height, preset } = config.screen;
+      const newScreen: ScreenConfig = { preset, width: height, height: width };
+      const newConfig = { ...config, screen: newScreen };
+      setConfig(newConfig);
+      autoSave(newConfig);
+    }
+    try {
+      await updateDisplay(displayId, { orientation: value as "LANDSCAPE" | "PORTRAIT" | "AUTO" });
+      setPreviewKey((k) => k + 1);
+    } catch {
+      toast.error("Failed to update orientation");
+    }
+  }
+
+  function updateScreen(partial: Partial<ScreenConfig>) {
+    const newConfig = { ...config, screen: { ...config.screen, ...partial } };
+    setConfig(newConfig);
+    autoSave(newConfig);
+  }
+
+  function selectResolutionPreset(label: string) {
+    const preset = RESOLUTION_PRESETS.find((p) => p.label === label);
+    if (!preset) return;
+    const isPortrait = currentOrientation === "PORTRAIT";
+    const w = isPortrait ? preset.height : preset.width;
+    const h = isPortrait ? preset.width : preset.height;
+    updateScreen({ preset: label, width: w, height: h });
+  }
 
   const autoSave = useCallback((newConfig: DisplayConfig) => {
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(async () => {
       try {
         await updateDisplayConfig(displayId, newConfig as unknown as Record<string, unknown>);
+        // Reload the preview iframe after save completes
+        setPreviewKey((k) => k + 1);
       } catch {
         toast.error("Auto-save failed");
       }
@@ -176,6 +234,87 @@ export function DisplayEditor({ displayId, layoutType, initialConfig, orientatio
 
         {activeTab === "layout" && (
           <div role="tabpanel" aria-labelledby="tab-layout" className="space-y-4">
+            <div>
+              <label className={labelClass}>Orientation</label>
+              <div className="flex gap-2">
+                {ORIENTATION_OPTIONS.map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    aria-pressed={currentOrientation === opt.value}
+                    onClick={() => changeOrientation(opt.value)}
+                    className={`flex items-center gap-1.5 flex-1 rounded-md border px-3 py-2 text-xs font-medium transition-colors ${currentOrientation === opt.value ? "border-[var(--color-primary)] bg-[var(--color-primary)]/10 text-[var(--color-primary)]" : "border-[var(--color-border)] text-[var(--color-muted-foreground)]"}`}
+                  >
+                    {opt.value === "PORTRAIT" ? <Smartphone className="h-3.5 w-3.5" /> : <Monitor className="h-3.5 w-3.5" />}
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <label className={labelClass}>Screen Resolution</label>
+              <div className="grid grid-cols-3 gap-2">
+                {RESOLUTION_PRESETS.map((preset) => {
+                  const isPortrait = currentOrientation === "PORTRAIT";
+                  const w = isPortrait ? preset.height : preset.width;
+                  const h = isPortrait ? preset.width : preset.height;
+                  const isActive = config.screen.preset === preset.label;
+                  return (
+                    <button
+                      key={preset.label}
+                      type="button"
+                      aria-pressed={isActive}
+                      onClick={() => selectResolutionPreset(preset.label)}
+                      className={`rounded-md border px-2 py-1.5 text-xs transition-colors ${isActive ? "border-[var(--color-primary)] bg-[var(--color-primary)]/10 text-[var(--color-primary)]" : "border-[var(--color-border)] text-[var(--color-muted-foreground)]"}`}
+                    >
+                      <div className="font-medium">{preset.label}</div>
+                      <div className="text-[10px] opacity-70">{w}x{h}</div>
+                    </button>
+                  );
+                })}
+                <button
+                  type="button"
+                  aria-pressed={config.screen.preset === "Custom"}
+                  onClick={() => updateScreen({ preset: "Custom" })}
+                  className={`rounded-md border px-2 py-1.5 text-xs transition-colors ${config.screen.preset === "Custom" ? "border-[var(--color-primary)] bg-[var(--color-primary)]/10 text-[var(--color-primary)]" : "border-[var(--color-border)] text-[var(--color-muted-foreground)]"}`}
+                >
+                  <div className="font-medium">Custom</div>
+                  <div className="text-[10px] opacity-70">{config.screen.width}x{config.screen.height}</div>
+                </button>
+              </div>
+              {config.screen.preset === "Custom" && (
+                <div className="mt-2 grid grid-cols-2 gap-2">
+                  <div>
+                    <label htmlFor="editor-screen-w" className="mb-1 block text-xs text-[var(--color-muted-foreground)]">Width (px)</label>
+                    <input id="editor-screen-w" type="number" min="320" max="7680" value={config.screen.width} onChange={(e) => updateScreen({ width: Number(e.target.value) })} className={inputClass} />
+                  </div>
+                  <div>
+                    <label htmlFor="editor-screen-h" className="mb-1 block text-xs text-[var(--color-muted-foreground)]">Height (px)</label>
+                    <input id="editor-screen-h" type="number" min="240" max="4320" value={config.screen.height} onChange={(e) => updateScreen({ height: Number(e.target.value) })} className={inputClass} />
+                  </div>
+                </div>
+              )}
+            </div>
+            <div>
+              <label htmlFor="editor-zoom" className={labelClass}>
+                Content Zoom: {config.screen.zoom ?? 100}%
+              </label>
+              <input
+                id="editor-zoom"
+                type="range"
+                min="50"
+                max="200"
+                step="5"
+                value={config.screen.zoom ?? 100}
+                onChange={(e) => updateScreen({ zoom: Number(e.target.value) })}
+                className="w-full"
+              />
+              <div className="flex justify-between text-[10px] text-[var(--color-muted-foreground)]">
+                <span>50%</span>
+                <button type="button" onClick={() => updateScreen({ zoom: 100 })} className="hover:text-[var(--color-foreground)] transition-colors">Reset</button>
+                <span>200%</span>
+              </div>
+            </div>
             <h3 className="text-sm font-semibold text-[var(--color-foreground)]">Layout Options</h3>
             {layoutType === "ROOM_BOOKING" && <RoomBookingOptions config={config.layout as RoomBookingConfig} onChange={updateLayout} labelClass={labelClass} checkboxClass={checkboxClass} inputClass={inputClass} />}
             {layoutType === "AGENDA" && <AgendaOptions config={config.layout as AgendaConfig} onChange={updateLayout} labelClass={labelClass} checkboxClass={checkboxClass} inputClass={inputClass} />}
@@ -347,17 +486,43 @@ export function DisplayEditor({ displayId, layoutType, initialConfig, orientatio
 
       <div className="w-full lg:w-3/5">
         <div className="sticky top-4">
-          <h3 className="mb-3 text-sm font-semibold text-[var(--color-foreground)]">Live Preview</h3>
-          <DisplayPreview
-            displayId={displayId}
-            layoutType={layoutType}
-            config={config}
-            orientation={orientation}
-            roomName={roomName}
-          />
-          <p className="mt-2 text-xs text-[var(--color-muted-foreground)]">
-            Preview is scaled to fit. The actual display renders at full resolution.
-          </p>
+          <h3 className="mb-3 text-sm font-semibold text-[var(--color-foreground)]">
+            Live Preview
+            <span className="ml-2 text-xs font-normal text-[var(--color-muted-foreground)]">
+              {config.screen.width} x {config.screen.height}
+            </span>
+          </h3>
+          <div ref={previewContainerRef} className="w-full">
+            {containerWidth > 0 && (() => {
+              const screenW = config.screen.width || 1920;
+              const screenH = config.screen.height || 1080;
+              const scale = containerWidth / screenW;
+              return (
+                <div
+                  className="overflow-hidden rounded-lg border border-[var(--color-border)]"
+                  style={{
+                    width: containerWidth,
+                    height: screenH * scale,
+                  }}
+                >
+                  <iframe
+                    ref={iframeRef}
+                    key={previewKey}
+                    src={`/display/${displayToken}?preview=1`}
+                    style={{
+                      width: screenW,
+                      height: screenH,
+                      transform: `scale(${scale})`,
+                      transformOrigin: "top left",
+                      border: "none",
+                      pointerEvents: "none",
+                    }}
+                    title="Display preview"
+                  />
+                </div>
+              );
+            })()}
+          </div>
         </div>
       </div>
     </div>

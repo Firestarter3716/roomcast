@@ -86,10 +86,32 @@ export interface InfoDisplayConfig {
   tickerSeparator: string;
 }
 
+export interface ScreenConfig {
+  preset: string;
+  width: number;
+  height: number;
+  zoom: number;
+}
+
+export const RESOLUTION_PRESETS = [
+  { label: "Full HD", width: 1920, height: 1080 },
+  { label: "4K UHD", width: 3840, height: 2160 },
+  { label: "HD", width: 1280, height: 720 },
+  { label: "WXGA", width: 1366, height: 768 },
+] as const;
+
+export const DEFAULT_SCREEN: ScreenConfig = {
+  preset: "Full HD",
+  width: 1920,
+  height: 1080,
+  zoom: 100,
+};
+
 export interface DisplayConfig {
   theme: ThemeConfig;
   branding: BrandingConfig;
   background: BackgroundConfig;
+  screen: ScreenConfig;
   layout: RoomBookingConfig | AgendaConfig | DayGridConfig | WeekGridConfig | InfoDisplayConfig;
 }
 

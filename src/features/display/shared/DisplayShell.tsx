@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, type ReactNode } from "react";
-import { type DisplayConfig, DEFAULT_THEME, DEFAULT_BRANDING, DEFAULT_BACKGROUND } from "@/features/displays/types";
+import { type DisplayConfig, DEFAULT_THEME, DEFAULT_BRANDING, DEFAULT_BACKGROUND, DEFAULT_SCREEN } from "@/features/displays/types";
 import { getFontFamily } from "@/shared/lib/fonts";
 
 type ConnectionStatus = "connected" | "polling" | "disconnected";
@@ -24,6 +24,8 @@ export function DisplayShell({ config, isPreview = false, style, connectionStatu
   const theme = { ...DEFAULT_THEME, ...config?.theme };
   const branding = { ...DEFAULT_BRANDING, ...config?.branding };
   const background = { ...DEFAULT_BACKGROUND, ...config?.background };
+  const screen = { ...DEFAULT_SCREEN, ...config?.screen };
+  const zoomLevel = (screen.zoom || 100) / 100;
 
   useEffect(() => {
     if (isPreview) return;
@@ -95,7 +97,7 @@ export function DisplayShell({ config, isPreview = false, style, connectionStatu
       {background.type === "image" && background.imageUrl && (
         <div style={{ position: "absolute", inset: 0, backgroundImage: `url(${background.imageUrl})`, backgroundSize: "cover", backgroundPosition: "center", opacity: background.imageOpacity, zIndex: 0 }} />
       )}
-      <div style={{ position: "relative", zIndex: 1, width: "100%", height: "100%", display: "flex", flexDirection: "column" }}>
+      <div style={{ position: "relative", zIndex: 1, width: "100%", height: "100%", display: "flex", flexDirection: "column", zoom: zoomLevel }}>
         {branding.logoUrl && (
           <div style={{ display: "flex", justifyContent: branding.logoPosition === "top-center" ? "center" : branding.logoPosition === "top-right" ? "flex-end" : "flex-start", padding: "1rem 1.5rem 0" }}>
             <img src={branding.logoUrl} alt="Display logo" style={{ height: branding.logoSize === "small" ? "1.5rem" : branding.logoSize === "large" ? "3rem" : "2rem" }} onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />

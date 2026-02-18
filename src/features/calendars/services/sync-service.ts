@@ -99,9 +99,26 @@ export async function syncCalendar(calendarId: string): Promise<SyncResult> {
   const operations: Prisma.PrismaPromise<unknown>[] = [];
 
   for (const event of toCreate) {
+    const dbFields = mapToDbFields(event, calendarId);
     operations.push(
-      prisma.calendarEvent.create({
-        data: mapToDbFields(event, calendarId),
+      prisma.calendarEvent.upsert({
+        where: {
+          calendarId_externalId: { calendarId, externalId: event.externalId },
+        },
+        create: dbFields,
+        update: {
+          title: event.title,
+          description: event.description ?? null,
+          location: event.location ?? null,
+          organizer: event.organizer ?? null,
+          attendeeCount: event.attendeeCount ?? null,
+          startTime: event.startTime,
+          endTime: event.endTime,
+          isAllDay: event.isAllDay,
+          isRecurring: event.isRecurring,
+          recurrenceId: event.recurrenceId ?? null,
+          rawData: event.rawData as Prisma.InputJsonValue ?? undefined,
+        },
       })
     );
   }

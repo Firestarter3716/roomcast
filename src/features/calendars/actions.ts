@@ -149,12 +149,16 @@ export async function triggerCalendarSync(id: string) {
   const calendar = await prisma.calendar.findUnique({ where: { id } });
   if (!calendar) throw new Error("Calendar not found");
 
-  await prisma.calendar.update({
-    where: { id },
-    data: { nextSyncAt: new Date() },
-  });
+  // Run sync inline instead of just setting a flag
+  const { runSyncForCalendar } = await import("./services/sync-service");
+  const result = await runSyncForCalendar(id);
 
   revalidatePath("/admin/calendars");
+
+  if (result.error) {
+    throw new Error(result.error);
+  }
+
   return { success: true };
 }
 

@@ -39,7 +39,9 @@ export function RoomBookingView({
   // --------------------------------------------------
   // Derive current / upcoming events
   // --------------------------------------------------
-  const { currentEvent, nextEvents, isFree, isEndingSoon, freeFromTime } = useMemo(() => {
+  type UpcomingItem = { type: "event"; event: DisplayEvent } | { type: "free"; startTime: string; endTime: string; durationMin: number };
+
+  const { currentEvent, nextItems, isFree, isEndingSoon, freeFromTime } = useMemo(() => {
     const nowMs = now.getTime();
     const current = events.find(
       (e) =>
@@ -64,14 +66,71 @@ export function RoomBookingView({
       });
     }
 
+    // Build upcoming items list, interleaving free slots if enabled
+    const items: UpcomingItem[] = [];
+    const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1).getTime();
+
+    function addHourlyFreeSlots(target: UpcomingItem[], from: number, to: number) {
+      let slotStart = from;
+      while (slotStart < to) {
+        const d = new Date(slotStart);
+        const nextHour = new Date(d.getFullYear(), d.getMonth(), d.getDate(), d.getHours() + 1).getTime();
+        const slotEnd = Math.min(nextHour, to);
+        const slotMin = Math.round((slotEnd - slotStart) / 60_000);
+        if (slotMin >= 5) {
+          target.push({
+            type: "free",
+            startTime: new Date(slotStart).toISOString(),
+            endTime: new Date(slotEnd).toISOString(),
+            durationMin: slotMin,
+          });
+        }
+        slotStart = slotEnd;
+      }
+    }
+
+    if (config.showFreeSlots) {
+      // Use ALL today's future events (not just the display limit) for accurate free slot calculation
+      const allTodayUpcoming = events
+        .filter((e) => !e.isAllDay && new Date(e.startTime).getTime() > nowMs && new Date(e.startTime).getTime() < todayEnd)
+        .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
+
+      // Starting point: end of current event or now
+      let cursor = current ? new Date(current.endTime).getTime() : nowMs;
+
+      for (const event of allTodayUpcoming) {
+        const eventStart = new Date(event.startTime).getTime();
+        // Only insert free slots in gaps not covered by other events
+        if (eventStart > cursor) {
+          addHourlyFreeSlots(items, cursor, eventStart);
+        }
+        items.push({ type: "event", event });
+        // Advance cursor past this event's end (handles overlapping events)
+        cursor = Math.max(cursor, new Date(event.endTime).getTime());
+      }
+
+      // Add free slots for the rest of the day after the last event
+      if (cursor < todayEnd) {
+        // Cap at a reasonable end-of-day (e.g. 22:00) to avoid showing midnight slots
+        const eodCap = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 22).getTime();
+        if (cursor < eodCap) {
+          addHourlyFreeSlots(items, cursor, Math.min(todayEnd, eodCap));
+        }
+      }
+    } else {
+      for (const event of upcoming) {
+        items.push({ type: "event", event });
+      }
+    }
+
     return {
       currentEvent: current || allDay || null,
-      nextEvents: upcoming,
+      nextItems: items,
       isFree: !current && !allDay,
       isEndingSoon: endingSoon,
       freeFromTime: freeFrom,
     };
-  }, [events, now, config.futureEventCount, locale]);
+  }, [events, now, config.futureEventCount, config.showFreeSlots, locale]);
 
   // --------------------------------------------------
   // Fade transition: track previous event id
@@ -203,9 +262,9 @@ export function RoomBookingView({
     </div>
   ) : null;
 
-  /** Upcoming events list */
+  /** Upcoming events / free slots list */
   const upcomingList =
-    nextEvents.length > 0 ? (
+    nextItems.length > 0 ? (
       <div>
         <div
           style={{
@@ -218,31 +277,59 @@ export function RoomBookingView({
         >
           {t.comingUp}
         </div>
-        {nextEvents.map((event) => (
-          <div
-            key={event.id}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "1rem",
-              padding: "0.75rem 0",
-              borderTop: "1px solid color-mix(in srgb, var(--display-muted) 13%, transparent)",
-            }}
-          >
+        {nextItems.map((item, i) =>
+          item.type === "event" ? (
             <div
+              key={item.event.id}
               style={{
-                fontSize: "0.875rem",
-                fontWeight: 500,
-                opacity: 0.7,
-                width: "5rem",
-                flexShrink: 0,
+                display: "flex",
+                alignItems: "center",
+                gap: "1rem",
+                padding: "0.75rem 0",
+                borderTop: "1px solid color-mix(in srgb, var(--display-muted) 13%, transparent)",
               }}
             >
-              {formatTime(event.startTime)}
+              <div
+                style={{
+                  fontSize: "0.875rem",
+                  fontWeight: 500,
+                  opacity: 0.7,
+                  width: "5rem",
+                  flexShrink: 0,
+                }}
+              >
+                {formatTime(item.event.startTime)}
+              </div>
+              <div style={{ fontSize: "0.875rem" }}>{item.event.title}</div>
             </div>
-            <div style={{ fontSize: "0.875rem" }}>{event.title}</div>
-          </div>
-        ))}
+          ) : (
+            <div
+              key={`free-${i}`}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "1rem",
+                padding: "0.75rem 0",
+                borderTop: "1px solid color-mix(in srgb, var(--display-muted) 13%, transparent)",
+              }}
+            >
+              <div
+                style={{
+                  fontSize: "0.875rem",
+                  fontWeight: 500,
+                  opacity: 0.7,
+                  width: "5rem",
+                  flexShrink: 0,
+                }}
+              >
+                {formatTime(item.startTime)}
+              </div>
+              <div style={{ fontSize: "0.875rem", color: "var(--display-free)", opacity: 0.8 }}>
+                {t.free} {formatTime(item.startTime)} – {formatTime(item.endTime)}
+              </div>
+            </div>
+          ),
+        )}
       </div>
     ) : null;
 
@@ -257,14 +344,15 @@ export function RoomBookingView({
           flexDirection: "column",
           height: "100%",
           padding: "2rem",
+          overflow: "hidden",
         }}
       >
         {/* Top: Large status banner spanning full width */}
-        <div style={{ marginBottom: "1rem" }}>{statusBanner}</div>
+        <div style={{ marginBottom: "1rem", flexShrink: 0 }}>{statusBanner}</div>
 
         {/* Room name and location */}
         {roomName && (
-          <div style={{ textAlign: "center", marginBottom: "0.5rem" }}>
+          <div style={{ textAlign: "center", marginBottom: "0.5rem", flexShrink: 0 }}>
             <div
               style={{
                 fontSize: "clamp(1rem, 2vw, 1.5rem)",
@@ -288,26 +376,27 @@ export function RoomBookingView({
         )}
 
         {/* Free from indicator */}
-        {freeFromIndicator}
+        {freeFromIndicator && <div style={{ flexShrink: 0 }}>{freeFromIndicator}</div>}
 
         {/* Middle: Current meeting info */}
         {meetingDetail && (
-          <div style={{ marginTop: "1rem", marginBottom: "1.5rem" }}>{meetingDetail}</div>
+          <div style={{ marginTop: "1rem", flexShrink: 0 }}>{meetingDetail}</div>
         )}
 
-        {/* Below: Upcoming events (compact), pushed toward bottom */}
+        {/* Upcoming events: takes remaining space, clips overflow */}
         {upcomingList && (
-          <div style={{ marginTop: "auto", paddingTop: "1.5rem" }}>
+          <div style={{ flex: 1, minHeight: 0, overflow: "hidden", paddingTop: "1.5rem" }}>
             {upcomingList}
           </div>
         )}
 
-        {/* Bottom: Date + Clock */}
+        {/* Bottom: Date + Clock — always visible */}
         <div
           style={{
-            marginTop: upcomingList ? "1.5rem" : "auto",
+            marginTop: upcomingList ? "1rem" : "auto",
             textAlign: "center",
             paddingTop: "1rem",
+            flexShrink: 0,
           }}
         >
           <div style={{ fontSize: "0.875rem", opacity: 0.5, marginBottom: "0.5rem" }}>
@@ -334,6 +423,7 @@ export function RoomBookingView({
         height: "100%",
         padding: "2rem",
         gap: "2rem",
+        overflow: "hidden",
       }}
     >
       {/* Left 60%: Status + meeting details */}
@@ -342,6 +432,7 @@ export function RoomBookingView({
           flex: "0 0 60%",
           display: "flex",
           flexDirection: "column",
+          overflow: "hidden",
         }}
       >
         {/* Header row: room name + clock */}
@@ -351,6 +442,7 @@ export function RoomBookingView({
             justifyContent: "space-between",
             alignItems: "center",
             marginBottom: "1.5rem",
+            flexShrink: 0,
           }}
         >
           <div>
@@ -389,26 +481,26 @@ export function RoomBookingView({
         </div>
 
         {/* Status banner */}
-        {statusBanner}
+        <div style={{ flexShrink: 0 }}>{statusBanner}</div>
 
         {/* Free from indicator */}
-        {freeFromIndicator}
+        {freeFromIndicator && <div style={{ flexShrink: 0 }}>{freeFromIndicator}</div>}
 
-        {/* Current meeting detail */}
+        {/* Current meeting detail — clips if it would overflow */}
         {meetingDetail && (
-          <div style={{ marginTop: "1.5rem" }}>{meetingDetail}</div>
+          <div style={{ marginTop: "1.5rem", flex: 1, minHeight: 0, overflow: "hidden" }}>{meetingDetail}</div>
         )}
       </div>
 
-      {/* Right 40%: Upcoming events */}
+      {/* Right 40%: Upcoming events — constrained to panel height */}
       <div
         style={{
           flex: "0 0 calc(40% - 2rem)",
           display: "flex",
           flexDirection: "column",
-          justifyContent: "flex-start",
           paddingTop: "4rem",
-          overflowY: "hidden",
+          minHeight: 0,
+          overflow: "hidden",
         }}
       >
         {upcomingList}

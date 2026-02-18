@@ -7,6 +7,7 @@ import {
   DEFAULT_THEME,
   DEFAULT_BRANDING,
   DEFAULT_BACKGROUND,
+  DEFAULT_SCREEN,
   getDefaultLayoutConfig,
 } from "@/features/displays/types";
 
@@ -89,6 +90,7 @@ export default async function DisplayPage({ params, searchParams }: DisplayPageP
     theme: { ...DEFAULT_THEME, ...rawConfig?.theme },
     branding: { ...DEFAULT_BRANDING, ...rawConfig?.branding },
     background: { ...DEFAULT_BACKGROUND, ...rawConfig?.background },
+    screen: { ...DEFAULT_SCREEN, ...rawConfig?.screen },
     layout: { ...getDefaultLayoutConfig(display.layoutType), ...rawConfig?.layout },
   };
 

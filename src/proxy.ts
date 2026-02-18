@@ -22,7 +22,7 @@ export default auth((req) => {
     "img-src 'self' data: https: blob:",
     "font-src 'self' data:",
     "connect-src 'self'",
-    `frame-ancestors ${isAdminRoute ? "'self'" : "'none'"}`,
+    `frame-ancestors ${isAdminRoute || isDisplayRoute ? "'self'" : "'none'"}`,
     "base-uri 'self'",
     "form-action 'self'",
   ];

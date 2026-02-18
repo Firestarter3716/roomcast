@@ -3,7 +3,7 @@ import { ArrowLeft, ExternalLink } from "lucide-react";
 import { notFound } from "next/navigation";
 import { getDisplay } from "@/features/displays/actions";
 import { DisplayEditor } from "@/features/displays/components";
-import { type DisplayConfig, DEFAULT_THEME, DEFAULT_BRANDING, DEFAULT_BACKGROUND, getDefaultLayoutConfig } from "@/features/displays/types";
+import { type DisplayConfig, DEFAULT_THEME, DEFAULT_BRANDING, DEFAULT_BACKGROUND, DEFAULT_SCREEN, getDefaultLayoutConfig } from "@/features/displays/types";
 
 export const dynamic = "force-dynamic";
 
@@ -24,6 +24,7 @@ export default async function EditDisplayPage({ params }: EditDisplayPageProps) 
     theme: { ...DEFAULT_THEME, ...config?.theme },
     branding: { ...DEFAULT_BRANDING, ...config?.branding },
     background: { ...DEFAULT_BACKGROUND, ...config?.background },
+    screen: { ...DEFAULT_SCREEN, ...config?.screen },
     layout: { ...getDefaultLayoutConfig(display.layoutType), ...config?.layout },
   };
 
@@ -44,7 +45,7 @@ export default async function EditDisplayPage({ params }: EditDisplayPageProps) 
           {display.room && ` \u00B7 ${display.room.name}`}
         </p>
       </div>
-      <DisplayEditor displayId={display.id} layoutType={display.layoutType} initialConfig={safeConfig} orientation={display.orientation} roomName={display.room?.name} initialIpWhitelist={display.ipWhitelist} />
+      <DisplayEditor displayId={display.id} displayToken={display.token} layoutType={display.layoutType} initialConfig={safeConfig} orientation={display.orientation} roomName={display.room?.name} initialIpWhitelist={display.ipWhitelist} />
     </div>
   );
 }

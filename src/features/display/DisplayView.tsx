@@ -20,6 +20,7 @@ import {
   DEFAULT_THEME,
   DEFAULT_BRANDING,
   DEFAULT_BACKGROUND,
+  DEFAULT_SCREEN,
   getDefaultLayoutConfig,
 } from "@/features/displays/types";
 import { THEME_PALETTES } from "@/features/displays/palettes";
@@ -128,6 +129,7 @@ export function DisplayView({
         theme: { ...DEFAULT_THEME, ...(liveConfig as DisplayConfig).theme },
         branding: { ...DEFAULT_BRANDING, ...(liveConfig as DisplayConfig).branding },
         background: { ...DEFAULT_BACKGROUND, ...(liveConfig as DisplayConfig).background },
+        screen: { ...DEFAULT_SCREEN, ...(liveConfig as DisplayConfig).screen },
         layout: { ...getDefaultLayoutConfig(layoutType), ...(liveConfig as DisplayConfig).layout },
       }
     : initialConfig;

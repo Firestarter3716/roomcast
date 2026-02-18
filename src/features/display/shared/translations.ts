@@ -31,6 +31,8 @@ export interface DisplayTranslations {
   upcoming: string;
   agenda: string;
   attendees: string;
+  /** Template: "{duration} min free", for free slot display */
+  freeForMinutes: string;
 }
 
 const de: DisplayTranslations = {
@@ -53,6 +55,7 @@ const de: DisplayTranslations = {
   upcoming: "Bevorstehend",
   agenda: "Agenda",
   attendees: "Teilnehmer",
+  freeForMinutes: "{duration} Min. frei",
 };
 
 const en: DisplayTranslations = {
@@ -75,6 +78,7 @@ const en: DisplayTranslations = {
   upcoming: "Upcoming",
   agenda: "Agenda",
   attendees: "attendees",
+  freeForMinutes: "{duration} min free",
 };
 
 const fr: DisplayTranslations = {
@@ -97,6 +101,7 @@ const fr: DisplayTranslations = {
   upcoming: "\u00c0 venir",
   agenda: "Agenda",
   attendees: "participants",
+  freeForMinutes: "{duration} min libre",
 };
 
 const translations: Record<string, DisplayTranslations> = { de, en, fr };
