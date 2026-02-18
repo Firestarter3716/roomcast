@@ -49,6 +49,7 @@ export interface RoomBookingConfig {
   showAttendeeCount: boolean;
   showProgressBar: boolean;
   futureEventCount: number;
+  nextEventCards: number;
   showFreeSlots: boolean;
   clockFormat: "12h" | "24h";
 }
@@ -154,6 +155,7 @@ export const DEFAULT_ROOM_BOOKING: RoomBookingConfig = {
   showAttendeeCount: true,
   showProgressBar: true,
   futureEventCount: 3,
+  nextEventCards: 2,
   showFreeSlots: true,
   clockFormat: "24h",
 };

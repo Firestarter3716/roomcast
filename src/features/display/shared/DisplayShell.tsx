@@ -74,10 +74,17 @@ export function DisplayShell({ config, isPreview = false, style, connectionStatu
       roomStatus === "free" ? theme.free :
       roomStatus === "endingSoon" ? (theme.endingSoon || "#B45309") :
       theme.busy;
-    bgStyle = {
-      backgroundColor: statusBgColor,
-      transition: "background-color 0.8s ease",
-    };
+    if (background.type === "gradient") {
+      bgStyle = {
+        background: `linear-gradient(${background.gradientAngle}deg, ${statusBgColor}, color-mix(in srgb, ${statusBgColor} 60%, #000))`,
+        transition: "background 0.8s ease",
+      };
+    } else {
+      bgStyle = {
+        backgroundColor: statusBgColor,
+        transition: "background-color 0.8s ease",
+      };
+    }
   } else if (background.type === "gradient") {
     bgStyle = { background: `linear-gradient(${background.gradientAngle}deg, ${background.gradientStart}, ${background.gradientEnd})` };
   } else if (background.type === "solid") {

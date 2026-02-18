@@ -35,7 +35,7 @@ interface DisplayEditorProps {
   initialIpWhitelist?: string[];
 }
 
-type EditorTab = "layout" | "theme" | "branding" | "background";
+type EditorTab = "layout" | "theme" | "branding";
 
 export function DisplayEditor({ displayId, displayToken, layoutType, initialConfig, orientation, roomName, initialIpWhitelist }: DisplayEditorProps) {
   const [config, setConfig] = useState<DisplayConfig>({
@@ -75,8 +75,8 @@ export function DisplayEditor({ displayId, displayToken, layoutType, initialConf
     const isNowPortrait = value === "PORTRAIT";
     const wasPortrait = prev === "PORTRAIT";
     if (isNowPortrait !== wasPortrait) {
-      const { width, height, preset } = config.screen;
-      const newScreen: ScreenConfig = { preset, width: height, height: width };
+      const { width, height, preset, zoom } = config.screen;
+      const newScreen: ScreenConfig = { preset, width: height, height: width, zoom };
       const newConfig = { ...config, screen: newScreen };
       setConfig(newConfig);
       autoSave(newConfig);
@@ -214,7 +214,6 @@ export function DisplayEditor({ displayId, displayToken, layoutType, initialConf
     { id: "layout", label: "Layout", icon: Layout },
     { id: "theme", label: "Theme", icon: Palette },
     { id: "branding", label: "Branding", icon: Tag },
-    { id: "background", label: "Background", icon: Image },
   ];
 
   const inputClass = "w-full rounded-md border border-[var(--color-input)] bg-[var(--color-background)] px-3 py-2 text-sm text-[var(--color-foreground)] focus:border-[var(--color-ring)] focus:outline-none focus:ring-2 focus:ring-[var(--color-ring)]/40";
@@ -329,6 +328,7 @@ export function DisplayEditor({ displayId, displayToken, layoutType, initialConf
           <ThemePanel
             config={config}
             updateTheme={updateTheme}
+            updateBackground={updateBackground}
             labelClass={labelClass}
             inputClass={inputClass}
             checkboxClass={checkboxClass}
@@ -366,58 +366,6 @@ export function DisplayEditor({ displayId, displayToken, layoutType, initialConf
               <input type="checkbox" checked={config.branding.showPoweredBy} onChange={(e) => updateBranding({ showPoweredBy: e.target.checked })} />
               Show &quot;Powered by RoomCast&quot;
             </label>
-          </div>
-        )}
-
-        {activeTab === "background" && (
-          <div role="tabpanel" aria-labelledby="tab-background" className="space-y-4">
-            <h3 className="text-sm font-semibold text-[var(--color-foreground)]">Background</h3>
-            <div>
-              <label className={labelClass}>Type</label>
-              <div className="flex gap-2">
-                {(["solid", "gradient", "image"] as const).map((t) => (
-                  <button key={t} type="button" aria-pressed={config.background.type === t} onClick={() => updateBackground({ type: t })} className={`flex-1 rounded-md border px-3 py-2 text-xs transition-colors ${config.background.type === t ? "border-[var(--color-primary)] bg-[var(--color-primary)]/10 text-[var(--color-primary)]" : "border-[var(--color-border)] text-[var(--color-muted-foreground)]"}`}>
-                    {t.charAt(0).toUpperCase() + t.slice(1)}
-                  </button>
-                ))}
-              </div>
-            </div>
-            {config.background.type === "solid" && (
-              <div className="flex items-center gap-3">
-                <input type="color" value={config.background.color} onChange={(e) => updateBackground({ color: e.target.value })} className="h-8 w-8 cursor-pointer rounded border border-[var(--color-border)]" aria-label="Background color picker" />
-                <input id="editor-bg-color" type="text" value={config.background.color} onChange={(e) => updateBackground({ color: e.target.value })} className={inputClass} aria-label="Background color hex value" />
-              </div>
-            )}
-            {config.background.type === "gradient" && (
-              <>
-                <div className="flex items-center gap-3">
-                  <label htmlFor="editor-gradient-start" className="text-xs text-[var(--color-muted-foreground)] w-12">Start</label>
-                  <input type="color" value={config.background.gradientStart} onChange={(e) => updateBackground({ gradientStart: e.target.value })} className="h-8 w-8 cursor-pointer rounded border border-[var(--color-border)]" aria-label="Gradient start color picker" />
-                  <input id="editor-gradient-start" type="text" value={config.background.gradientStart} onChange={(e) => updateBackground({ gradientStart: e.target.value })} className={inputClass} />
-                </div>
-                <div className="flex items-center gap-3">
-                  <label htmlFor="editor-gradient-end" className="text-xs text-[var(--color-muted-foreground)] w-12">End</label>
-                  <input type="color" value={config.background.gradientEnd} onChange={(e) => updateBackground({ gradientEnd: e.target.value })} className="h-8 w-8 cursor-pointer rounded border border-[var(--color-border)]" aria-label="Gradient end color picker" />
-                  <input id="editor-gradient-end" type="text" value={config.background.gradientEnd} onChange={(e) => updateBackground({ gradientEnd: e.target.value })} className={inputClass} />
-                </div>
-                <div>
-                  <label htmlFor="editor-gradient-angle" className={labelClass}>Angle: {config.background.gradientAngle}&deg;</label>
-                  <input id="editor-gradient-angle" type="range" min="0" max="360" value={config.background.gradientAngle} onChange={(e) => updateBackground({ gradientAngle: Number(e.target.value) })} className="w-full" />
-                </div>
-              </>
-            )}
-            {config.background.type === "image" && (
-              <>
-                <div>
-                  <label htmlFor="editor-image-url" className={labelClass}>Image URL</label>
-                  <input id="editor-image-url" type="text" value={config.background.imageUrl} onChange={(e) => updateBackground({ imageUrl: e.target.value })} className={inputClass} placeholder="https://example.com/bg.jpg" />
-                </div>
-                <div>
-                  <label htmlFor="editor-image-opacity" className={labelClass}>Opacity: {Math.round(config.background.imageOpacity * 100)}%</label>
-                  <input id="editor-image-opacity" type="range" min="0" max="1" step="0.05" value={config.background.imageOpacity} onChange={(e) => updateBackground({ imageOpacity: Number(e.target.value) })} className="w-full" />
-                </div>
-              </>
-            )}
           </div>
         )}
 
@@ -525,14 +473,16 @@ export function DisplayEditor({ displayId, displayToken, layoutType, initialConf
   );
 }
 
-function ThemePanel({ config, updateTheme, labelClass, inputClass, checkboxClass }: {
+function ThemePanel({ config, updateTheme, updateBackground, labelClass, inputClass, checkboxClass }: {
   config: DisplayConfig;
   updateTheme: (partial: Partial<ThemeConfig>) => void;
+  updateBackground: (partial: Partial<BackgroundConfig>) => void;
   labelClass: string;
   inputClass: string;
   checkboxClass: string;
 }) {
   const [customOpen, setCustomOpen] = useState(config.theme.preset === "custom");
+  const [bgOpen, setBgOpen] = useState(config.background.type !== "solid" || config.background.color !== "#0F172A");
 
   return (
     <div role="tabpanel" aria-labelledby="tab-theme" className="space-y-4">
@@ -607,6 +557,69 @@ function ThemePanel({ config, updateTheme, labelClass, inputClass, checkboxClass
           </div>
         )}
       </div>
+
+      <div className="rounded-lg border border-[var(--color-border)]">
+        <button
+          type="button"
+          onClick={() => setBgOpen(!bgOpen)}
+          aria-expanded={bgOpen}
+          className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm font-medium text-[var(--color-foreground)] hover:bg-[var(--color-muted)]/10 transition-colors rounded-lg"
+        >
+          <Image className="h-4 w-4 text-[var(--color-muted-foreground)]" />
+          Background
+          {bgOpen ? <ChevronDown className="ml-auto h-4 w-4 text-[var(--color-muted-foreground)]" /> : <ChevronRight className="ml-auto h-4 w-4 text-[var(--color-muted-foreground)]" />}
+        </button>
+        {bgOpen && (
+          <div className="border-t border-[var(--color-border)] px-4 py-4 space-y-4">
+            <div>
+              <label className={labelClass}>Type</label>
+              <div className="flex gap-2">
+                {(["solid", "gradient", "image"] as const).map((t) => (
+                  <button key={t} type="button" aria-pressed={config.background.type === t} onClick={() => updateBackground({ type: t })} className={`flex-1 rounded-md border px-3 py-2 text-xs transition-colors ${config.background.type === t ? "border-[var(--color-primary)] bg-[var(--color-primary)]/10 text-[var(--color-primary)]" : "border-[var(--color-border)] text-[var(--color-muted-foreground)]"}`}>
+                    {t.charAt(0).toUpperCase() + t.slice(1)}
+                  </button>
+                ))}
+              </div>
+            </div>
+            {config.background.type === "solid" && (
+              <div className="flex items-center gap-3">
+                <input type="color" value={config.background.color} onChange={(e) => updateBackground({ color: e.target.value })} className="h-8 w-8 cursor-pointer rounded border border-[var(--color-border)]" aria-label="Background color picker" />
+                <input id="editor-bg-color" type="text" value={config.background.color} onChange={(e) => updateBackground({ color: e.target.value })} className={inputClass} aria-label="Background color hex value" />
+              </div>
+            )}
+            {config.background.type === "gradient" && (
+              <>
+                <div className="flex items-center gap-3">
+                  <label htmlFor="editor-gradient-start" className="text-xs text-[var(--color-muted-foreground)] w-12">Start</label>
+                  <input type="color" value={config.background.gradientStart} onChange={(e) => updateBackground({ gradientStart: e.target.value })} className="h-8 w-8 cursor-pointer rounded border border-[var(--color-border)]" aria-label="Gradient start color picker" />
+                  <input id="editor-gradient-start" type="text" value={config.background.gradientStart} onChange={(e) => updateBackground({ gradientStart: e.target.value })} className={inputClass} />
+                </div>
+                <div className="flex items-center gap-3">
+                  <label htmlFor="editor-gradient-end" className="text-xs text-[var(--color-muted-foreground)] w-12">End</label>
+                  <input type="color" value={config.background.gradientEnd} onChange={(e) => updateBackground({ gradientEnd: e.target.value })} className="h-8 w-8 cursor-pointer rounded border border-[var(--color-border)]" aria-label="Gradient end color picker" />
+                  <input id="editor-gradient-end" type="text" value={config.background.gradientEnd} onChange={(e) => updateBackground({ gradientEnd: e.target.value })} className={inputClass} />
+                </div>
+                <div>
+                  <label htmlFor="editor-gradient-angle" className={labelClass}>Angle: {config.background.gradientAngle}&deg;</label>
+                  <input id="editor-gradient-angle" type="range" min="0" max="360" value={config.background.gradientAngle} onChange={(e) => updateBackground({ gradientAngle: Number(e.target.value) })} className="w-full" />
+                </div>
+              </>
+            )}
+            {config.background.type === "image" && (
+              <>
+                <div>
+                  <label htmlFor="editor-image-url" className={labelClass}>Image URL</label>
+                  <input id="editor-image-url" type="text" value={config.background.imageUrl} onChange={(e) => updateBackground({ imageUrl: e.target.value })} className={inputClass} placeholder="https://example.com/bg.jpg" />
+                </div>
+                <div>
+                  <label htmlFor="editor-image-opacity" className={labelClass}>Opacity: {Math.round(config.background.imageOpacity * 100)}%</label>
+                  <input id="editor-image-opacity" type="range" min="0" max="1" step="0.05" value={config.background.imageOpacity} onChange={(e) => updateBackground({ imageOpacity: Number(e.target.value) })} className="w-full" />
+                </div>
+              </>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -619,6 +632,7 @@ function RoomBookingOptions({ config, onChange, labelClass, checkboxClass, input
       <label className={checkboxClass}><input type="checkbox" checked={config.showProgressBar} onChange={(e) => onChange({ showProgressBar: e.target.checked })} /> Show progress bar</label>
       <label className={checkboxClass}><input type="checkbox" checked={config.showFreeSlots} onChange={(e) => onChange({ showFreeSlots: e.target.checked })} /> Show free time slots</label>
       <div><label htmlFor="editor-rb-future-events" className={labelClass}>Upcoming events</label><input id="editor-rb-future-events" type="number" min="1" max="10" value={config.futureEventCount} onChange={(e) => onChange({ futureEventCount: Number(e.target.value) })} className={inputClass} /></div>
+      <div><label htmlFor="editor-rb-next-cards" className={labelClass}>Next event cards (left side)</label><input id="editor-rb-next-cards" type="number" min="0" max="5" value={config.nextEventCards ?? 2} onChange={(e) => onChange({ nextEventCards: Number(e.target.value) })} className={inputClass} /></div>
       <div><label htmlFor="editor-rb-clock-format" className={labelClass}>Clock format</label><select id="editor-rb-clock-format" value={config.clockFormat} onChange={(e) => onChange({ clockFormat: e.target.value })} className={inputClass}><option value="24h">24-hour</option><option value="12h">12-hour</option></select></div>
     </div>
   );

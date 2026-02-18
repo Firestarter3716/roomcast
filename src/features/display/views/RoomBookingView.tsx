@@ -41,7 +41,7 @@ export function RoomBookingView({
   // --------------------------------------------------
   type UpcomingItem = { type: "event"; event: DisplayEvent } | { type: "free"; startTime: string; endTime: string; durationMin: number };
 
-  const { currentEvent, nextItems, isFree, isEndingSoon, freeFromTime } = useMemo(() => {
+  const { currentEvent, nextEvents, nextItems, isFree, isEndingSoon, freeFromTime } = useMemo(() => {
     const nowMs = now.getTime();
     const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1).getTime();
 
@@ -138,14 +138,19 @@ export function RoomBookingView({
       }
     }
 
+    // Next N upcoming events (for left-side cards in landscape, max 5)
+    const cardCount = Math.min(Math.max(config.nextEventCards ?? 2, 0), 5);
+    const next2 = upcoming.slice(0, cardCount);
+
     return {
       currentEvent: current || allDay || null,
+      nextEvents: next2,
       nextItems: items,
       isFree: !current && !allDay,
       isEndingSoon: endingSoon,
       freeFromTime: freeFrom,
     };
-  }, [events, now, config.futureEventCount, config.showFreeSlots, locale]);
+  }, [events, now, config.futureEventCount, config.nextEventCards, config.showFreeSlots, locale]);
 
   // --------------------------------------------------
   // Fade transition: track previous event id
@@ -182,21 +187,27 @@ export function RoomBookingView({
     <StatusBanner isFree={isFree} locale={locale} />
   );
 
-  /** Current meeting detail block */
+  /** Current meeting detail block — highlighted card */
   const meetingDetail = currentEvent ? (
     <div
       key={fadeKey}
       style={{
         padding: "1.5rem",
         borderRadius: "0.75rem",
-        backgroundColor: "color-mix(in srgb, var(--display-busy) 8%, transparent)",
+        backgroundColor: "color-mix(in srgb, var(--display-busy) 12%, transparent)",
+        borderLeft: "4px solid var(--display-busy)",
         animation: "display-fade-in 0.5s ease-out",
       }}
     >
+      <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "0.5rem" }}>
+        <div style={{ width: "0.5rem", height: "0.5rem", borderRadius: "50%", backgroundColor: "var(--display-busy)", animation: "display-pulse 2s ease-in-out infinite" }} />
+        <span style={{ fontSize: "0.7rem", textTransform: "uppercase", letterSpacing: "0.1em", opacity: 0.6, fontWeight: 600 }}>{t.status.busy}</span>
+      </div>
       <div
         style={{
-          fontSize: "clamp(1.25rem, 3vw, 2rem)",
-          fontWeight: 600,
+          fontSize: "clamp(1.5rem, 3.5vw, 2.25rem)",
+          fontWeight: 700,
+          lineHeight: 1.2,
         }}
       >
         {currentEvent.title}
@@ -222,14 +233,13 @@ export function RoomBookingView({
             marginTop: "0.5rem",
             color: "var(--display-busy)",
             fontSize: "0.875rem",
-            fontWeight: 500,
+            fontWeight: 600,
           }}
         >
           {t.status.endingSoon}
         </div>
       )}
 
-      {/* All-day event: show "Occupied all day" instead of progress + time */}
       {currentEvent.isAllDay ? (
         <div
           style={{
@@ -253,15 +263,34 @@ export function RoomBookingView({
             </div>
           )}
           <div
-            style={{ marginTop: "0.5rem", fontSize: "0.875rem", opacity: 0.6 }}
+            style={{ marginTop: "0.5rem", fontSize: "1rem", opacity: 0.7, fontWeight: 500 }}
           >
-            {formatTime(currentEvent.startTime)} -{" "}
-            {formatTime(currentEvent.endTime)}
+            {formatTime(currentEvent.startTime)} – {formatTime(currentEvent.endTime)}
           </div>
         </>
       )}
     </div>
   ) : null;
+
+  /** Next event card (smaller, muted style) */
+  const nextEventCard = (event: DisplayEvent) => (
+    <div
+      key={event.id}
+      style={{
+        padding: "1rem 1.25rem",
+        borderRadius: "0.75rem",
+        backgroundColor: "color-mix(in srgb, var(--display-muted) 6%, transparent)",
+        borderLeft: "3px solid color-mix(in srgb, var(--display-muted) 30%, transparent)",
+      }}
+    >
+      <div style={{ fontSize: "clamp(0.875rem, 1.5vw, 1.125rem)", fontWeight: 600 }}>
+        {event.title}
+      </div>
+      <div style={{ marginTop: "0.25rem", fontSize: "0.8rem", opacity: 0.55, fontWeight: 500 }}>
+        {formatTime(event.startTime)} – {formatTime(event.endTime)}
+      </div>
+    </div>
+  );
 
   /** "Free from HH:MM" indicator shown when room is busy */
   const freeFromIndicator = !isFree && freeFromTime ? (
@@ -428,6 +457,50 @@ export function RoomBookingView({
   }
 
   // --------------------------------------------------
+  // Landscape: measure which next-event cards fit without clipping
+  // --------------------------------------------------
+  const cardsContainerRef = useRef<HTMLDivElement>(null);
+  const [visibleCardCount, setVisibleCardCount] = useState(nextEvents.length);
+
+  useEffect(() => {
+    const container = cardsContainerRef.current;
+    if (!container || nextEvents.length === 0) {
+      setVisibleCardCount(nextEvents.length);
+      return;
+    }
+    function measure() {
+      if (!container) return;
+      const containerH = container.clientHeight;
+      const children = Array.from(container.children) as HTMLElement[];
+      // First child is the "Coming up" label
+      let used = children[0]?.offsetHeight ?? 0;
+      let fits = 0;
+      for (let i = 1; i < children.length; i++) {
+        const gap = 8; // 0.5rem gap
+        const childH = children[i].offsetHeight + (i > 1 ? gap : gap);
+        if (used + childH <= containerH) {
+          used += childH;
+          fits++;
+        } else {
+          break;
+        }
+      }
+      setVisibleCardCount(fits);
+    }
+    // Measure after render
+    const frame = requestAnimationFrame(measure);
+    const ro = new ResizeObserver(measure);
+    ro.observe(container);
+    return () => { cancelAnimationFrame(frame); ro.disconnect(); };
+  }, [nextEvents.length, currentEvent, isFree]);
+
+  const visibleNextEvents = nextEvents.slice(0, visibleCardCount);
+  const leftCardIds = new Set(visibleNextEvents.map((e) => e.id));
+  const rightItems = nextItems.filter(
+    (item) => item.type === "free" || !leftCardIds.has(item.event.id),
+  );
+
+  // --------------------------------------------------
   // Landscape layout (side by side)
   // --------------------------------------------------
   return (
@@ -441,7 +514,7 @@ export function RoomBookingView({
         overflow: "hidden",
       }}
     >
-      {/* Left 60%: Status + meeting details */}
+      {/* Left 60%: Status + current meeting + next 2 cards */}
       <div
         style={{
           flex: "0 0 60%",
@@ -501,13 +574,27 @@ export function RoomBookingView({
         {/* Free from indicator */}
         {freeFromIndicator && <div style={{ flexShrink: 0 }}>{freeFromIndicator}</div>}
 
-        {/* Current meeting detail — clips if it would overflow */}
+        {/* Current meeting detail — highlighted card */}
         {meetingDetail && (
-          <div style={{ marginTop: "1.5rem", flex: 1, minHeight: 0, overflow: "hidden" }}>{meetingDetail}</div>
+          <div style={{ marginTop: "1.5rem", flexShrink: 0 }}>{meetingDetail}</div>
+        )}
+
+        {/* Next upcoming meetings as cards — only show cards that fully fit */}
+        {nextEvents.length > 0 && (
+          <div ref={cardsContainerRef} style={{ marginTop: "1rem", display: "flex", flexDirection: "column", gap: "0.5rem", flex: 1, minHeight: 0, overflow: "hidden" }}>
+            <div style={{ fontSize: "0.7rem", textTransform: "uppercase", letterSpacing: "0.1em", opacity: 0.4, fontWeight: 600, flexShrink: 0 }}>
+              {t.comingUp}
+            </div>
+            {nextEvents.map((e, i) => (
+              <div key={e.id} style={{ flexShrink: 0, visibility: i < visibleCardCount ? "visible" : "hidden" }}>
+                {nextEventCard(e)}
+              </div>
+            ))}
+          </div>
         )}
       </div>
 
-      {/* Right 40%: Upcoming events — constrained to panel height */}
+      {/* Right 40%: Remaining upcoming events / free slots */}
       <div
         style={{
           flex: "0 0 calc(40% - 2rem)",
@@ -518,7 +605,74 @@ export function RoomBookingView({
           overflow: "hidden",
         }}
       >
-        {upcomingList}
+        {rightItems.length > 0 ? (
+          <div>
+            <div
+              style={{
+                fontSize: "0.75rem",
+                textTransform: "uppercase",
+                letterSpacing: "0.1em",
+                opacity: 0.5,
+                marginBottom: "0.75rem",
+              }}
+            >
+              {t.comingUp}
+            </div>
+            {rightItems.map((item, i) =>
+              item.type === "event" ? (
+                <div
+                  key={item.event.id}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "1rem",
+                    padding: "0.75rem 0",
+                    borderTop: "1px solid color-mix(in srgb, var(--display-muted) 13%, transparent)",
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: "0.875rem",
+                      fontWeight: 500,
+                      opacity: 0.7,
+                      width: "5rem",
+                      flexShrink: 0,
+                    }}
+                  >
+                    {formatTime(item.event.startTime)}
+                  </div>
+                  <div style={{ fontSize: "0.875rem" }}>{item.event.title}</div>
+                </div>
+              ) : (
+                <div
+                  key={`free-${i}`}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "1rem",
+                    padding: "0.75rem 0",
+                    borderTop: "1px solid color-mix(in srgb, var(--display-muted) 13%, transparent)",
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: "0.875rem",
+                      fontWeight: 500,
+                      opacity: 0.7,
+                      width: "5rem",
+                      flexShrink: 0,
+                    }}
+                  >
+                    {formatTime(item.startTime)}
+                  </div>
+                  <div style={{ fontSize: "0.875rem", color: "var(--display-free)", opacity: 0.8 }}>
+                    {t.free} {formatTime(item.startTime)} – {formatTime(item.endTime)}
+                  </div>
+                </div>
+              ),
+            )}
+          </div>
+        ) : null}
       </div>
     </div>
   );

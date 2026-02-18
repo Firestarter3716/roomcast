@@ -60,6 +60,11 @@
   to { transform: translateY(0); opacity: 1; }
 }
 
+@keyframes display-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
 @keyframes display-ticker {
   0% { transform: translateX(0); }
   100% { transform: translateX(-50%); }
