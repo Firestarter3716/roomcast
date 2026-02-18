@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useDisplaySSE, type DisplayEvent } from "./hooks/useDisplaySSE";
 import { DisplayShell } from "./shared/DisplayShell";
 import { EventErrorBoundary } from "./shared/EventErrorBoundary";
+import { ViewErrorBoundary } from "./shared/ViewErrorBoundary";
 import { RoomBookingView } from "./views/RoomBookingView";
 import { AgendaView } from "./views/AgendaView";
 import { DayGridView } from "./views/DayGridView";
@@ -88,6 +89,32 @@ export function DisplayView({
     }
   }, [connected, connectionMode]);
 
+  // --- Auto-detect screen orientation ---
+  const [detectedOrientation, setDetectedOrientation] = useState<"LANDSCAPE" | "PORTRAIT">("LANDSCAPE");
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mql = window.matchMedia("(orientation: portrait)");
+    // Set initial value
+    setDetectedOrientation(mql.matches ? "PORTRAIT" : "LANDSCAPE");
+    const handler = (e: MediaQueryListEvent) => {
+      setDetectedOrientation(e.matches ? "PORTRAIT" : "LANDSCAPE");
+    };
+    mql.addEventListener("change", handler);
+    return () => mql.removeEventListener("change", handler);
+  }, []);
+
+  // Resolve orientation: when prop is "AUTO", use detected screen orientation
+  const resolvedOrientation = orientation === "AUTO" ? detectedOrientation : orientation;
+
+  // Derive connection status for the shell indicator
+  const connectionStatus: "connected" | "polling" | "disconnected" =
+    connectionMode === "polling"
+      ? "polling"
+      : connected
+        ? "connected"
+        : "disconnected";
+
   const displayEvents = events.length > 0 ? events : initialEvents;
 
   // Resolve theme palette override
@@ -119,7 +146,7 @@ export function DisplayView({
             roomName={roomName}
             roomLocation={roomLocation}
             locale={locale}
-            orientation={orientation}
+            orientation={resolvedOrientation}
           />
         );
       case "AGENDA":
@@ -167,11 +194,12 @@ export function DisplayView({
         : undefined;
 
   return (
-    <DisplayShell config={displayConfig} style={scaleStyle}>
-      {/* Connection status is logged to console only -- no visible indicators for display viewers */}
-      <EventErrorBoundary>
-        {renderView()}
-      </EventErrorBoundary>
+    <DisplayShell config={displayConfig} style={scaleStyle} connectionStatus={connectionStatus}>
+      <ViewErrorBoundary>
+        <EventErrorBoundary>
+          {renderView()}
+        </EventErrorBoundary>
+      </ViewErrorBoundary>
     </DisplayShell>
   );
 }

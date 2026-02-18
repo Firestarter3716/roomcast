@@ -46,6 +46,564 @@ const ORIENTATION_HINTS: Record<string, string> = {
   INFO_DISPLAY: "Works in any orientation",
 };
 
+/* ------------------------------------------------------------------ */
+/*  LayoutPreviewMini - small visual thumbnail for each layout type   */
+/* ------------------------------------------------------------------ */
+
+function LayoutPreviewMini({
+  layout,
+  orientation,
+  isSelected,
+}: {
+  layout: string;
+  orientation: string;
+  isSelected: boolean;
+}) {
+  const isPortrait = orientation === "PORTRAIT";
+  const w = isPortrait ? 80 : 140;
+  const h = isPortrait ? 120 : 90;
+
+  const bg = "#0F172A";
+  const fg = isSelected ? "rgba(59,130,246,0.6)" : "rgba(148,163,184,0.35)";
+  const accent = isSelected ? "#3B82F6" : "#64748B";
+  const green = isSelected ? "#22C55E" : "#4ADE80";
+  const muted = "rgba(148,163,184,0.25)";
+  const textMuted = "rgba(148,163,184,0.55)";
+
+  const base: React.CSSProperties = {
+    width: w,
+    height: h,
+    borderRadius: 6,
+    background: bg,
+    overflow: "hidden",
+    position: "relative",
+    fontSize: 6,
+    fontFamily: "system-ui, sans-serif",
+    color: "#CBD5E1",
+    margin: "0 auto",
+    border: `1px solid ${isSelected ? "rgba(59,130,246,0.4)" : "rgba(148,163,184,0.15)"}`,
+  };
+
+  if (layout === "ROOM_BOOKING") {
+    return (
+      <div style={base}>
+        {/* Status banner */}
+        <div
+          style={{
+            background: green,
+            color: "#fff",
+            textAlign: "center",
+            fontWeight: 700,
+            fontSize: 7,
+            padding: "3px 0",
+            letterSpacing: 1,
+          }}
+        >
+          FREE
+        </div>
+        {/* Room name */}
+        <div
+          style={{
+            textAlign: "center",
+            fontWeight: 600,
+            fontSize: 7,
+            padding: "4px 0 2px",
+            color: "#E2E8F0",
+          }}
+        >
+          Room 101
+        </div>
+        {/* Upcoming slot */}
+        <div style={{ padding: "0 6px" }}>
+          <div
+            style={{
+              background: fg,
+              borderRadius: 3,
+              padding: "3px 4px",
+              marginTop: 3,
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <span style={{ color: textMuted, fontSize: 5 }}>10:00</span>
+            <div
+              style={{
+                background: accent,
+                borderRadius: 2,
+                width: "55%",
+                height: 4,
+              }}
+            />
+          </div>
+          <div
+            style={{
+              background: fg,
+              borderRadius: 3,
+              padding: "3px 4px",
+              marginTop: 2,
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <span style={{ color: textMuted, fontSize: 5 }}>11:30</span>
+            <div
+              style={{
+                background: muted,
+                borderRadius: 2,
+                width: "40%",
+                height: 4,
+              }}
+            />
+          </div>
+        </div>
+        {/* Clock */}
+        <div
+          style={{
+            position: "absolute",
+            bottom: 3,
+            width: "100%",
+            textAlign: "center",
+            fontSize: 7,
+            color: textMuted,
+            fontVariantNumeric: "tabular-nums",
+          }}
+        >
+          14:30
+        </div>
+      </div>
+    );
+  }
+
+  if (layout === "AGENDA") {
+    const bars = [
+      { time: "09:00", width: "60%", color: accent },
+      { time: "10:30", width: "45%", color: fg },
+      { time: "12:00", width: "70%", color: accent },
+      { time: "14:00", width: "35%", color: fg },
+    ];
+    return (
+      <div style={base}>
+        {/* Header */}
+        <div
+          style={{
+            background: accent,
+            height: 10,
+            display: "flex",
+            alignItems: "center",
+            padding: "0 5px",
+          }}
+        >
+          <span style={{ color: "#fff", fontSize: 5, fontWeight: 600 }}>
+            Today
+          </span>
+        </div>
+        {/* Event bars */}
+        <div style={{ padding: "4px 5px" }}>
+          {bars.map((b, i) => (
+            <div
+              key={i}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 3,
+                marginTop: i === 0 ? 0 : 3,
+              }}
+            >
+              <span
+                style={{
+                  fontSize: 5,
+                  color: textMuted,
+                  width: 16,
+                  flexShrink: 0,
+                  fontVariantNumeric: "tabular-nums",
+                }}
+              >
+                {b.time}
+              </span>
+              <div
+                style={{
+                  background: b.color,
+                  borderRadius: 2,
+                  height: 5,
+                  width: b.width,
+                }}
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (layout === "DAY_GRID") {
+    const hours = ["08", "09", "10", "11", "12", "13"];
+    return (
+      <div style={base}>
+        <div style={{ display: "flex", height: "100%" }}>
+          {/* Hour labels */}
+          <div
+            style={{
+              width: 16,
+              flexShrink: 0,
+              borderRight: `1px solid ${muted}`,
+              paddingTop: 4,
+            }}
+          >
+            {hours.map((hr) => (
+              <div
+                key={hr}
+                style={{
+                  fontSize: 5,
+                  color: textMuted,
+                  height: h / hours.length,
+                  lineHeight: `${h / hours.length}px`,
+                  textAlign: "right",
+                  paddingRight: 2,
+                  fontVariantNumeric: "tabular-nums",
+                }}
+              >
+                {hr}
+              </div>
+            ))}
+          </div>
+          {/* Grid area with event blocks */}
+          <div style={{ flex: 1, position: "relative", padding: "4px 3px" }}>
+            {/* Event 1 */}
+            <div
+              style={{
+                position: "absolute",
+                top: `${(1 / hours.length) * 100}%`,
+                left: 3,
+                right: 3,
+                height: `${(1.5 / hours.length) * 100}%`,
+                background: accent,
+                borderRadius: 2,
+                opacity: 0.8,
+              }}
+            />
+            {/* Event 2 */}
+            <div
+              style={{
+                position: "absolute",
+                top: `${(3.5 / hours.length) * 100}%`,
+                left: 3,
+                right: "40%",
+                height: `${(1 / hours.length) * 100}%`,
+                background: fg,
+                borderRadius: 2,
+              }}
+            />
+            {/* Event 3 */}
+            <div
+              style={{
+                position: "absolute",
+                top: `${(3.5 / hours.length) * 100}%`,
+                left: "55%",
+                right: 3,
+                height: `${(0.8 / hours.length) * 100}%`,
+                background: green,
+                borderRadius: 2,
+                opacity: 0.6,
+              }}
+            />
+            {/* Hour grid lines */}
+            {hours.map((_, i) => (
+              <div
+                key={i}
+                style={{
+                  position: "absolute",
+                  top: `${((i + 0.3) / hours.length) * 100}%`,
+                  left: 0,
+                  right: 0,
+                  height: 1,
+                  background: muted,
+                }}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (layout === "WEEK_GRID") {
+    const days = isPortrait ? ["M", "T", "W", "T", "F"] : ["Mon", "Tue", "Wed", "Thu", "Fri"];
+    return (
+      <div style={base}>
+        {/* Day column headers */}
+        <div
+          style={{
+            display: "flex",
+            borderBottom: `1px solid ${muted}`,
+          }}
+        >
+          {/* Spacer for hour labels */}
+          <div style={{ width: 12, flexShrink: 0 }} />
+          {days.map((d) => (
+            <div
+              key={d}
+              style={{
+                flex: 1,
+                textAlign: "center",
+                fontSize: 5,
+                fontWeight: 600,
+                color: textMuted,
+                padding: "3px 0",
+                borderLeft: `1px solid ${muted}`,
+              }}
+            >
+              {d}
+            </div>
+          ))}
+        </div>
+        {/* Grid body */}
+        <div style={{ display: "flex", flex: 1, height: h - 16 }}>
+          {/* Hour labels */}
+          <div style={{ width: 12, flexShrink: 0 }}>
+            {[9, 11, 13, 15].map((hr) => (
+              <div
+                key={hr}
+                style={{
+                  fontSize: 4,
+                  color: textMuted,
+                  height: (h - 16) / 4,
+                  lineHeight: `${(h - 16) / 4}px`,
+                  textAlign: "right",
+                  paddingRight: 1,
+                  fontVariantNumeric: "tabular-nums",
+                }}
+              >
+                {hr}
+              </div>
+            ))}
+          </div>
+          {/* Day columns */}
+          {days.map((d, col) => (
+            <div
+              key={d}
+              style={{
+                flex: 1,
+                position: "relative",
+                borderLeft: `1px solid ${muted}`,
+              }}
+            >
+              {/* Scattered event dots / blocks */}
+              {col === 0 && (
+                <div
+                  style={{
+                    position: "absolute",
+                    top: "10%",
+                    left: 1,
+                    right: 1,
+                    height: "18%",
+                    background: accent,
+                    borderRadius: 1,
+                    opacity: 0.7,
+                  }}
+                />
+              )}
+              {col === 1 && (
+                <div
+                  style={{
+                    position: "absolute",
+                    top: "45%",
+                    left: 1,
+                    right: 1,
+                    height: "12%",
+                    background: fg,
+                    borderRadius: 1,
+                  }}
+                />
+              )}
+              {col === 2 && (
+                <>
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: "20%",
+                      left: 1,
+                      right: 1,
+                      height: "14%",
+                      background: accent,
+                      borderRadius: 1,
+                      opacity: 0.7,
+                    }}
+                  />
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: "60%",
+                      left: 1,
+                      right: 1,
+                      height: "10%",
+                      background: green,
+                      borderRadius: 1,
+                      opacity: 0.5,
+                    }}
+                  />
+                </>
+              )}
+              {col === 3 && (
+                <div
+                  style={{
+                    position: "absolute",
+                    top: "70%",
+                    left: 1,
+                    right: 1,
+                    height: "16%",
+                    background: fg,
+                    borderRadius: 1,
+                  }}
+                />
+              )}
+              {col === 4 && (
+                <div
+                  style={{
+                    position: "absolute",
+                    top: "5%",
+                    left: 1,
+                    right: 1,
+                    height: "22%",
+                    background: accent,
+                    borderRadius: 1,
+                    opacity: 0.6,
+                  }}
+                />
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (layout === "INFO_DISPLAY") {
+    return (
+      <div style={base}>
+        <div style={{ display: "flex", height: "100%", flexDirection: "column" }}>
+          {/* Top area: events left, clock right */}
+          <div style={{ display: "flex", flex: 1, minHeight: 0 }}>
+            {/* Event list (left) */}
+            <div
+              style={{
+                flex: 1,
+                padding: "4px 4px 2px",
+                borderRight: `1px solid ${muted}`,
+              }}
+            >
+              <div
+                style={{
+                  fontSize: 5,
+                  fontWeight: 600,
+                  color: textMuted,
+                  marginBottom: 3,
+                }}
+              >
+                Today
+              </div>
+              {[accent, fg, accent].map((c, i) => (
+                <div
+                  key={i}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 2,
+                    marginTop: i === 0 ? 0 : 2,
+                  }}
+                >
+                  <div
+                    style={{
+                      width: 3,
+                      height: 3,
+                      borderRadius: "50%",
+                      background: c,
+                      flexShrink: 0,
+                    }}
+                  />
+                  <div
+                    style={{
+                      background: c,
+                      height: 3,
+                      borderRadius: 1,
+                      width: `${50 + i * 12}%`,
+                      opacity: 0.6,
+                    }}
+                  />
+                </div>
+              ))}
+            </div>
+            {/* Right side: clock + upcoming */}
+            <div
+              style={{
+                width: isPortrait ? "45%" : "38%",
+                padding: "4px 4px 2px",
+              }}
+            >
+              {/* Clock */}
+              <div
+                style={{
+                  textAlign: "center",
+                  fontWeight: 700,
+                  fontSize: isPortrait ? 10 : 11,
+                  color: "#E2E8F0",
+                  fontVariantNumeric: "tabular-nums",
+                  marginBottom: 3,
+                }}
+              >
+                14:30
+              </div>
+              {/* Upcoming */}
+              <div
+                style={{ fontSize: 4, color: textMuted, marginBottom: 2 }}
+              >
+                Upcoming
+              </div>
+              {[fg, muted].map((c, i) => (
+                <div
+                  key={i}
+                  style={{
+                    background: c,
+                    height: 3,
+                    borderRadius: 1,
+                    marginTop: 2,
+                    width: `${70 + i * 15}%`,
+                  }}
+                />
+              ))}
+            </div>
+          </div>
+          {/* Ticker bar at bottom */}
+          <div
+            style={{
+              height: 9,
+              background: accent,
+              display: "flex",
+              alignItems: "center",
+              padding: "0 4px",
+              gap: 4,
+            }}
+          >
+            <span style={{ fontSize: 4, color: "#fff", whiteSpace: "nowrap" }}>
+              Welcome to RoomCast
+            </span>
+            <span style={{ fontSize: 4, color: "rgba(255,255,255,0.5)" }}>
+              &#x2022;&#x2022;&#x2022;
+            </span>
+            <span style={{ fontSize: 4, color: "#fff", whiteSpace: "nowrap" }}>
+              Next: Team Standup
+            </span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Fallback
+  return <div style={base} />;
+}
+
 interface CreatedDisplay {
   id: string;
   name: string;
@@ -286,26 +844,37 @@ function DisplayWizardInner({ calendars, rooms }: DisplayWizardProps) {
                     : "border-[var(--color-border)] hover:border-[var(--color-border-hover)]"
                 }`}
               >
-                <Layout
-                  className={`h-6 w-6 mb-2 ${
-                    selectedLayout === opt.value
-                      ? "text-[var(--color-primary)]"
-                      : "text-[var(--color-muted-foreground)]"
-                  }`}
-                />
-                <h3
-                  className={`font-medium ${
-                    selectedLayout === opt.value
-                      ? "text-[var(--color-primary)]"
-                      : "text-[var(--color-foreground)]"
-                  }`}
-                >
-                  {opt.label}
-                </h3>
-                <p className="mt-1 text-xs text-[var(--color-muted-foreground)]">
-                  {opt.description}
-                </p>
-                <p className="mt-2 text-[10px] font-medium text-[var(--color-muted-foreground)] italic">
+                <div className="flex items-start gap-3 mb-3">
+                  <Layout
+                    className={`h-5 w-5 shrink-0 mt-0.5 ${
+                      selectedLayout === opt.value
+                        ? "text-[var(--color-primary)]"
+                        : "text-[var(--color-muted-foreground)]"
+                    }`}
+                  />
+                  <div>
+                    <h3
+                      className={`font-medium leading-tight ${
+                        selectedLayout === opt.value
+                          ? "text-[var(--color-primary)]"
+                          : "text-[var(--color-foreground)]"
+                      }`}
+                    >
+                      {opt.label}
+                    </h3>
+                    <p className="mt-0.5 text-xs text-[var(--color-muted-foreground)]">
+                      {opt.description}
+                    </p>
+                  </div>
+                </div>
+                <div className="py-2">
+                  <LayoutPreviewMini
+                    layout={opt.value}
+                    orientation={selectedOrientation}
+                    isSelected={selectedLayout === opt.value}
+                  />
+                </div>
+                <p className="mt-2 text-[10px] font-medium text-[var(--color-muted-foreground)] italic text-center">
                   {ORIENTATION_HINTS[opt.value]}
                 </p>
               </button>

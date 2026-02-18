@@ -1,9 +1,28 @@
 "use client";
 
-import { useMemo, useRef, useEffect, useCallback } from "react";
+import { useMemo, useRef, useState, useEffect, useCallback } from "react";
 import { useCurrentTime } from "../hooks/useCurrentTime";
 import { type DisplayEvent } from "../hooks/useDisplaySSE";
 import { type DayGridConfig } from "@/features/displays/types";
+
+// ---------------------------------------------------------------------------
+// CSS keyframes injected once for the fade transition
+// ---------------------------------------------------------------------------
+const FADE_KEYFRAMES = `
+@keyframes displayFadeIn {
+  from { opacity: 0.3; }
+  to   { opacity: 1; }
+}
+`;
+
+let keyframesInjected = false;
+function ensureKeyframes() {
+  if (typeof document === "undefined" || keyframesInjected) return;
+  const style = document.createElement("style");
+  style.textContent = FADE_KEYFRAMES;
+  document.head.appendChild(style);
+  keyframesInjected = true;
+}
 
 interface DayGridViewProps { events: DisplayEvent[]; config: DayGridConfig; locale?: string; }
 
@@ -116,6 +135,23 @@ export function DayGridView({ events, config, locale: localeProp }: DayGridViewP
   const locale = localeProp || "de-DE";
   const now = useCurrentTime(60000);
   const totalHours = config.timeRangeEnd - config.timeRangeStart;
+
+  // Inject keyframes on mount
+  useEffect(() => {
+    ensureKeyframes();
+  }, []);
+
+  // Fade transition: track event changes
+  const [fadeKey, setFadeKey] = useState(0);
+  const prevEventIdsRef = useRef<string>("");
+
+  useEffect(() => {
+    const currentIds = events.map((e) => e.id).join(",");
+    if (prevEventIdsRef.current && prevEventIdsRef.current !== currentIds) {
+      setFadeKey((k) => k + 1);
+    }
+    prevEventIdsRef.current = currentIds;
+  }, [events]);
   const hours = useMemo(() => { const h = []; for (let i = config.timeRangeStart; i < config.timeRangeEnd; i++) h.push(i); return h; }, [config.timeRangeStart, config.timeRangeEnd]);
 
   // Ref for the scrollable container (outermost div)
@@ -184,8 +220,9 @@ export function DayGridView({ events, config, locale: localeProp }: DayGridViewP
 
   return (
     <div
+      key={fadeKey}
       ref={scrollContainerRef}
-      style={{ height: "100%", overflowY: "auto", padding: "1.5rem" }}
+      style={{ height: "100%", overflowY: "auto", padding: "1.5rem", animation: "displayFadeIn 0.5s ease-in-out" }}
     >
       {/* Date header */}
       <div

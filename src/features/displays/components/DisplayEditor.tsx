@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useRef, useEffect } from "react";
-import { updateDisplayConfig } from "../actions";
+import { updateDisplayConfig, updateDisplay } from "../actions";
 import { THEME_PALETTES, FONT_OPTIONS } from "../palettes";
 import {
   type ThemeConfig,
@@ -19,7 +19,7 @@ import {
   getDefaultLayoutConfig,
 } from "../types";
 import { toast } from "sonner";
-import { Save, Palette, Layout, Image, Tag } from "lucide-react";
+import { Save, Palette, Layout, Image, Tag, Shield, ChevronDown, ChevronRight } from "lucide-react";
 import { DisplayPreview } from "./DisplayPreview";
 
 interface DisplayEditorProps {
@@ -28,11 +28,12 @@ interface DisplayEditorProps {
   initialConfig: DisplayConfig;
   orientation?: string;
   roomName?: string;
+  initialIpWhitelist?: string[];
 }
 
 type EditorTab = "layout" | "theme" | "branding" | "background";
 
-export function DisplayEditor({ displayId, layoutType, initialConfig, orientation, roomName }: DisplayEditorProps) {
+export function DisplayEditor({ displayId, layoutType, initialConfig, orientation, roomName, initialIpWhitelist }: DisplayEditorProps) {
   const [config, setConfig] = useState<DisplayConfig>({
     theme: { ...DEFAULT_THEME, ...initialConfig?.theme },
     branding: { ...DEFAULT_BRANDING, ...initialConfig?.branding },
@@ -42,6 +43,9 @@ export function DisplayEditor({ displayId, layoutType, initialConfig, orientatio
   const [activeTab, setActiveTab] = useState<EditorTab>("layout");
   const [saving, setSaving] = useState(false);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [securityOpen, setSecurityOpen] = useState((initialIpWhitelist ?? []).length > 0);
+  const [ipWhitelistText, setIpWhitelistText] = useState((initialIpWhitelist ?? []).join("\n"));
+  const ipSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const autoSave = useCallback((newConfig: DisplayConfig) => {
     if (saveTimer.current) clearTimeout(saveTimer.current);
@@ -53,6 +57,43 @@ export function DisplayEditor({ displayId, layoutType, initialConfig, orientatio
       }
     }, 1000);
   }, [displayId]);
+
+  const validateIpEntry = useCallback((entry: string): boolean => {
+    const trimmed = entry.trim();
+    if (!trimmed) return true; // empty lines are filtered out
+    if (trimmed.includes("/")) {
+      // CIDR: e.g. 192.168.1.0/24
+      const [network, prefixStr] = trimmed.split("/");
+      if (!network || !prefixStr) return false;
+      const prefix = Number(prefixStr);
+      if (!Number.isInteger(prefix) || prefix < 0 || prefix > 32) return false;
+      const parts = network.split(".");
+      if (parts.length !== 4) return false;
+      return parts.every((p) => { const n = Number(p); return Number.isInteger(n) && n >= 0 && n <= 255; });
+    } else {
+      // Plain IPv4
+      const parts = trimmed.split(".");
+      if (parts.length !== 4) return false;
+      return parts.every((p) => { const n = Number(p); return Number.isInteger(n) && n >= 0 && n <= 255; });
+    }
+  }, []);
+
+  const autoSaveIpWhitelist = useCallback((text: string) => {
+    if (ipSaveTimer.current) clearTimeout(ipSaveTimer.current);
+    ipSaveTimer.current = setTimeout(async () => {
+      const lines = text.split("\n").map((l) => l.trim()).filter(Boolean);
+      const invalid = lines.filter((l) => !validateIpEntry(l));
+      if (invalid.length > 0) {
+        toast.warning(`Invalid IP/CIDR entries: ${invalid.join(", ")}`);
+        return;
+      }
+      try {
+        await updateDisplay(displayId, { ipWhitelist: lines });
+      } catch {
+        toast.error("Failed to save IP whitelist");
+      }
+    }, 1500);
+  }, [displayId, validateIpEntry]);
 
   function updateTheme(partial: Partial<ThemeConfig>) {
     const newConfig = { ...config, theme: { ...config.theme, ...partial } };
@@ -81,8 +122,20 @@ export function DisplayEditor({ displayId, layoutType, initialConfig, orientatio
   async function manualSave() {
     setSaving(true);
     if (saveTimer.current) clearTimeout(saveTimer.current);
+    if (ipSaveTimer.current) clearTimeout(ipSaveTimer.current);
     try {
-      await updateDisplayConfig(displayId, config as unknown as Record<string, unknown>);
+      // Validate IP whitelist entries before saving
+      const ipLines = ipWhitelistText.split("\n").map((l) => l.trim()).filter(Boolean);
+      const invalidEntries = ipLines.filter((l) => !validateIpEntry(l));
+      if (invalidEntries.length > 0) {
+        toast.warning(`Invalid IP/CIDR entries: ${invalidEntries.join(", ")}`);
+      }
+      const validIpLines = ipLines.filter((l) => validateIpEntry(l));
+
+      await Promise.all([
+        updateDisplayConfig(displayId, config as unknown as Record<string, unknown>),
+        updateDisplay(displayId, { ipWhitelist: validIpLines }),
+      ]);
       toast.success("Configuration saved");
     } catch {
       toast.error("Failed to save");
@@ -92,7 +145,10 @@ export function DisplayEditor({ displayId, layoutType, initialConfig, orientatio
   }
 
   useEffect(() => {
-    return () => { if (saveTimer.current) clearTimeout(saveTimer.current); };
+    return () => {
+      if (saveTimer.current) clearTimeout(saveTimer.current);
+      if (ipSaveTimer.current) clearTimeout(ipSaveTimer.current);
+    };
   }, []);
 
   const tabs: { id: EditorTab; label: string; icon: typeof Layout }[] = [
@@ -250,6 +306,36 @@ export function DisplayEditor({ displayId, layoutType, initialConfig, orientatio
             )}
           </div>
         )}
+
+        <div className="rounded-lg border border-[var(--color-border)]">
+          <button
+            type="button"
+            onClick={() => setSecurityOpen(!securityOpen)}
+            className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm font-medium text-[var(--color-foreground)] hover:bg-[var(--color-muted)]/10 transition-colors rounded-lg"
+          >
+            <Shield className="h-4 w-4 text-[var(--color-muted-foreground)]" />
+            Security
+            {securityOpen ? <ChevronDown className="ml-auto h-4 w-4 text-[var(--color-muted-foreground)]" /> : <ChevronRight className="ml-auto h-4 w-4 text-[var(--color-muted-foreground)]" />}
+          </button>
+          {securityOpen && (
+            <div className="border-t border-[var(--color-border)] px-4 py-4 space-y-2">
+              <label className={labelClass}>IP Whitelist (optional)</label>
+              <textarea
+                value={ipWhitelistText}
+                onChange={(e) => {
+                  setIpWhitelistText(e.target.value);
+                  autoSaveIpWhitelist(e.target.value);
+                }}
+                rows={4}
+                className={inputClass}
+                placeholder={"192.168.1.0/24\n10.0.0.1\n172.16.0.0/16"}
+              />
+              <p className="text-xs text-[var(--color-muted-foreground)]">
+                Restrict access to specific IPs or CIDR ranges. One per line. Leave empty for unrestricted access.
+              </p>
+            </div>
+          )}
+        </div>
 
         <button onClick={manualSave} disabled={saving} className="inline-flex items-center gap-2 rounded-md bg-[var(--color-primary)] px-4 py-2.5 text-sm font-medium text-[var(--color-primary-foreground)] hover:bg-[var(--color-primary-hover)] transition-colors disabled:opacity-50">
           <Save className="h-4 w-4" />

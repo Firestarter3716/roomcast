@@ -1,9 +1,28 @@
 "use client";
 
-import { useMemo, useState, useEffect, useCallback } from "react";
+import { useMemo, useState, useEffect, useRef, useCallback } from "react";
 import { useCurrentTime } from "../hooks/useCurrentTime";
 import { type DisplayEvent } from "../hooks/useDisplaySSE";
 import { type WeekGridConfig } from "@/features/displays/types";
+
+// ---------------------------------------------------------------------------
+// CSS keyframes injected once for the fade transition
+// ---------------------------------------------------------------------------
+const FADE_KEYFRAMES = `
+@keyframes displayFadeIn {
+  from { opacity: 0.3; }
+  to   { opacity: 1; }
+}
+`;
+
+let keyframesInjected = false;
+function ensureKeyframes() {
+  if (typeof document === "undefined" || keyframesInjected) return;
+  const style = document.createElement("style");
+  style.textContent = FADE_KEYFRAMES;
+  document.head.appendChild(style);
+  keyframesInjected = true;
+}
 
 const HOURS_START = 7; const HOURS_END = 22; const TOTAL_HOURS = HOURS_END - HOURS_START;
 
@@ -39,6 +58,23 @@ interface WeekGridViewProps { events: DisplayEvent[]; config: WeekGridConfig; lo
 
 export function WeekGridView({ events, config, locale }: WeekGridViewProps) {
   const now = useCurrentTime(60000);
+
+  // Inject keyframes on mount
+  useEffect(() => {
+    ensureKeyframes();
+  }, []);
+
+  // Fade transition: track event changes
+  const [fadeKey, setFadeKey] = useState(0);
+  const prevEventIdsRef = useRef<string>("");
+
+  useEffect(() => {
+    const currentIds = events.map((e) => e.id).join(",");
+    if (prevEventIdsRef.current && prevEventIdsRef.current !== currentIds) {
+      setFadeKey((k) => k + 1);
+    }
+    prevEventIdsRef.current = currentIds;
+  }, [events]);
 
   // --- Monday 00:00 auto-rollover ---
   // Track the current week key; when a new Monday arrives the key changes,
@@ -83,7 +119,7 @@ export function WeekGridView({ events, config, locale }: WeekGridViewProps) {
   }, [weekStart, events]);
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100%", padding: "1rem" }}>
+    <div key={fadeKey} style={{ display: "flex", flexDirection: "column", height: "100%", padding: "1rem", animation: "displayFadeIn 0.5s ease-in-out" }}>
       <div style={{ display: "flex", paddingLeft: "3rem" }}>
         {days.map((day, i) => (<div key={day} style={{ flex: 1, textAlign: "center", padding: "0.5rem", fontSize: "0.8125rem", fontWeight: 600, opacity: config.showCurrentDayHighlight && i === currentDayIndex ? 1 : 0.7, color: config.showCurrentDayHighlight && i === currentDayIndex ? "var(--display-primary)" : "inherit" }}>{day}</div>))}
       </div>

@@ -34,7 +34,10 @@
     "loginTitle": "Connexion",
     "loginSubtitle": "Plateforme d'affichage dynamique",
     "invalidCredentials": "Identifiants invalides",
-    "sessionExpired": "Votre session a expiré"
+    "sessionExpired": "Votre session a expiré",
+    "signInWith": "Se connecter avec {provider}",
+    "orContinueWith": "ou continuer avec",
+    "oauthError": "Echec de la connexion OAuth"
   },
   "calendars": {
     "title": "Calendriers",

@@ -34,7 +34,10 @@
     "loginTitle": "Sign in",
     "loginSubtitle": "Digital Signage Calendar Platform",
     "invalidCredentials": "Invalid credentials",
-    "sessionExpired": "Your session has expired"
+    "sessionExpired": "Your session has expired",
+    "signInWith": "Sign in with {provider}",
+    "orContinueWith": "or continue with",
+    "oauthError": "OAuth sign-in failed"
   },
   "calendars": {
     "title": "Calendars",

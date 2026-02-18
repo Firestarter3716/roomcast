@@ -26,6 +26,17 @@ const LANGUAGE_OPTIONS = [
   { value: "fr", label: "Fran\u00e7ais" },
 ];
 
+const TIMEZONE_OPTIONS = [
+  "Europe/Berlin", "Europe/London", "Europe/Paris", "Europe/Zurich",
+  "Europe/Vienna", "Europe/Amsterdam", "Europe/Brussels", "Europe/Madrid",
+  "Europe/Rome", "Europe/Stockholm", "Europe/Warsaw", "Europe/Prague",
+  "America/New_York", "America/Chicago", "America/Denver", "America/Los_Angeles",
+  "America/Toronto", "America/Sao_Paulo",
+  "Asia/Tokyo", "Asia/Shanghai", "Asia/Singapore", "Asia/Dubai",
+  "Australia/Sydney", "Pacific/Auckland",
+  "UTC",
+];
+
 export function GeneralSettingsForm({ initialSettings }: GeneralSettingsFormProps) {
   const t = useTranslations("admin.settings");
   const [saving, setSaving] = useState(false);
@@ -78,11 +89,13 @@ export function GeneralSettingsForm({ initialSettings }: GeneralSettingsFormProp
 
       <div>
         <label className={labelClass}>{t("defaultTimezone")}</label>
-        <input
-          {...form.register("defaultTimezone")}
-          className={inputClass}
-          placeholder="Europe/Berlin"
-        />
+        <select {...form.register("defaultTimezone")} className={inputClass}>
+          {TIMEZONE_OPTIONS.map((tz) => (
+            <option key={tz} value={tz}>
+              {tz}
+            </option>
+          ))}
+        </select>
       </div>
 
       <div>

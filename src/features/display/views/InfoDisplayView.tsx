@@ -1,12 +1,31 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import { useCurrentTime } from "../hooks/useCurrentTime";
 import { DisplayClock } from "../shared/DisplayClock";
 import { TickerTape } from "../shared/TickerTape";
 import { getDisplayTranslations } from "../shared/translations";
 import { type DisplayEvent } from "../hooks/useDisplaySSE";
 import { type InfoDisplayConfig } from "@/features/displays/types";
+
+// ---------------------------------------------------------------------------
+// CSS keyframes injected once for the fade transition
+// ---------------------------------------------------------------------------
+const FADE_KEYFRAMES = `
+@keyframes displayFadeIn {
+  from { opacity: 0.3; }
+  to   { opacity: 1; }
+}
+`;
+
+let keyframesInjected = false;
+function ensureKeyframes() {
+  if (typeof document === "undefined" || keyframesInjected) return;
+  const style = document.createElement("style");
+  style.textContent = FADE_KEYFRAMES;
+  document.head.appendChild(style);
+  keyframesInjected = true;
+}
 
 interface InfoDisplayViewProps { events: DisplayEvent[]; config: InfoDisplayConfig; locale?: string; }
 
@@ -16,6 +35,23 @@ export function InfoDisplayView({ events, config, locale }: InfoDisplayViewProps
   const tickerSeparator = config.tickerSeparator ?? " \u2022\u2022\u2022 ";
   const now = useCurrentTime(showSeconds ? 1000 : 30000);
   const t = getDisplayTranslations(locale || "de-DE");
+
+  // Inject keyframes on mount
+  useEffect(() => {
+    ensureKeyframes();
+  }, []);
+
+  // Fade transition: track event changes
+  const [fadeKey, setFadeKey] = useState(0);
+  const prevEventIdsRef = useRef<string>("");
+
+  useEffect(() => {
+    const currentIds = events.map((e) => e.id).join(",");
+    if (prevEventIdsRef.current && prevEventIdsRef.current !== currentIds) {
+      setFadeKey((k) => k + 1);
+    }
+    prevEventIdsRef.current = currentIds;
+  }, [events]);
   const todayEvents = useMemo(() => {
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate() + 1);
@@ -31,7 +67,7 @@ export function InfoDisplayView({ events, config, locale }: InfoDisplayViewProps
   const dateString = now.toLocaleDateString(locale || "de-DE", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100%", padding: "2rem" }}>
+    <div key={fadeKey} style={{ display: "flex", flexDirection: "column", height: "100%", padding: "2rem", animation: "displayFadeIn 0.5s ease-in-out" }}>
       <div style={{ display: "flex", justifyContent: clockPosition === "center" ? "center" : "space-between", alignItems: clockPosition === "center" ? "center" : "flex-start", marginBottom: "2rem", flexDirection: clockPosition === "center" ? "column" : "row", gap: clockPosition === "center" ? "0.5rem" : undefined }}>
         {clockPosition === "center" ? (
           <>

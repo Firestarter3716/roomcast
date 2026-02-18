@@ -4,14 +4,23 @@ import { useEffect, type ReactNode } from "react";
 import { type DisplayConfig, DEFAULT_THEME, DEFAULT_BRANDING, DEFAULT_BACKGROUND } from "@/features/displays/types";
 import { getFontFamily } from "@/shared/lib/fonts";
 
+type ConnectionStatus = "connected" | "polling" | "disconnected";
+
 interface DisplayShellProps {
   config: DisplayConfig;
   isPreview?: boolean;
   style?: React.CSSProperties;
+  connectionStatus?: ConnectionStatus;
   children: ReactNode;
 }
 
-export function DisplayShell({ config, isPreview = false, style, children }: DisplayShellProps) {
+const STATUS_COLORS: Record<ConnectionStatus, string> = {
+  connected: "#22c55e",
+  polling: "#f59e0b",
+  disconnected: "#ef4444",
+};
+
+export function DisplayShell({ config, isPreview = false, style, connectionStatus, children }: DisplayShellProps) {
   const theme = { ...DEFAULT_THEME, ...config?.theme };
   const branding = { ...DEFAULT_BRANDING, ...config?.branding };
   const background = { ...DEFAULT_BACKGROUND, ...config?.background };
@@ -33,12 +42,22 @@ export function DisplayShell({ config, isPreview = false, style, children }: Dis
     document.body.style.cursor = "none";
     document.body.style.userSelect = "none";
     document.body.style.overflow = "hidden";
+
+    // Add a style element to hide scrollbars
+    const style = document.createElement('style');
+    style.textContent = `
+      *::-webkit-scrollbar { display: none !important; }
+      * { scrollbar-width: none !important; }
+    `;
+    document.head.appendChild(style);
+
     function preventContextMenu(e: MouseEvent) { e.preventDefault(); }
     document.addEventListener("contextmenu", preventContextMenu);
     return () => {
       document.body.style.cursor = "";
       document.body.style.userSelect = "";
       document.body.style.overflow = "";
+      document.head.removeChild(style);
       document.removeEventListener("contextmenu", preventContextMenu);
     };
   }, [isPreview]);
@@ -87,6 +106,24 @@ export function DisplayShell({ config, isPreview = false, style, children }: Dis
           <div style={{ textAlign: "center", padding: "0.5rem", fontSize: "0.625rem", opacity: 0.4, color: theme.muted }}>Powered by RoomCast</div>
         )}
       </div>
+      {connectionStatus && (
+        <div
+          aria-label={`Connection: ${connectionStatus}`}
+          style={{
+            position: "fixed",
+            bottom: 12,
+            right: 12,
+            width: 8,
+            height: 8,
+            borderRadius: "50%",
+            backgroundColor: STATUS_COLORS[connectionStatus],
+            opacity: 0.5,
+            zIndex: 9999,
+            transition: "background-color 0.3s ease, opacity 0.3s ease",
+            pointerEvents: "none",
+          }}
+        />
+      )}
     </div>
   );
 }

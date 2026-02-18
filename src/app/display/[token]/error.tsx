@@ -1,7 +1,9 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Monitor } from "lucide-react";
+
+const RETRY_DELAYS = [5000, 10000, 30000, 60000];
 
 export default function DisplayError({
   error,
@@ -10,11 +12,28 @@ export default function DisplayError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const [retryCount, setRetryCount] = useState(0);
+  const [countdown, setCountdown] = useState(() => RETRY_DELAYS[0] / 1000);
+
+  const currentDelay = RETRY_DELAYS[Math.min(retryCount, RETRY_DELAYS.length - 1)];
+
+  // Countdown display timer
   useEffect(() => {
-    // Auto-retry after 30 seconds
-    const timer = setTimeout(() => reset(), 30000);
+    setCountdown(Math.ceil(currentDelay / 1000));
+    const interval = setInterval(() => {
+      setCountdown((c) => (c > 1 ? c - 1 : c));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [retryCount, currentDelay]);
+
+  // Retry timer
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setRetryCount((c) => c + 1);
+      reset();
+    }, currentDelay);
     return () => clearTimeout(timer);
-  }, [error, reset]);
+  }, [retryCount, currentDelay, reset]);
 
   return (
     <div
@@ -64,7 +83,7 @@ export default function DisplayError({
           color: "#525252",
         }}
       >
-        Retrying automatically...
+        Retrying in {countdown} second{countdown !== 1 ? "s" : ""}...
       </div>
     </div>
   );

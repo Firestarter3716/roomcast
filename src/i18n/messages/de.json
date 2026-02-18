@@ -34,7 +34,10 @@
     "loginTitle": "Anmelden",
     "loginSubtitle": "Digital Signage Calendar Platform",
     "invalidCredentials": "Ungültige Anmeldedaten",
-    "sessionExpired": "Ihre Sitzung ist abgelaufen"
+    "sessionExpired": "Ihre Sitzung ist abgelaufen",
+    "signInWith": "Anmelden mit {provider}",
+    "orContinueWith": "oder weiter mit",
+    "oauthError": "OAuth-Anmeldung fehlgeschlagen"
   },
   "calendars": {
     "title": "Kalender",

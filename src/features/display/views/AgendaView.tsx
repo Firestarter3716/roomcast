@@ -1,11 +1,30 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import { useCurrentTime } from "../hooks/useCurrentTime";
 import { getDisplayTranslations, type DisplayTranslations } from "../shared/translations";
 import { type DisplayEvent } from "../hooks/useDisplaySSE";
 import { type AgendaConfig } from "@/features/displays/types";
 import { AutoScroller } from "../shared/AutoScroller";
+
+// ---------------------------------------------------------------------------
+// CSS keyframes injected once for the fade transition
+// ---------------------------------------------------------------------------
+const FADE_KEYFRAMES = `
+@keyframes displayFadeIn {
+  from { opacity: 0.3; }
+  to   { opacity: 1; }
+}
+`;
+
+let keyframesInjected = false;
+function ensureKeyframes() {
+  if (typeof document === "undefined" || keyframesInjected) return;
+  const style = document.createElement("style");
+  style.textContent = FADE_KEYFRAMES;
+  document.head.appendChild(style);
+  keyframesInjected = true;
+}
 
 // ---------------------------------------------------------------------------
 // Types
@@ -260,6 +279,23 @@ export function AgendaView({ events, config, locale: localeProp }: AgendaViewPro
   const now = useCurrentTime(30_000);
   const dateKey = useDateKey();
 
+  // Inject keyframes on mount
+  useEffect(() => {
+    ensureKeyframes();
+  }, []);
+
+  // Fade transition: track event changes
+  const [fadeKey, setFadeKey] = useState(0);
+  const prevEventIdsRef = useRef<string>("");
+
+  useEffect(() => {
+    const currentIds = events.map((e) => e.id).join(",");
+    if (prevEventIdsRef.current && prevEventIdsRef.current !== currentIds) {
+      setFadeKey((k) => k + 1);
+    }
+    prevEventIdsRef.current = currentIds;
+  }, [events]);
+
   // Written-out date header
   const dateString = now.toLocaleDateString(locale, {
     weekday: "long",
@@ -296,7 +332,17 @@ export function AgendaView({ events, config, locale: localeProp }: AgendaViewPro
   }, [config.timeRangeStart, config.timeRangeEnd]);
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100%", padding: "1.5rem", overflow: "hidden" }}>
+    <div
+      key={fadeKey}
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        height: "100%",
+        padding: "1.5rem",
+        overflow: "hidden",
+        animation: "displayFadeIn 0.5s ease-in-out",
+      }}
+    >
       {/* Date header */}
       <div
         style={{
