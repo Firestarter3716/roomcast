@@ -126,8 +126,7 @@ export function DisplayEditor({ displayId, displayToken, layoutType, initialConf
     saveTimer.current = setTimeout(async () => {
       try {
         await updateDisplayConfig(displayId, newConfig as unknown as Record<string, unknown>);
-        // Reload the preview iframe after save completes
-        setPreviewKey((k) => k + 1);
+        // Config updates are pushed to the iframe via SSE — no reload needed
       } catch {
         toast.error("Auto-save failed");
       }
