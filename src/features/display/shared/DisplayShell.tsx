@@ -128,7 +128,7 @@ export function DisplayShell({ config, isPreview = false, style, connectionStatu
         )}
         <div style={{ flex: 1, minHeight: 0 }}>{children}</div>
         {branding.showPoweredBy && (
-          <div style={{ textAlign: "center", padding: "0.5rem", fontSize: "0.625rem", opacity: 0.4, color: theme.muted }}>Powered by RoomCast</div>
+          <div style={{ textAlign: "center", padding: "0.5rem", fontSize: "0.625rem", opacity: 0.4, color: theme.muted }}>RoomCast by UNYX</div>
         )}
       </div>
       {connectionStatus && (

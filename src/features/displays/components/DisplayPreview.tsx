@@ -247,7 +247,7 @@ export function DisplayPreview({ displayId, layoutType, config, orientation, roo
           {/* Powered by footer */}
           {branding.showPoweredBy && (
             <div style={{ textAlign: "center", padding: "0.5rem", fontSize: "0.625rem", opacity: 0.4, color: theme.muted }}>
-              Powered by RoomCast
+              RoomCast by UNYX
             </div>
           )}
         </div>

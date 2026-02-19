@@ -398,7 +398,7 @@ export function DisplayEditor({ displayId, displayToken, layoutType, initialConf
             </div>
             <label className={checkboxClass}>
               <input type="checkbox" checked={config.branding.showPoweredBy} onChange={(e) => updateBranding({ showPoweredBy: e.target.checked })} />
-              Show &quot;Powered by RoomCast&quot;
+              Show &quot;RoomCast by UNYX&quot; footer
             </label>
           </div>
         )}
