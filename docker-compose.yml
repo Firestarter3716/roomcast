@@ -44,9 +44,10 @@ services:
       dockerfile: Dockerfile
       network: host
     restart: unless-stopped
+    network_mode: host
     command: ["node", "dist/sync-worker.js"]
     environment:
-      DATABASE_URL: postgresql://roomcast:roomcast@db:5432/roomcast
+      DATABASE_URL: postgresql://roomcast:roomcast@localhost:5432/roomcast
       ENCRYPTION_SECRET: ${ENCRYPTION_SECRET:-change-me-in-production}
     depends_on:
       db:
