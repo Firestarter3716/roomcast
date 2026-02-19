@@ -57,6 +57,7 @@ export function DisplayEditor({ displayId, displayToken, layoutType, initialConf
   const [currentLayoutType, setCurrentLayoutType] = useState(layoutType);
   const [currentOrientation, setCurrentOrientation] = useState(orientation || "LANDSCAPE");
   const [previewStatus, setPreviewStatus] = useState<"live" | "free" | "busy" | "endingSoon">("live");
+  const [previewSize, setPreviewSize] = useState<"S" | "M" | "L">("L");
   const previewContainerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(0);
 
@@ -442,7 +443,7 @@ export function DisplayEditor({ displayId, displayToken, layoutType, initialConf
 
       <div className="w-full lg:w-3/5">
         <div className="sticky top-4">
-          <div className="mb-3 flex items-center justify-between">
+          <div className="mb-3">
             <h3 className="text-sm font-semibold text-[var(--color-foreground)]">
               Live Preview
               <span className="ml-2 text-xs font-normal text-[var(--color-muted-foreground)]">
@@ -450,36 +451,57 @@ export function DisplayEditor({ displayId, displayToken, layoutType, initialConf
               </span>
             </h3>
           </div>
-          <div className="mb-3 flex gap-1 rounded-lg bg-[var(--color-muted)]/10 p-1">
-            {([
-              { value: "live", label: "Live" },
-              { value: "free", label: "Free", color: "#22C55E" },
-              { value: "busy", label: "Busy", color: "#EF4444" },
-              { value: "endingSoon", label: "Ending Soon", color: "#F59E0B" },
-            ] as const).map((opt) => (
-              <button
-                key={opt.value}
-                type="button"
-                onClick={() => { setPreviewStatus(opt.value); setPreviewKey((k) => k + 1); }}
-                className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${previewStatus === opt.value ? "bg-[var(--color-background)] text-[var(--color-foreground)] shadow-sm" : "text-[var(--color-muted-foreground)] hover:text-[var(--color-foreground)]"}`}
-              >
-                {"color" in opt && <span className="h-2 w-2 rounded-full" style={{ backgroundColor: opt.color }} />}
-                {opt.label}
-              </button>
-            ))}
+          <div className="mb-3 flex items-center gap-2">
+            <div className="flex gap-1 rounded-lg bg-[var(--color-muted)]/10 p-1">
+              {([
+                { value: "live", label: "Live" },
+                { value: "free", label: "Free", color: "#22C55E" },
+                { value: "busy", label: "Busy", color: "#EF4444" },
+                { value: "endingSoon", label: "Ending Soon", color: "#F59E0B" },
+              ] as const).map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => { setPreviewStatus(opt.value); setPreviewKey((k) => k + 1); }}
+                  className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${previewStatus === opt.value ? "bg-[var(--color-background)] text-[var(--color-foreground)] shadow-sm" : "text-[var(--color-muted-foreground)] hover:text-[var(--color-foreground)]"}`}
+                >
+                  {"color" in opt && <span className="h-2 w-2 rounded-full" style={{ backgroundColor: opt.color }} />}
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+            <div className="ml-auto flex gap-1 rounded-md bg-[var(--color-muted)]/10 p-1">
+              {([
+                { value: "S", label: "S" },
+                { value: "M", label: "M" },
+                { value: "L", label: "L" },
+              ] as const).map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setPreviewSize(opt.value)}
+                  className={`rounded px-2.5 py-1 text-[10px] font-semibold transition-colors ${previewSize === opt.value ? "bg-[var(--color-background)] text-[var(--color-foreground)] shadow-sm" : "text-[var(--color-muted-foreground)] hover:text-[var(--color-foreground)]"}`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
           </div>
           <div ref={previewContainerRef} className="w-full">
             {containerWidth > 0 && (() => {
               const screenW = config.screen.width || 1920;
               const screenH = config.screen.height || 1080;
-              const scale = containerWidth / screenW;
+              const sizeFactor = previewSize === "S" ? 0.5 : previewSize === "M" ? 0.75 : 1;
+              const previewW = containerWidth * sizeFactor;
+              const scale = previewW / screenW;
               const statusParam = previewStatus !== "live" ? `&status=${previewStatus}` : "";
               return (
                 <div
                   className="overflow-hidden rounded-lg border border-[var(--color-border)]"
                   style={{
-                    width: containerWidth,
+                    width: previewW,
                     height: screenH * scale,
+                    margin: sizeFactor < 1 ? "0 auto" : undefined,
                   }}
                 >
                   <iframe
