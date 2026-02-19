@@ -14,6 +14,7 @@ import {
   type DayGridConfig,
   type WeekGridConfig,
   type InfoDisplayConfig,
+  LAYOUT_OPTIONS,
   ORIENTATION_OPTIONS,
   RESOLUTION_PRESETS,
   DEFAULT_THEME,
@@ -53,6 +54,7 @@ export function DisplayEditor({ displayId, displayToken, layoutType, initialConf
   const ipSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [previewKey, setPreviewKey] = useState(0);
+  const [currentLayoutType, setCurrentLayoutType] = useState(layoutType);
   const [currentOrientation, setCurrentOrientation] = useState(orientation || "LANDSCAPE");
   const [previewStatus, setPreviewStatus] = useState<"live" | "free" | "busy" | "endingSoon">("live");
   const previewContainerRef = useRef<HTMLDivElement>(null);
@@ -86,6 +88,21 @@ export function DisplayEditor({ displayId, displayToken, layoutType, initialConf
       setPreviewKey((k) => k + 1);
     } catch {
       toast.error("Failed to update orientation");
+    }
+  }
+
+  async function changeLayoutType(value: string) {
+    setCurrentLayoutType(value);
+    // Reset layout config to defaults for the new layout type
+    const newLayout = getDefaultLayoutConfig(value);
+    const newConfig = { ...config, layout: newLayout };
+    setConfig(newConfig);
+    try {
+      await updateDisplay(displayId, { layoutType: value as "ROOM_BOOKING" | "AGENDA" | "DAY_GRID" | "WEEK_GRID" | "INFO_DISPLAY" });
+      autoSave(newConfig);
+      setPreviewKey((k) => k + 1);
+    } catch {
+      toast.error("Failed to update layout type");
     }
   }
 
@@ -235,6 +252,23 @@ export function DisplayEditor({ displayId, displayToken, layoutType, initialConf
         {activeTab === "layout" && (
           <div role="tabpanel" aria-labelledby="tab-layout" className="space-y-4">
             <div>
+              <label className={labelClass}>Display View</label>
+              <div className="grid grid-cols-2 gap-2">
+                {LAYOUT_OPTIONS.map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    aria-pressed={currentLayoutType === opt.value}
+                    onClick={() => changeLayoutType(opt.value)}
+                    className={`rounded-lg border p-3 text-left transition-colors ${currentLayoutType === opt.value ? "border-[var(--color-primary)] bg-[var(--color-primary)]/5" : "border-[var(--color-border)] hover:border-[var(--color-border-hover)]"}`}
+                  >
+                    <p className={`text-xs font-medium ${currentLayoutType === opt.value ? "text-[var(--color-primary)]" : "text-[var(--color-foreground)]"}`}>{opt.label}</p>
+                    <p className="text-[10px] text-[var(--color-muted-foreground)] mt-0.5">{opt.description}</p>
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
               <label className={labelClass}>Orientation</label>
               <div className="flex gap-2">
                 {ORIENTATION_OPTIONS.map((opt) => (
@@ -316,11 +350,11 @@ export function DisplayEditor({ displayId, displayToken, layoutType, initialConf
               </div>
             </div>
             <h3 className="text-sm font-semibold text-[var(--color-foreground)]">Layout Options</h3>
-            {layoutType === "ROOM_BOOKING" && <RoomBookingOptions config={config.layout as RoomBookingConfig} onChange={updateLayout} labelClass={labelClass} checkboxClass={checkboxClass} inputClass={inputClass} />}
-            {layoutType === "AGENDA" && <AgendaOptions config={config.layout as AgendaConfig} onChange={updateLayout} labelClass={labelClass} checkboxClass={checkboxClass} inputClass={inputClass} />}
-            {layoutType === "DAY_GRID" && <DayGridOptions config={config.layout as DayGridConfig} onChange={updateLayout} labelClass={labelClass} checkboxClass={checkboxClass} inputClass={inputClass} />}
-            {layoutType === "WEEK_GRID" && <WeekGridOptions config={config.layout as WeekGridConfig} onChange={updateLayout} checkboxClass={checkboxClass} />}
-            {layoutType === "INFO_DISPLAY" && <InfoDisplayOptions config={config.layout as InfoDisplayConfig} onChange={updateLayout} labelClass={labelClass} checkboxClass={checkboxClass} inputClass={inputClass} />}
+            {currentLayoutType === "ROOM_BOOKING" && <RoomBookingOptions config={config.layout as RoomBookingConfig} onChange={updateLayout} labelClass={labelClass} checkboxClass={checkboxClass} inputClass={inputClass} />}
+            {currentLayoutType === "AGENDA" && <AgendaOptions config={config.layout as AgendaConfig} onChange={updateLayout} labelClass={labelClass} checkboxClass={checkboxClass} inputClass={inputClass} />}
+            {currentLayoutType === "DAY_GRID" && <DayGridOptions config={config.layout as DayGridConfig} onChange={updateLayout} labelClass={labelClass} checkboxClass={checkboxClass} inputClass={inputClass} />}
+            {currentLayoutType === "WEEK_GRID" && <WeekGridOptions config={config.layout as WeekGridConfig} onChange={updateLayout} checkboxClass={checkboxClass} />}
+            {currentLayoutType === "INFO_DISPLAY" && <InfoDisplayOptions config={config.layout as InfoDisplayConfig} onChange={updateLayout} labelClass={labelClass} checkboxClass={checkboxClass} inputClass={inputClass} />}
           </div>
         )}
 
