@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PHANTOM — Security Analysis Agent</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@300;400;500;600;700&family=Exo+2:ital,wght@0,200;0,300;0,400;0,600;1,200&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --void: #020508;
+  --deep: #060d0f;
+  --surface: #0a1419;
+  --surface2: #0f1e24;
+  --border: rgba(0,255,140,0.08);
+  --border2: rgba(0,255,140,0.18);
+  --acid: #00ff8c;
+  --acid-dim: rgba(0,255,140,0.07);
+  --acid-mid: rgba(0,255,140,0.15);
+  --red-hot: #ff2d55;
+  --red-dim: rgba(255,45,85,0.1);
+  --amber: #ffab00;
+  --amber-dim: rgba(255,171,0,0.1);
+  --blue-cold: #00d4ff;
+  --blue-dim: rgba(0,212,255,0.08);
+  --muted: #2a4a52;
+  --text: #8bc4c8;
+  --text-bright: #cce8eb;
+
+  --font-display: 'Rajdhani', sans-serif;
+  --font-mono: 'Share Tech Mono', monospace;
+  --font-body: 'Exo 2', sans-serif;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--void);
+  color: var(--text);
+  font-family: var(--font-body);
+  min-height: 100vh;
+  overflow-x: hidden;
+  cursor: crosshair;
+}
+
+/* CRT scanlines */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent 0px,
+    transparent 2px,
+    rgba(0,0,0,0.08) 2px,
+    rgba(0,0,0,0.08) 4px
+  );
+  pointer-events: none; z-index: 100;
+}
+
+/* Vignette */
+body::after {
+  content: '';
+  position: fixed; inset: 0;
+  background: radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.7) 100%);
+  pointer-events: none; z-index: 0;
+}
+
+/* Acid glow top */
+.glow-top {
+  position: fixed; top: -150px; left: 50%; transform: translateX(-50%);
+  width: 800px; height: 300px;
+  background: radial-gradient(ellipse, rgba(0,255,140,0.05) 0%, transparent 70%);
+  pointer-events: none; z-index: 0;
+}
+
+/* Corner brackets */
+.bracket-tl, .bracket-tr, .bracket-bl, .bracket-br {
+  position: fixed;
+  width: 40px; height: 40px;
+  pointer-events: none; z-index: 10;
+  opacity: 0.4;
+}
+.bracket-tl { top: 16px; left: 16px; border-top: 1px solid var(--acid); border-left: 1px solid var(--acid); }
+.bracket-tr { top: 16px; right: 16px; border-top: 1px solid var(--acid); border-right: 1px solid var(--acid); }
+.bracket-bl { bottom: 16px; left: 16px; border-bottom: 1px solid var(--acid); border-left: 1px solid var(--acid); }
+.bracket-br { bottom: 16px; right: 16px; border-bottom: 1px solid var(--acid); border-right: 1px solid var(--acid); }
+
+.page {
+  position: relative; z-index: 1;
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 64px 40px 80px;
+}
+
+/* ── STATUSBAR ── */
+.statusbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 16px;
+  background: var(--deep);
+  border: 1px solid var(--border);
+  margin-bottom: 60px;
+  animation: flicker 0.5s ease-out both;
+}
+
+.sb-left { display: flex; align-items: center; gap: 24px; }
+
+.sb-indicator {
+  display: flex; align-items: center; gap: 7px;
+  font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.1em;
+}
+.sb-indicator .dot {
+  width: 6px; height: 6px; border-radius: 50%;
+}
+.dot-green { background: var(--acid); box-shadow: 0 0 8px var(--acid); animation: pulse-green 2s ease-in-out infinite; }
+.dot-red   { background: var(--red-hot); }
+.dot-amber { background: var(--amber); }
+.ind-green { color: var(--acid); }
+.ind-red   { color: var(--red-hot); }
+
+.sb-right {
+  font-family: var(--font-mono); font-size: 10px; color: var(--muted);
+  letter-spacing: 0.1em;
+}
+
+/* ── HERO ── */
+.hero {
+  margin-bottom: 64px;
+  animation: flicker 0.5s 0.06s ease-out both;
+}
+
+.hero-label {
+  font-family: var(--font-mono); font-size: 10px; color: var(--acid);
+  letter-spacing: 0.25em; text-transform: uppercase;
+  margin-bottom: 12px;
+  display: flex; align-items: center; gap: 12px;
+}
+.hero-label::before { content: '//'; opacity: 0.5; }
+
+.hero-name {
+  font-family: var(--font-display);
+  font-size: clamp(90px, 15vw, 160px);
+  font-weight: 700;
+  line-height: 0.85;
+  letter-spacing: 0.06em;
+  color: transparent;
+  -webkit-text-stroke: 1px rgba(0,255,140,0.3);
+  position: relative;
+  display: inline-block;
+}
+
+.hero-name .fill {
+  position: absolute; inset: 0;
+  font-family: var(--font-display);
+  font-size: inherit; font-weight: inherit; line-height: inherit; letter-spacing: inherit;
+  background: linear-gradient(180deg, #cce8eb 0%, rgba(0,255,140,0.6) 60%, transparent 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.hero-sub {
+  display: flex; align-items: baseline; gap: 24px;
+  margin-top: 16px;
+}
+.hero-role {
+  font-family: var(--font-display); font-size: 20px; font-weight: 600;
+  color: var(--text); letter-spacing: 0.15em; text-transform: uppercase;
+}
+.hero-version {
+  font-family: var(--font-mono); font-size: 11px; color: var(--muted);
+  letter-spacing: 0.1em;
+}
+
+/* ── THREAT TICKER ── */
+.ticker-wrap {
+  background: var(--deep); border: 1px solid var(--border);
+  border-left: 3px solid var(--red-hot);
+  padding: 12px 20px;
+  margin-bottom: 64px;
+  overflow: hidden;
+  animation: flicker 0.5s 0.12s ease-out both;
+}
+.ticker-inner {
+  display: flex; gap: 0;
+  white-space: nowrap;
+  animation: scroll-ticker 30s linear infinite;
+}
+.ticker-item {
+  font-family: var(--font-mono); font-size: 11px;
+  color: var(--muted); letter-spacing: 0.08em;
+  padding: 0 40px;
+  flex-shrink: 0;
+}
+.ticker-item .sev-c { color: var(--red-hot); font-weight: 700; }
+.ticker-item .sev-h { color: var(--amber); }
+.ticker-item .sev-m { color: var(--acid); }
+
+/* ── SECTION LABEL ── */
+.section-label {
+  display: flex; align-items: center; gap: 12px;
+  font-family: var(--font-mono); font-size: 9px; color: var(--acid);
+  letter-spacing: 0.22em; text-transform: uppercase;
+  margin-bottom: 20px;
+}
+.section-label::before { content: '▶'; font-size: 7px; }
+.section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+/* ── DOMAIN MATRIX ── */
+.domain-section { margin-bottom: 64px; animation: flicker 0.5s 0.18s ease-out both; }
+
+.domain-matrix {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+}
+
+.domain-cell {
+  background: var(--deep);
+  padding: 22px 20px;
+  position: relative;
+  overflow: hidden;
+  transition: background 0.2s;
+}
+.domain-cell:hover { background: var(--surface); }
+.domain-cell::after {
+  content: '';
+  position: absolute; bottom: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, var(--acid), transparent);
+  transform: scaleX(0); transform-origin: left;
+  transition: transform 0.3s ease;
+}
+.domain-cell:hover::after { transform: scaleX(1); }
+
+.domain-num {
+  font-family: var(--font-mono); font-size: 9px;
+  color: var(--acid); letter-spacing: 0.12em; margin-bottom: 8px; opacity: 0.7;
+}
+.domain-name {
+  font-family: var(--font-display); font-size: 15px; font-weight: 700;
+  color: var(--text-bright); letter-spacing: 0.08em; text-transform: uppercase;
+  margin-bottom: 10px;
+}
+.domain-tags {
+  display: flex; flex-wrap: wrap; gap: 4px;
+}
+.dtag {
+  font-family: var(--font-mono); font-size: 9px;
+  color: var(--muted); letter-spacing: 0.06em;
+  border: 1px solid var(--muted); padding: 1px 6px;
+  transition: all 0.15s;
+}
+.domain-cell:hover .dtag { border-color: var(--border2); color: var(--text); }
+
+/* ── SEVERITY TABLE ── */
+.severity-section { margin-bottom: 64px; animation: flicker 0.5s 0.24s ease-out both; }
+
+.sev-table { width: 100%; border-collapse: collapse; border: 1px solid var(--border); }
+.sev-table tr { border-bottom: 1px solid var(--border); transition: background 0.15s; }
+.sev-table tr:last-child { border-bottom: none; }
+.sev-table tr:hover { background: var(--surface); }
+.sev-table th {
+  font-family: var(--font-mono); font-size: 9px; color: var(--acid);
+  letter-spacing: 0.18em; text-transform: uppercase; text-align: left;
+  padding: 10px 18px; background: var(--deep);
+  border-bottom: 1px solid var(--border2);
+}
+.sev-table td {
+  font-family: var(--font-mono); font-size: 11px; color: var(--muted);
+  padding: 13px 18px; vertical-align: middle; line-height: 1.5;
+}
+.sev-table td:first-child { width: 120px; }
+
+.sev-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-family: var(--font-mono); font-size: 10px; font-weight: 700;
+  letter-spacing: 0.1em; padding: 3px 12px;
+  border: 1px solid; min-width: 90px; justify-content: center;
+}
+.sev-c { color: var(--red-hot); border-color: var(--red-hot); background: var(--red-dim); }
+.sev-h { color: var(--amber); border-color: var(--amber); background: var(--amber-dim); }
+.sev-m { color: var(--acid); border-color: var(--acid); background: var(--acid-dim); }
+.sev-l { color: var(--blue-cold); border-color: var(--blue-cold); background: var(--blue-dim); }
+.sev-i { color: var(--muted); border-color: var(--muted); }
+
+.sla-fast { color: var(--red-hot); }
+.sla-med  { color: var(--amber); }
+.sla-slow { color: var(--text); }
+
+/* ── CODE PANEL ── */
+.code-section { margin-bottom: 64px; animation: flicker 0.5s 0.3s ease-out both; }
+
+.term {
+  background: #020a0c;
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+
+.term-bar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 16px;
+  background: var(--deep);
+  border-bottom: 1px solid var(--border);
+}
+.term-title {
+  font-family: var(--font-mono); font-size: 10px; color: var(--acid);
+  letter-spacing: 0.1em; display: flex; align-items: center; gap: 8px;
+}
+.term-title::before { content: '$'; opacity: 0.5; }
+
+.term-tabs { display: flex; gap: 0; }
+.term-tab {
+  font-family: var(--font-mono); font-size: 9px;
+  padding: 5px 16px; color: var(--muted); cursor: pointer;
+  border: 1px solid transparent; border-bottom: none;
+  letter-spacing: 0.06em; transition: all 0.15s;
+}
+.term-tab:hover { color: var(--text); }
+.term-tab.active {
+  background: #020a0c; color: var(--acid);
+  border-color: var(--border);
+}
+
+.term-body { padding: 24px 28px; }
+
+.code-pane { display: none; }
+.code-pane.active { display: block; }
+
+pre {
+  font-family: var(--font-mono); font-size: 12px;
+  line-height: 1.75; white-space: pre; overflow-x: auto;
+}
+
+.ck  { color: #00d4ff; }
+.cs  { color: var(--acid); }
+.cn  { color: var(--text-bright); }
+.ct  { color: #c084fc; }
+.cc  { color: var(--muted); font-style: italic; }
+.cf  { color: #fbbf24; }
+.cdanger { color: var(--red-hot); font-weight: 700; }
+.csafe   { color: var(--acid); font-weight: 700; }
+
+/* ── WORKFLOW ── */
+.workflow-section { margin-bottom: 64px; animation: flicker 0.5s 0.36s ease-out both; }
+
+.wf-pipeline {
+  display: grid; grid-template-columns: repeat(6, 1fr);
+  gap: 1px; background: var(--border);
+  border: 1px solid var(--border);
+}
+
+.wf-node {
+  background: var(--deep); padding: 20px 14px;
+  text-align: center; position: relative; transition: background 0.2s;
+}
+.wf-node:hover { background: var(--surface); }
+
+.wf-hex {
+  width: 44px; height: 44px; margin: 0 auto 12px;
+  background: var(--surface); border: 1px solid var(--border2);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-display); font-size: 16px; font-weight: 700;
+  color: var(--acid); clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  transition: all 0.2s;
+}
+.wf-node:hover .wf-hex { background: var(--acid-dim); border-color: var(--acid); }
+
+.wf-step-name {
+  font-family: var(--font-mono); font-size: 8px; color: var(--acid);
+  letter-spacing: 0.14em; text-transform: uppercase; margin-bottom: 6px;
+}
+.wf-step-desc {
+  font-size: 10px; color: var(--muted); line-height: 1.4; font-weight: 300;
+}
+
+/* ── PRINCIPLES ── */
+.principles-section { margin-bottom: 64px; animation: flicker 0.5s 0.42s ease-out both; }
+
+.principles-list { display: flex; flex-direction: column; gap: 1px; background: var(--border); border: 1px solid var(--border); }
+
+.principle-row {
+  display: grid; grid-template-columns: 52px 1fr;
+  background: var(--deep); transition: background 0.15s;
+}
+.principle-row:hover { background: var(--surface); }
+
+.p-num {
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-display); font-size: 28px; font-weight: 700;
+  color: rgba(0,255,140,0.12); border-right: 1px solid var(--border);
+  transition: color 0.2s;
+}
+.principle-row:hover .p-num { color: rgba(0,255,140,0.25); }
+
+.p-body { padding: 18px 22px; }
+.p-title {
+  font-family: var(--font-display); font-size: 14px; font-weight: 700;
+  color: var(--text-bright); letter-spacing: 0.1em; text-transform: uppercase;
+  margin-bottom: 5px;
+}
+.p-text { font-size: 12px; color: var(--muted); line-height: 1.6; font-weight: 300; }
+
+/* ── FOOTER ── */
+.footer {
+  border-top: 1px solid var(--border);
+  padding-top: 36px;
+  display: grid; grid-template-columns: 1fr auto; gap: 32px;
+  align-items: center;
+  animation: flicker 0.5s 0.5s ease-out both;
+}
+
+.footer-line {
+  font-family: var(--font-mono); font-size: 13px;
+  color: var(--muted); font-style: italic; line-height: 1.7;
+}
+.footer-line em { color: var(--text); font-style: normal; }
+
+.footer-id {
+  text-align: right;
+  font-family: var(--font-mono); font-size: 9px; color: var(--muted);
+  letter-spacing: 0.14em; line-height: 2;
+}
+
+/* ── ANIMATIONS ── */
+@keyframes flicker {
+  0% { opacity: 0; }
+  10% { opacity: 0.8; }
+  12% { opacity: 0.4; }
+  14% { opacity: 0.9; }
+  100% { opacity: 1; }
+}
+
+@keyframes pulse-green {
+  0%, 100% { box-shadow: 0 0 6px var(--acid); }
+  50% { box-shadow: 0 0 2px var(--acid); opacity: 0.5; }
+}
+
+@keyframes scroll-ticker {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 720px) {
+  .domain-matrix { grid-template-columns: 1fr 1fr; }
+  .wf-pipeline { grid-template-columns: repeat(3, 1fr); }
+  .footer { grid-template-columns: 1fr; }
+  .footer-id { text-align: left; }
+  .hero-name { font-size: 72px; }
+}
+</style>
+</head>
+<body>
+
+<div class="glow-top"></div>
+<div class="bracket-tl"></div>
+<div class="bracket-tr"></div>
+<div class="bracket-bl"></div>
+<div class="bracket-br"></div>
+
+<div class="page">
+
+  <!-- STATUSBAR -->
+  <div class="statusbar">
+    <div class="sb-left">
+      <div class="sb-indicator"><div class="dot dot-green"></div><span class="ind-green">ACTIVE</span></div>
+      <div class="sb-indicator" style="color:var(--muted)">CLAUDE CODE / SECURITY AGENT</div>
+      <div class="sb-indicator" style="color:var(--muted)">THREAT LEVEL: <span style="color:var(--red-hot)">HIGH</span></div>
+    </div>
+    <div class="sb-right">PHANTOM v1.0 · 2026</div>
+  </div>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-label">Security Analysis Agent · Claude Code Identity</div>
+    <div class="hero-name">
+      PHANTOM
+      <span class="fill">PHANTOM</span>
+    </div>
+    <div class="hero-sub">
+      <span class="hero-role">Principal Security Engineer</span>
+      <span class="hero-version">// OFFENSIVE · DEFENSIVE · FORENSIC</span>
+    </div>
+  </section>
+
+  <!-- TICKER -->
+  <div class="ticker-wrap">
+    <div class="ticker-inner">
+      <span class="ticker-item">AUTH_BYPASS detected → <span class="sev-c">CRITICAL</span> · Immediate response required</span>
+      <span class="ticker-item">SQL_INJECTION vector → input validation missing on /api/users?id=</span>
+      <span class="ticker-item">JWT_ALG_CONFUSION → algorithm not pinned · <span class="sev-h">HIGH</span></span>
+      <span class="ticker-item">DEPENDENCY_CVE → <span class="sev-m">MEDIUM</span> · lodash@4.17.20 · CVSS 6.1</span>
+      <span class="ticker-item">TIMING_ATTACK → string comparison in token validation</span>
+      <span class="ticker-item">SECRETS_IN_GIT → API key detected in commit abc4f3d · <span class="sev-c">CRITICAL</span></span>
+      <span class="ticker-item">SSRF_VECTOR → user-supplied URL passed to internal fetch without validation</span>
+      <span class="ticker-item">AUTH_BYPASS detected → <span class="sev-c">CRITICAL</span> · Immediate response required</span>
+      <span class="ticker-item">SQL_INJECTION vector → input validation missing on /api/users?id=</span>
+      <span class="ticker-item">JWT_ALG_CONFUSION → algorithm not pinned · <span class="sev-h">HIGH</span></span>
+      <span class="ticker-item">DEPENDENCY_CVE → <span class="sev-m">MEDIUM</span> · lodash@4.17.20 · CVSS 6.1</span>
+      <span class="ticker-item">TIMING_ATTACK → string comparison in token validation</span>
+      <span class="ticker-item">SECRETS_IN_GIT → API key detected in commit abc4f3d · <span class="sev-c">CRITICAL</span></span>
+      <span class="ticker-item">SSRF_VECTOR → user-supplied URL passed to internal fetch without validation</span>
+    </div>
+  </div>
+
+  <!-- DOMAINS -->
+  <section class="domain-section">
+    <div class="section-label">Security Domains</div>
+    <div class="domain-matrix">
+      <div class="domain-cell">
+        <div class="domain-num">// 01</div>
+        <div class="domain-name">AppSec</div>
+        <div class="domain-tags">
+          <span class="dtag">OWASP Top 10</span><span class="dtag">SAST</span>
+          <span class="dtag">DAST</span><span class="dtag">Semgrep</span>
+          <span class="dtag">Burp Suite</span><span class="dtag">XSS</span>
+          <span class="dtag">SQLi</span><span class="dtag">SSRF</span>
+        </div>
+      </div>
+      <div class="domain-cell">
+        <div class="domain-num">// 02</div>
+        <div class="domain-name">Auth & Identity</div>
+        <div class="domain-tags">
+          <span class="dtag">OAuth2</span><span class="dtag">OIDC</span>
+          <span class="dtag">JWT</span><span class="dtag">PKCE</span>
+          <span class="dtag">RBAC</span><span class="dtag">FIDO2</span>
+          <span class="dtag">Session Mgmt</span><span class="dtag">MFA</span>
+        </div>
+      </div>
+      <div class="domain-cell">
+        <div class="domain-num">// 03</div>
+        <div class="domain-name">Cryptography</div>
+        <div class="domain-tags">
+          <span class="dtag">AES-GCM</span><span class="dtag">Ed25519</span>
+          <span class="dtag">Argon2id</span><span class="dtag">ECDSA</span>
+          <span class="dtag">Key Mgmt</span><span class="dtag">HSM</span>
+          <span class="dtag">TLS 1.3</span><span class="dtag">PKI</span>
+        </div>
+      </div>
+      <div class="domain-cell">
+        <div class="domain-num">// 04</div>
+        <div class="domain-name">Cloud Security</div>
+        <div class="domain-tags">
+          <span class="dtag">IAM</span><span class="dtag">Vault</span>
+          <span class="dtag">GuardDuty</span><span class="dtag">Falco</span>
+          <span class="dtag">Checkov</span><span class="dtag">tfsec</span>
+          <span class="dtag">OPA</span><span class="dtag">CSPM</span>
+        </div>
+      </div>
+      <div class="domain-cell">
+        <div class="domain-num">// 05</div>
+        <div class="domain-name">Incident Response</div>
+        <div class="domain-tags">
+          <span class="dtag">Log Triage</span><span class="dtag">IOC</span>
+          <span class="dtag">CVSS</span><span class="dtag">CVE</span>
+          <span class="dtag">Threat Hunt</span><span class="dtag">SIEM</span>
+          <span class="dtag">Forensics</span><span class="dtag">Timeline</span>
+        </div>
+      </div>
+      <div class="domain-cell">
+        <div class="domain-num">// 06</div>
+        <div class="domain-name">Network & Infra</div>
+        <div class="domain-tags">
+          <span class="dtag">Firewall</span><span class="dtag">VPN</span>
+          <span class="dtag">HSTS</span><span class="dtag">CSP</span>
+          <span class="dtag">Rate Limit</span><span class="dtag">DDoS</span>
+          <span class="dtag">DNSSEC</span><span class="dtag">Zero Trust</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SEVERITY TABLE -->
+  <section class="severity-section">
+    <div class="section-label">Severity Classification</div>
+    <table class="sev-table">
+      <thead>
+        <tr>
+          <th>Level</th>
+          <th>CVSS Range</th>
+          <th>Example Findings</th>
+          <th>Response SLA</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="sev-badge sev-c">CRITICAL</span></td>
+          <td>9.0 – 10.0</td>
+          <td>RCE, auth bypass, unauthenticated SQLi, secrets exposed in prod</td>
+          <td><span class="sla-fast">Immediate · same day</span></td>
+        </tr>
+        <tr>
+          <td><span class="sev-badge sev-h">HIGH</span></td>
+          <td>7.0 – 8.9</td>
+          <td>Privilege escalation, XXE, SSRF, stored XSS on admin panel</td>
+          <td><span class="sla-fast">24 – 72 hours</span></td>
+        </tr>
+        <tr>
+          <td><span class="sev-badge sev-m">MEDIUM</span></td>
+          <td>4.0 – 6.9</td>
+          <td>Reflected XSS, IDOR, information disclosure, insecure deserialization</td>
+          <td><span class="sla-med">1 – 2 weeks</span></td>
+        </tr>
+        <tr>
+          <td><span class="sev-badge sev-l">LOW</span></td>
+          <td>0.1 – 3.9</td>
+          <td>Missing security headers, verbose error messages, clickjacking</td>
+          <td><span class="sla-slow">Next sprint</span></td>
+        </tr>
+        <tr>
+          <td><span class="sev-badge" style="color:var(--muted);border-color:var(--muted)">INFO</span></td>
+          <td>0.0</td>
+          <td>Best practice deviations, hardening opportunities, dependency age</td>
+          <td><span class="sla-slow">Backlog</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- CODE -->
+  <section class="code-section">
+    <div class="section-label">Secure Code Patterns</div>
+    <div class="term">
+      <div class="term-bar">
+        <div class="term-title">phantom · secure-patterns.ts</div>
+        <div class="term-tabs">
+          <div class="term-tab active" onclick="showPhantomPane('ph-timing')">timing</div>
+          <div class="term-tab" onclick="showPhantomPane('ph-pwd')">passwords</div>
+          <div class="term-tab" onclick="showPhantomPane('ph-jwt')">jwt</div>
+          <div class="term-tab" onclick="showPhantomPane('ph-input')">input</div>
+        </div>
+      </div>
+      <div class="term-body">
+
+        <div class="code-pane active" id="ph-timing">
+<pre><span class="cc">// ❌ VULNERABLE: string comparison leaks timing info to attackers</span>
+<span class="ck">if</span> (providedToken <span class="cn">===</span> storedToken) { <span class="cc">/* timing oracle */</span> }
+
+<span class="cc">// ✅ PHANTOM STANDARD: Constant-time comparison — always</span>
+<span class="ck">import</span> { <span class="cf">timingSafeEqual</span> } <span class="ck">from</span> <span class="cs">'node:crypto'</span>
+
+<span class="ck">function</span> <span class="cf">safeCompare</span>(<span class="cn">a</span>: <span class="ct">string</span>, <span class="cn">b</span>: <span class="ct">string</span>): <span class="ct">boolean</span> {
+  <span class="cc">// Pad to same length to prevent early-exit on length mismatch</span>
+  <span class="ck">const</span> <span class="cn">bufA</span> = Buffer.<span class="cf">from</span>(a.<span class="cf">padEnd</span>(64))
+  <span class="ck">const</span> <span class="cn">bufB</span> = Buffer.<span class="cf">from</span>(b.<span class="cf">padEnd</span>(64))
+  <span class="ck">return</span> <span class="cf">timingSafeEqual</span>(bufA, bufB) && a.<span class="cn">length</span> === b.<span class="cn">length</span>
+}</pre>
+        </div>
+
+        <div class="code-pane" id="ph-pwd">
+<pre><span class="cc">// ❌ REJECTED: MD5 / SHA256 — trivially cracked with rainbow tables</span>
+<span class="cdanger">crypto.createHash('sha256').update(password).digest('hex')</span>
+
+<span class="cc">// ✅ PHANTOM STANDARD: Argon2id — winner of Password Hashing Competition</span>
+<span class="ck">import</span> argon2 <span class="ck">from</span> <span class="cs">'argon2'</span>
+
+<span class="ck">const</span> ARGON_OPTIONS = {
+  <span class="cn">type</span>:        argon2.<span class="cn">argon2id</span>,  <span class="cc">// resistant to GPU and side-channel</span>
+  <span class="cn">memoryCost</span>: <span class="cs">65536</span>,            <span class="cc">// 64 MB — tune to your server</span>
+  <span class="cn">timeCost</span>:   <span class="cs">3</span>,                <span class="cc">// iterations</span>
+  <span class="cn">parallelism</span>: <span class="cs">4</span>,               <span class="cc">// threads</span>
+}
+
+<span class="ck">export const</span> <span class="cf">hashPassword</span> = (<span class="cn">plain</span>: <span class="ct">string</span>) =>
+  argon2.<span class="cf">hash</span>(plain, ARGON_OPTIONS)
+
+<span class="ck">export const</span> <span class="cf">verifyPassword</span> = (<span class="cn">hash</span>: <span class="ct">string</span>, <span class="cn">plain</span>: <span class="ct">string</span>) =>
+  argon2.<span class="cf">verify</span>(hash, plain)</pre>
+        </div>
+
+        <div class="code-pane" id="ph-jwt">
+<pre><span class="cc">// ❌ VULNERABLE: Algorithm confusion — attacker changes alg to 'none'</span>
+<span class="cdanger">jwt.verify(token, SECRET)  // accepts any algorithm including 'none'</span>
+
+<span class="cc">// ✅ PHANTOM STANDARD: Explicit algorithm, audience, issuer — always</span>
+<span class="ck">import</span> * <span class="ck">as</span> <span class="ct">jose</span> <span class="ck">from</span> <span class="cs">'jose'</span>
+
+<span class="ck">const</span> <span class="cn">PUBLIC_KEY</span> = <span class="ck">await</span> jose.<span class="cf">importSPKI</span>(process.env.<span class="cn">JWT_PUBLIC_KEY</span>!, <span class="cs">'RS256'</span>)
+
+<span class="ck">const</span> { payload } = <span class="ck">await</span> jose.<span class="cf">jwtVerify</span>(token, PUBLIC_KEY, {
+  <span class="cn">algorithms</span>: [<span class="cs">'RS256'</span>],          <span class="cc">// pinned — never wildcard</span>
+  <span class="cn">audience</span>:   process.env.<span class="cn">JWT_AUD</span>, <span class="cc">// prevent cross-service token reuse</span>
+  <span class="cn">issuer</span>:     process.env.<span class="cn">JWT_ISS</span>,
+  <span class="cn">clockTolerance</span>: <span class="cs">30</span>,              <span class="cc">// 30s skew tolerance only</span>
+})</pre>
+        </div>
+
+        <div class="code-pane" id="ph-input">
+<pre><span class="cc">// ❌ VULNERABLE: Raw user input concatenated into query</span>
+<span class="cdanger">db.query(`SELECT * FROM users WHERE id = ${req.params.id}`)</span>
+
+<span class="cc">// ✅ PHANTOM STANDARD: Parse → validate → parameterize</span>
+<span class="ck">import</span> { z } <span class="ck">from</span> <span class="cs">'zod'</span>
+
+<span class="ck">const</span> <span class="cn">ParamSchema</span> = z.<span class="cf">object</span>({
+  <span class="cn">id</span>:     z.<span class="cf">string</span>().<span class="cf">uuid</span>(),            <span class="cc">// strict format</span>
+  <span class="cn">limit</span>:  z.<span class="cf">coerce</span>.<span class="cf">number</span>().<span class="cf">int</span>().<span class="cf">min</span>(<span class="cs">1</span>).<span class="cf">max</span>(<span class="cs">100</span>).<span class="cf">default</span>(<span class="cs">20</span>),
+  <span class="cn">cursor</span>: z.<span class="cf">string</span>().<span class="cf">uuid</span>().<span class="cf">optional</span>(),
+})
+
+<span class="ck">const</span> <span class="cn">params</span> = ParamSchema.<span class="cf">parse</span>(req.<span class="cn">params</span>)  <span class="cc">// throws on violation</span>
+<span class="ck">const</span> <span class="cn">user</span>   = <span class="ck">await</span> db.<span class="cn">user</span>.<span class="cf">findUnique</span>({ <span class="cn">where</span>: { <span class="cn">id</span>: params.<span class="cn">id</span> } })</pre>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- WORKFLOW -->
+  <section class="workflow-section">
+    <div class="section-label">Assessment Workflow</div>
+    <div class="wf-pipeline">
+      <div class="wf-node">
+        <div class="wf-hex">T</div>
+        <div class="wf-step-name">Threat Model</div>
+        <div class="wf-step-desc">STRIDE analysis before any feature or change</div>
+      </div>
+      <div class="wf-node">
+        <div class="wf-hex">A</div>
+        <div class="wf-step-name">Assess</div>
+        <div class="wf-step-desc">Map full attack surface systematically</div>
+      </div>
+      <div class="wf-node">
+        <div class="wf-hex">F</div>
+        <div class="wf-step-name">Find</div>
+        <div class="wf-step-desc">Document every finding with CVSS + PoC</div>
+      </div>
+      <div class="wf-node">
+        <div class="wf-hex">R</div>
+        <div class="wf-step-name">Remediate</div>
+        <div class="wf-step-desc">Root cause fix with regression test</div>
+      </div>
+      <div class="wf-node">
+        <div class="wf-hex">V</div>
+        <div class="wf-step-name">Verify</div>
+        <div class="wf-step-desc">Confirm exploit path closed, no new surface</div>
+      </div>
+      <div class="wf-node">
+        <div class="wf-hex">M</div>
+        <div class="wf-step-name">Monitor</div>
+        <div class="wf-step-desc">Log + alert on every security event boundary</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PRINCIPLES -->
+  <section class="principles-section">
+    <div class="section-label">Security Doctrine</div>
+    <div class="principles-list">
+      <div class="principle-row">
+        <div class="p-num">01</div>
+        <div class="p-body">
+          <div class="p-title">Assume Breach</div>
+          <div class="p-text">Design controls assuming the perimeter has already failed. Ask not only how to prevent — but how to detect and limit damage when it happens. Defense begins after the wall.</div>
+        </div>
+      </div>
+      <div class="principle-row">
+        <div class="p-num">02</div>
+        <div class="p-body">
+          <div class="p-title">Never Trust, Always Verify</div>
+          <div class="p-text">Every input is hostile until validated. Every caller is unauthenticated until proven. Every dependency is a supply chain risk until reviewed. Trust is explicit, scoped, and time-limited.</div>
+        </div>
+      </div>
+      <div class="principle-row">
+        <div class="p-num">03</div>
+        <div class="p-body">
+          <div class="p-title">Defense in Depth</div>
+          <div class="p-text">No single control is sufficient. Layer validation, authentication, encryption, monitoring, and rate-limiting. A breach that bypasses one control must still face five more.</div>
+        </div>
+      </div>
+      <div class="principle-row">
+        <div class="p-num">04</div>
+        <div class="p-body">
+          <div class="p-title">Least Privilege Everywhere</div>
+          <div class="p-text">Tokens, roles, service accounts, API keys, database users — every principal has exactly the permissions its task requires. No more. Over-permissioning is a vulnerability with a CVSS score.</div>
+        </div>
+      </div>
+      <div class="principle-row">
+        <div class="p-num">05</div>
+        <div class="p-body">
+          <div class="p-title">Security is Observable</div>
+          <div class="p-text">A breach you cannot detect is worse than one you can. Every control must have corresponding logging and alerting. Audit trails are tamper-evident. Anomalies surface before they become incidents.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="footer-line">
+      <em>The question is never whether you will be attacked.</em><br>
+      The question is whether you will know.
+    </div>
+    <div class="footer-id">
+      CLAUDE CODE AGENT<br>
+      SECURITY · CRYPTOGRAPHY · FORENSICS<br>
+      PHANTOM v1.0 · 2026
+    </div>
+  </footer>
+
+</div>
+
+<script>
+function showPhantomPane(id) {
+  document.querySelectorAll('.code-pane').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.term-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  event.target.classList.add('active');
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,27 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(sudo apt update:*)",
+      "Bash(sudo apt install:*)",
+      "Bash(git --version)",
+      "Bash(ssh:*)",
+      "Bash(git init:*)",
+      "Bash(git remote add:*)",
+      "Bash(git branch:*)",
+      "Bash(git config:*)",
+      "Bash(git -C /home/steve/projects pull origin main)",
+      "Bash(git -C /home/steve/projects pull origin master)",
+      "Bash(docker compose:*)",
+      "Bash(sudo docker compose:*)",
+      "Bash(docker ps:*)",
+      "Bash(npm install:*)",
+      "Bash(npx prisma generate:*)",
+      "Bash(npx prisma db push:*)",
+      "Bash(npm run db:seed:*)",
+      "Bash(npm run dev:*)",
+      "Bash(git -C /home/steve/projects status)",
+      "Bash(git -C /home/steve/projects diff --staged --stat)",
+      "Bash(git -C /home/steve/projects log --oneline -5)"
+    ]
+  }
+}

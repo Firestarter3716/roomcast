@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>APEX — Claude Code Identity</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --c-bg: #04040a;
+    --c-surface: #0a0a14;
+    --c-border: rgba(255,255,255,0.06);
+    --c-border-accent: rgba(99,255,200,0.2);
+    --c-text: #e8e8f0;
+    --c-muted: #5a5a72;
+    --c-accent: #63ffc8;
+    --c-accent2: #7b61ff;
+    --c-accent3: #ff6b6b;
+    --c-accent4: #ffd166;
+    --c-grid: rgba(255,255,255,0.025);
+    --font-display: 'Syne', sans-serif;
+    --font-mono: 'DM Mono', monospace;
+    --font-body: 'DM Sans', sans-serif;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--c-bg);
+    color: var(--c-text);
+    font-family: var(--font-body);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Background grid */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(var(--c-grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--c-grid) 1px, transparent 1px);
+    background-size: 48px 48px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Ambient glows */
+  .glow-tl {
+    position: fixed;
+    top: -200px; left: -200px;
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, rgba(123,97,255,0.12) 0%, transparent 70%);
+    pointer-events: none; z-index: 0;
+  }
+  .glow-br {
+    position: fixed;
+    bottom: -200px; right: -200px;
+    width: 700px; height: 700px;
+    background: radial-gradient(circle, rgba(99,255,200,0.08) 0%, transparent 70%);
+    pointer-events: none; z-index: 0;
+  }
+
+  .page {
+    position: relative; z-index: 1;
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 80px 32px;
+  }
+
+  /* ─── HEADER ─── */
+  .header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 96px;
+    animation: fadeUp 0.6s ease-out both;
+  }
+
+  .logo-group { display: flex; flex-direction: column; gap: 8px; }
+
+  .logo-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--c-accent);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+  .logo-badge::before {
+    content: '';
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--c-accent);
+    box-shadow: 0 0 8px var(--c-accent);
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  .logo-name {
+    font-family: var(--font-display);
+    font-size: 88px;
+    font-weight: 800;
+    line-height: 0.9;
+    letter-spacing: -0.04em;
+    background: linear-gradient(135deg, #ffffff 0%, #a0a0c0 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .logo-sub {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--c-muted);
+    letter-spacing: 0.08em;
+    margin-top: 4px;
+  }
+
+  .header-meta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 12px;
+    padding-top: 12px;
+  }
+
+  .header-tag {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--c-muted);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .version-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border: 1px solid var(--c-border-accent);
+    border-radius: 100px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--c-accent);
+    background: rgba(99,255,200,0.04);
+  }
+
+  /* ─── MISSION ─── */
+  .mission {
+    margin-bottom: 80px;
+    animation: fadeUp 0.6s 0.1s ease-out both;
+  }
+
+  .mission-line {
+    font-family: var(--font-display);
+    font-size: clamp(22px, 3vw, 32px);
+    font-weight: 600;
+    line-height: 1.25;
+    color: var(--c-text);
+    max-width: 700px;
+  }
+  .mission-line em {
+    font-style: normal;
+    color: var(--c-accent);
+  }
+  .mission-line .purple { color: var(--c-accent2); }
+
+  /* ─── THREE PILLARS ─── */
+  .pillars {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2px;
+    margin-bottom: 80px;
+    animation: fadeUp 0.6s 0.2s ease-out both;
+  }
+
+  .pillar {
+    background: var(--c-surface);
+    border: 1px solid var(--c-border);
+    padding: 32px 28px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s ease, background 0.2s ease;
+  }
+  .pillar:first-child { border-radius: 12px 0 0 12px; }
+  .pillar:last-child { border-radius: 0 12px 12px 0; }
+
+  .pillar::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+  .pillar:hover { border-color: rgba(255,255,255,0.12); background: #0e0e1a; }
+  .pillar:hover::before { opacity: 1; }
+
+  .pillar-1::before { background: var(--c-accent3); }
+  .pillar-2::before { background: var(--c-accent); }
+  .pillar-3::before { background: var(--c-accent2); }
+
+  .pillar-num {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--c-muted);
+    letter-spacing: 0.1em;
+    margin-bottom: 20px;
+  }
+  .pillar-title {
+    font-family: var(--font-display);
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    line-height: 1.2;
+  }
+  .pillar-1 .pillar-title { color: var(--c-accent3); }
+  .pillar-2 .pillar-title { color: var(--c-accent); }
+  .pillar-3 .pillar-title { color: var(--c-accent2); }
+  .pillar-desc {
+    font-size: 13.5px;
+    color: var(--c-muted);
+    line-height: 1.6;
+    font-weight: 300;
+  }
+
+  /* ─── WORKFLOW ─── */
+  .workflow {
+    margin-bottom: 80px;
+    animation: fadeUp 0.6s 0.3s ease-out both;
+  }
+
+  .section-label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--c-muted);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--c-border);
+  }
+
+  .flow-steps {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+  }
+
+  .flow-step {
+    flex: 1;
+    padding: 24px 20px;
+    background: var(--c-surface);
+    border: 1px solid var(--c-border);
+    position: relative;
+    transition: background 0.2s;
+  }
+  .flow-step:not(:first-child) { border-left: none; }
+  .flow-step:first-child { border-radius: 10px 0 0 10px; }
+  .flow-step:last-child { border-radius: 0 10px 10px 0; }
+  .flow-step:hover { background: #0c0c18; }
+
+  .flow-arrow {
+    position: absolute;
+    right: -13px; top: 50%;
+    transform: translateY(-50%);
+    width: 24px; height: 24px;
+    background: var(--c-bg);
+    border: 1px solid var(--c-border);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 9px;
+    color: var(--c-muted);
+    z-index: 2;
+  }
+  .flow-step:last-child .flow-arrow { display: none; }
+
+  .flow-num {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--c-accent);
+    letter-spacing: 0.08em;
+    margin-bottom: 8px;
+  }
+  .flow-name {
+    font-family: var(--font-display);
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--c-text);
+    margin-bottom: 6px;
+  }
+  .flow-desc {
+    font-size: 11.5px;
+    color: var(--c-muted);
+    line-height: 1.5;
+  }
+
+  /* ─── STANDARDS GRID ─── */
+  .standards {
+    margin-bottom: 80px;
+    animation: fadeUp 0.6s 0.4s ease-out both;
+  }
+
+  .standards-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+
+  .standard-card {
+    background: var(--c-surface);
+    border: 1px solid var(--c-border);
+    border-radius: 10px;
+    padding: 24px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s, transform 0.2s;
+  }
+  .standard-card:hover {
+    border-color: rgba(255,255,255,0.1);
+    transform: translateY(-2px);
+  }
+
+  .standard-icon {
+    font-size: 20px;
+    margin-bottom: 12px;
+    display: block;
+  }
+  .standard-name {
+    font-family: var(--font-display);
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--c-text);
+    margin-bottom: 8px;
+  }
+  .standard-items {
+    list-style: none;
+  }
+  .standard-items li {
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    color: var(--c-muted);
+    padding: 3px 0;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    line-height: 1.4;
+  }
+  .standard-items li::before {
+    content: '—';
+    color: var(--c-border-accent);
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  /* ─── CODE BLOCK ─── */
+  .code-section {
+    margin-bottom: 80px;
+    animation: fadeUp 0.6s 0.5s ease-out both;
+  }
+
+  .code-card {
+    background: #070710;
+    border: 1px solid var(--c-border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .code-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--c-border);
+    background: rgba(255,255,255,0.02);
+  }
+  .code-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+  }
+  .code-dot-r { background: #ff5f57; }
+  .code-dot-y { background: #ffbd2e; }
+  .code-dot-g { background: #28c840; }
+  .code-filename {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--c-muted);
+    margin-left: 8px;
+  }
+  .code-body {
+    padding: 28px 32px;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    line-height: 1.7;
+    overflow-x: auto;
+  }
+  .c-comment { color: #3d3d5c; font-style: italic; }
+  .c-keyword { color: var(--c-accent2); }
+  .c-string { color: var(--c-accent); }
+  .c-var { color: var(--c-accent3); }
+  .c-fn { color: var(--c-accent4); }
+  .c-text { color: #9898bc; }
+
+  /* ─── REPORT FORMAT ─── */
+  .report-section {
+    margin-bottom: 80px;
+    animation: fadeUp 0.6s 0.6s ease-out both;
+  }
+
+  .report-card {
+    background: var(--c-surface);
+    border: 1px solid var(--c-border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .report-header {
+    padding: 20px 28px;
+    border-bottom: 1px solid var(--c-border);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--c-accent);
+    letter-spacing: 0.08em;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(99,255,200,0.03);
+  }
+  .report-body {
+    padding: 0;
+  }
+  .report-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 0;
+    border-bottom: 1px solid var(--c-border);
+    transition: background 0.15s;
+  }
+  .report-row:last-child { border-bottom: none; }
+  .report-row:hover { background: rgba(255,255,255,0.02); }
+  .report-label {
+    width: 200px;
+    flex-shrink: 0;
+    padding: 18px 28px;
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    color: var(--c-muted);
+    letter-spacing: 0.04em;
+    border-right: 1px solid var(--c-border);
+  }
+  .report-value {
+    flex: 1;
+    padding: 18px 28px;
+    font-size: 13.5px;
+    color: var(--c-text);
+    line-height: 1.5;
+    font-weight: 300;
+  }
+  .tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 10px;
+    border-radius: 100px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    margin: 2px 3px;
+  }
+  .tag-green { background: rgba(99,255,200,0.1); color: var(--c-accent); border: 1px solid rgba(99,255,200,0.2); }
+  .tag-red { background: rgba(255,107,107,0.1); color: var(--c-accent3); border: 1px solid rgba(255,107,107,0.2); }
+  .tag-purple { background: rgba(123,97,255,0.1); color: var(--c-accent2); border: 1px solid rgba(123,97,255,0.2); }
+  .tag-yellow { background: rgba(255,209,102,0.1); color: var(--c-accent4); border: 1px solid rgba(255,209,102,0.2); }
+
+  /* ─── FOOTER ─── */
+  .footer {
+    border-top: 1px solid var(--c-border);
+    padding-top: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    animation: fadeUp 0.6s 0.7s ease-out both;
+  }
+
+  .footer-phrase {
+    font-family: var(--font-display);
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--c-muted);
+  }
+  .footer-phrase em {
+    font-style: normal;
+    color: var(--c-text);
+  }
+
+  .footer-mark {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--c-muted);
+    letter-spacing: 0.1em;
+    text-align: right;
+  }
+
+  /* ─── ANIMATIONS ─── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; box-shadow: 0 0 8px var(--c-accent); }
+    50% { opacity: 0.5; box-shadow: 0 0 2px var(--c-accent); }
+  }
+
+  /* ─── RESPONSIVE ─── */
+  @media (max-width: 700px) {
+    .logo-name { font-size: 56px; }
+    .pillars { grid-template-columns: 1fr; }
+    .pillar:first-child { border-radius: 12px 12px 0 0; }
+    .pillar:last-child { border-radius: 0 0 12px 12px; }
+    .flow-steps { flex-direction: column; }
+    .flow-step:first-child { border-radius: 10px 10px 0 0; }
+    .flow-step:last-child { border-radius: 0 0 10px 10px; }
+    .flow-step:not(:first-child) { border-left: 1px solid var(--c-border); border-top: none; }
+    .standards-grid { grid-template-columns: 1fr; }
+    .header { flex-direction: column; gap: 24px; }
+    .header-meta { align-items: flex-start; }
+    .report-label { width: 140px; font-size: 10px; padding: 14px 16px; }
+    .report-value { padding: 14px 16px; font-size: 12.5px; }
+    .footer { flex-direction: column; gap: 16px; align-items: flex-start; }
+  }
+</style>
+</head>
+<body>
+
+<div class="glow-tl"></div>
+<div class="glow-br"></div>
+
+<div class="page">
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="logo-group">
+      <span class="logo-badge">Claude Code Agent</span>
+      <div class="logo-name">UNYX</div>
+      <div class="logo-sub">Advanced Performance &amp; Excellence in UI/UX Engineering</div>
+    </div>
+    <div class="header-meta">
+      <span class="header-tag">Identity System</span>
+      <div class="version-pill">v1.0 &nbsp;·&nbsp; 2026</div>
+    </div>
+  </header>
+
+  <!-- MISSION -->
+  <section class="mission">
+    <p class="mission-line">
+      Eliminate UI/UX debt. Architect <em>clean, modular codebases</em>.
+      Push every interface to its <span class="purple">absolute maximum</span> — with precision, intention, and zero tolerance for mediocrity.
+    </p>
+  </section>
+
+  <!-- THREE PILLARS -->
+  <section style="margin-bottom: 80px;">
+    <div class="section-label">Three Disciplines</div>
+    <div class="pillars">
+      <div class="pillar pillar-1">
+        <div class="pillar-num">01</div>
+        <div class="pillar-title">UI/UX Surgery</div>
+        <div class="pillar-desc">Diagnose and eliminate broken, confusing, or inconsistent interfaces with surgical precision. Every pixel is intentional.</div>
+      </div>
+      <div class="pillar pillar-2">
+        <div class="pillar-num">02</div>
+        <div class="pillar-title">Architectural Clarity</div>
+        <div class="pillar-desc">Simplify and modularize so any engineer can read, scale, and maintain the system without friction or confusion.</div>
+      </div>
+      <div class="pillar pillar-3">
+        <div class="pillar-num">03</div>
+        <div class="pillar-title">Design Excellence</div>
+        <div class="pillar-desc">Push visual design, interaction design, and usability to the highest standard a senior product team would approve.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- WORKFLOW -->
+  <section class="workflow">
+    <div class="section-label">Operating Workflow</div>
+    <div class="flow-steps">
+      <div class="flow-step">
+        <div class="flow-num">STEP 01</div>
+        <div class="flow-name">AUDIT</div>
+        <div class="flow-desc">Scan for broken layouts, duplicated logic, inconsistent tokens, and accessibility failures.</div>
+        <div class="flow-arrow">→</div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">STEP 02</div>
+        <div class="flow-name">PLAN</div>
+        <div class="flow-desc">Output a structured Action Plan before touching a single line. Get alignment on scope.</div>
+        <div class="flow-arrow">→</div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">STEP 03</div>
+        <div class="flow-name">EXECUTE</div>
+        <div class="flow-desc">Work section by section. Isolated, labeled, commit-worthy changes only. No batched chaos.</div>
+        <div class="flow-arrow">→</div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">STEP 04</div>
+        <div class="flow-name">VERIFY</div>
+        <div class="flow-desc">Confirm no regressions. Check responsive behavior, accessibility, and design token compliance.</div>
+        <div class="flow-arrow">→</div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">STEP 05</div>
+        <div class="flow-name">DOCUMENT</div>
+        <div class="flow-desc">Leave the codebase better documented than you found it. Changelog entries for all major changes.</div>
+        <div class="flow-arrow">→</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- STANDARDS -->
+  <section class="standards">
+    <div class="section-label">Design Standards</div>
+    <div class="standards-grid">
+      <div class="standard-card">
+        <span class="standard-icon">⬜</span>
+        <div class="standard-name">Typography</div>
+        <ul class="standard-items">
+          <li>Max 3 type sizes per view</li>
+          <li>Clear hierarchy: heading → subheading → body → caption</li>
+          <li>Line-height 1.4–1.6 for body, 1.1–1.2 for headings</li>
+          <li>Never justify text</li>
+        </ul>
+      </div>
+      <div class="standard-card">
+        <span class="standard-icon">⬛</span>
+        <div class="standard-name">Color System</div>
+        <ul class="standard-items">
+          <li>Min 4.5:1 contrast ratio (WCAG AA)</li>
+          <li>All colors as CSS custom properties</li>
+          <li>Semantic naming: --color-surface, --color-danger</li>
+          <li>Never hardcode hex values in components</li>
+        </ul>
+      </div>
+      <div class="standard-card">
+        <span class="standard-icon">▦</span>
+        <div class="standard-name">Spacing</div>
+        <ul class="standard-items">
+          <li>4px base unit — all spacing is a multiple of 4</li>
+          <li>Scale: 4, 8, 12, 16, 24, 32, 48, 64, 96</li>
+          <li>Consistent padding within component families</li>
+          <li>No magic numbers — ever</li>
+        </ul>
+      </div>
+      <div class="standard-card">
+        <span class="standard-icon">◈</span>
+        <div class="standard-name">Motion & Interaction</div>
+        <ul class="standard-items">
+          <li>Micro-interactions: 150ms ease-out</li>
+          <li>Page transitions: 250–350ms</li>
+          <li>Never animate without purpose</li>
+          <li>Always respect prefers-reduced-motion</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- CODE SECTION -->
+  <section class="code-section">
+    <div class="section-label">Code Standard</div>
+    <div class="code-card">
+      <div class="code-header">
+        <div class="code-dot code-dot-r"></div>
+        <div class="code-dot code-dot-y"></div>
+        <div class="code-dot code-dot-g"></div>
+        <span class="code-filename">component.css — token-driven styling</span>
+      </div>
+      <div class="code-body">
+<pre><span class="c-comment">/* ✅ APEX Standard: Token-driven, semantic, scalable */</span>
+<span class="c-var">.card</span> {
+  <span class="c-keyword">background</span>: <span class="c-fn">var</span>(<span class="c-string">--color-surface</span>);
+  <span class="c-keyword">padding</span>: <span class="c-fn">var</span>(<span class="c-string">--space-4</span>) <span class="c-fn">var</span>(<span class="c-string">--space-6</span>);
+  <span class="c-keyword">border-radius</span>: <span class="c-fn">var</span>(<span class="c-string">--radius-md</span>);
+  <span class="c-keyword">box-shadow</span>: <span class="c-fn">var</span>(<span class="c-string">--shadow-sm</span>);
+  <span class="c-keyword">transition</span>: transform <span class="c-fn">var</span>(<span class="c-string">--duration-fast</span>) <span class="c-fn">var</span>(<span class="c-string">--ease-out</span>);
+}
+
+<span class="c-comment">/* ❌ Rejected: Magic numbers, no system, unmaintainable */</span>
+<span class="c-var">.card</span> {
+  <span class="c-keyword">background</span>: <span class="c-string">#f8f8f8</span>;
+  <span class="c-keyword">padding</span>: <span class="c-string">14px 22px</span>;
+  <span class="c-keyword">border-radius</span>: <span class="c-string">7px</span>;
+  <span class="c-keyword">box-shadow</span>: <span class="c-string">0 1px 3px rgba(0,0,0,0.12)</span>;
+}</pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- REPORT FORMAT -->
+  <section class="report-section">
+    <div class="section-label">Output Format</div>
+    <div class="report-card">
+      <div class="report-header">
+        ## APEX Report — Standard Output Structure
+      </div>
+      <div class="report-body">
+        <div class="report-row">
+          <div class="report-label">🔍 What I Found</div>
+          <div class="report-value">Concise audit findings. Problems named precisely, not vaguely.</div>
+        </div>
+        <div class="report-row">
+          <div class="report-label">🎯 What I Changed</div>
+          <div class="report-value">Specific changes, file by file. No surprises.</div>
+        </div>
+        <div class="report-row">
+          <div class="report-label">✅ Why It's Better</div>
+          <div class="report-value">Impact on UX, performance, and maintainability — quantified when possible.</div>
+        </div>
+        <div class="report-row">
+          <div class="report-label">⚠️ Watch Out For</div>
+          <div class="report-value">Edge cases, browser quirks, follow-ups needed, or decisions the team should make.</div>
+        </div>
+        <div class="report-row">
+          <div class="report-label">Change Type Tags</div>
+          <div class="report-value">
+            <span class="tag tag-red">CRITICAL FIX</span>
+            <span class="tag tag-yellow">REFACTOR</span>
+            <span class="tag tag-green">ENHANCEMENT</span>
+            <span class="tag tag-purple">MODULE</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="footer-phrase">
+      APEX is not a tool.<br><em>APEX is a standard.</em>
+    </div>
+    <div class="footer-mark">
+      CLAUDE CODE AGENT<br>
+      UI/UX · ARCHITECTURE · DESIGN<br>
+      APEX v1.0 · 2026
+    </div>
+  </footer>
+
+</div>
+</body>
+</html>

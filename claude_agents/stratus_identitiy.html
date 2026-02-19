@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>STRATUS — Cloud Architecture Agent</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@200;300;400;500;600;700;800&family=JetBrains+Mono:ital,wght@0,200;0,300;0,400;0,500;1,200&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --sky: #f0f4f8;
+  --cloud: #ffffff;
+  --cloud-2: #f8fafc;
+  --stratum: #e2eaf2;
+  --stratum2: #d0dce9;
+  --ink: #1a2535;
+  --ink-2: #334d6e;
+  --ink-3: #6b87a8;
+  --ink-4: #b0c4d8;
+  --electric: #0057ff;
+  --electric-dim: rgba(0,87,255,0.08);
+  --electric-line: rgba(0,87,255,0.2);
+  --teal: #00b4d8;
+  --teal-dim: rgba(0,180,216,0.1);
+  --success: #10b981;
+  --success-dim: rgba(16,185,129,0.1);
+  --warn: #f59e0b;
+  --warn-dim: rgba(245,158,11,0.1);
+  --danger: #ef4444;
+  --danger-dim: rgba(239,68,68,0.08);
+
+  --font-display: 'Lexend', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--sky);
+  color: var(--ink);
+  font-family: var(--font-display);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Blueprint grid */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image:
+    linear-gradient(rgba(0,87,255,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,87,255,0.04) 1px, transparent 1px),
+    linear-gradient(rgba(0,87,255,0.015) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,87,255,0.015) 1px, transparent 1px);
+  background-size: 96px 96px, 96px 96px, 24px 24px, 24px 24px;
+  pointer-events: none; z-index: 0;
+}
+
+/* Altitude gradient */
+body::after {
+  content: '';
+  position: fixed; top: 0; left: 0; right: 0; height: 400px;
+  background: linear-gradient(180deg, rgba(0,87,255,0.03) 0%, transparent 100%);
+  pointer-events: none; z-index: 0;
+}
+
+.page {
+  position: relative; z-index: 1;
+  max-width: 1060px;
+  margin: 0 auto;
+  padding: 60px 40px 80px;
+}
+
+/* ── NAV BAR ── */
+.navbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 24px;
+  background: var(--cloud);
+  border: 1px solid var(--stratum2);
+  margin-bottom: 72px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  animation: riseUp 0.5s ease-out both;
+}
+
+.nav-brand {
+  display: flex; align-items: center; gap: 12px;
+  font-family: var(--font-mono); font-size: 11px;
+  color: var(--ink-3); letter-spacing: 0.1em;
+}
+.nav-brand::before {
+  content: '//';
+  color: var(--electric); font-weight: 500;
+}
+
+.nav-pills { display: flex; gap: 8px; }
+.nav-pill {
+  font-family: var(--font-mono); font-size: 9px;
+  padding: 3px 12px; letter-spacing: 0.1em;
+  border: 1px solid var(--stratum2); color: var(--ink-3);
+  font-weight: 400;
+}
+.nav-pill.active {
+  background: var(--electric); color: white;
+  border-color: var(--electric);
+}
+
+/* ── HERO ── */
+.hero {
+  display: grid; grid-template-columns: 1fr 340px;
+  gap: 48px; align-items: end;
+  margin-bottom: 72px;
+  animation: riseUp 0.5s 0.07s ease-out both;
+}
+
+.hero-eyebrow {
+  font-family: var(--font-mono); font-size: 10px;
+  color: var(--electric); letter-spacing: 0.2em; text-transform: uppercase;
+  margin-bottom: 12px;
+  display: flex; align-items: center; gap: 10px;
+}
+.hero-eyebrow::before {
+  content: '';
+  width: 24px; height: 1px; background: var(--electric);
+}
+
+.hero-name {
+  font-family: var(--font-display);
+  font-size: clamp(80px, 13vw, 144px);
+  font-weight: 800; line-height: 0.88;
+  letter-spacing: -0.03em;
+  color: var(--ink);
+}
+
+.hero-name span {
+  display: block;
+  background: linear-gradient(135deg, var(--electric) 0%, var(--teal) 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.hero-tagline {
+  font-size: 15px; font-weight: 300; color: var(--ink-3);
+  line-height: 1.6; margin-top: 16px; max-width: 500px;
+}
+
+.hero-card {
+  background: var(--cloud);
+  border: 1px solid var(--stratum2);
+  padding: 28px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.04);
+}
+
+.hero-card-title {
+  font-family: var(--font-mono); font-size: 9px;
+  color: var(--ink-4); letter-spacing: 0.18em; text-transform: uppercase;
+  margin-bottom: 16px;
+}
+
+.stat-row {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.stat {
+  padding: 14px 0;
+  border-bottom: 1px solid var(--stratum);
+}
+.stat:nth-child(n+3) { border-bottom: none; }
+.stat-val {
+  font-family: var(--font-display); font-size: 28px; font-weight: 700;
+  color: var(--electric); line-height: 1; margin-bottom: 4px;
+}
+.stat-label {
+  font-family: var(--font-mono); font-size: 9px; color: var(--ink-4);
+  letter-spacing: 0.1em; text-transform: uppercase;
+}
+
+/* ── SECTION LABEL ── */
+.section-label {
+  display: flex; align-items: center; gap: 14px;
+  font-family: var(--font-mono); font-size: 9px; color: var(--ink-3);
+  letter-spacing: 0.2em; text-transform: uppercase;
+  margin-bottom: 20px;
+}
+.section-label::before {
+  content: ''; width: 4px; height: 4px;
+  background: var(--electric); border-radius: 50%;
+}
+.section-label::after {
+  content: ''; flex: 1; height: 1px; background: var(--stratum2);
+}
+
+/* ── CLOUD PLATFORMS ── */
+.platforms-section { margin-bottom: 72px; animation: riseUp 0.5s 0.14s ease-out both; }
+
+.platform-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.platform-card {
+  background: var(--cloud);
+  border: 1px solid var(--stratum2);
+  padding: 24px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.03);
+  transition: box-shadow 0.2s, border-color 0.2s, transform 0.2s;
+}
+.platform-card:hover {
+  box-shadow: 0 6px 24px rgba(0,87,255,0.08);
+  border-color: var(--electric-line);
+  transform: translateY(-2px);
+}
+
+.platform-card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 3px;
+}
+.pc-aws::before   { background: linear-gradient(90deg, #ff9900, #ff6600); }
+.pc-gcp::before   { background: linear-gradient(90deg, #4285f4, #34a853); }
+.pc-azure::before { background: linear-gradient(90deg, #0078d4, #50e6ff); }
+
+.platform-logo {
+  font-family: var(--font-display); font-size: 11px; font-weight: 700;
+  letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 16px;
+}
+.pc-aws   .platform-logo { color: #e07000; }
+.pc-gcp   .platform-logo { color: #4285f4; }
+.pc-azure .platform-logo { color: #0078d4; }
+
+.platform-services {
+  display: flex; flex-wrap: wrap; gap: 5px;
+}
+.svc-chip {
+  font-family: var(--font-mono); font-size: 9.5px;
+  color: var(--ink-3); background: var(--sky);
+  border: 1px solid var(--stratum); padding: 2px 8px;
+  letter-spacing: 0.03em; transition: all 0.15s;
+}
+.platform-card:hover .svc-chip {
+  border-color: var(--electric-line); color: var(--ink-2);
+}
+
+/* ── ARCHITECTURE DIAGRAM ── */
+.arch-section { margin-bottom: 72px; animation: riseUp 0.5s 0.2s ease-out both; }
+
+.arch-canvas {
+  background: var(--cloud);
+  border: 1px solid var(--stratum2);
+  padding: 40px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.03);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Blueprint watermark */
+.arch-canvas::before {
+  content: 'ARCHITECTURE';
+  position: absolute; bottom: 20px; right: 24px;
+  font-family: var(--font-mono); font-size: 56px; font-weight: 200;
+  color: rgba(0,87,255,0.04); letter-spacing: 0.2em; pointer-events: none;
+}
+
+.arch-diagram {
+  display: grid;
+  grid-template-columns: 1fr 2fr 1fr;
+  grid-template-rows: auto auto;
+  gap: 32px 40px;
+  align-items: center;
+}
+
+.arch-col { display: flex; flex-direction: column; gap: 12px; }
+.arch-col-center { display: flex; flex-direction: column; gap: 16px; align-items: center; }
+
+.arch-node {
+  border: 1px solid var(--stratum2);
+  background: var(--cloud-2); padding: 12px 16px;
+  text-align: center; position: relative;
+  transition: all 0.2s;
+}
+.arch-node:hover {
+  border-color: var(--electric-line);
+  box-shadow: 0 0 0 3px var(--electric-dim);
+}
+
+.arch-node-label {
+  font-family: var(--font-mono); font-size: 9px; color: var(--ink-3);
+  letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 4px;
+}
+.arch-node-name {
+  font-size: 12px; font-weight: 600; color: var(--ink); line-height: 1.3;
+}
+
+.arch-node.primary {
+  border-color: var(--electric-line);
+  background: var(--electric-dim);
+}
+.arch-node.primary .arch-node-name { color: var(--electric); }
+
+.arch-node.warning {
+  border-color: rgba(245,158,11,0.3);
+  background: var(--warn-dim);
+}
+.arch-node.warning .arch-node-name { color: var(--warn); }
+
+.arch-arrow {
+  display: flex; align-items: center; gap: 6px;
+  font-family: var(--font-mono); font-size: 9px; color: var(--ink-4);
+  letter-spacing: 0.08em;
+}
+.arch-arrow::before, .arch-arrow::after {
+  content: ''; flex: 1; height: 1px; border-top: 1px dashed var(--stratum2);
+}
+
+.arch-center-nodes {
+  display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;
+  width: 100%;
+}
+
+.arch-legend {
+  display: flex; gap: 24px; margin-top: 24px;
+  padding-top: 20px; border-top: 1px solid var(--stratum);
+}
+.legend-item {
+  display: flex; align-items: center; gap: 8px;
+  font-family: var(--font-mono); font-size: 9px; color: var(--ink-3);
+  letter-spacing: 0.1em;
+}
+.legend-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+}
+.ld-primary { background: var(--electric); }
+.ld-teal    { background: var(--teal); }
+.ld-warn    { background: var(--warn); }
+.ld-neutral { background: var(--ink-4); }
+
+/* ── PATTERNS TABLE ── */
+.patterns-section { margin-bottom: 72px; animation: riseUp 0.5s 0.27s ease-out both; }
+
+.patterns-table {
+  width: 100%; border-collapse: collapse;
+  background: var(--cloud);
+  border: 1px solid var(--stratum2);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.03);
+}
+.patterns-table thead tr {
+  border-bottom: 1px solid var(--stratum2);
+  background: var(--sky);
+}
+.patterns-table thead th {
+  font-family: var(--font-mono); font-size: 9px; color: var(--ink-3);
+  letter-spacing: 0.18em; text-transform: uppercase; text-align: left;
+  padding: 11px 20px; font-weight: 400;
+}
+.patterns-table tbody tr {
+  border-bottom: 1px solid var(--stratum);
+  transition: background 0.15s;
+}
+.patterns-table tbody tr:last-child { border-bottom: none; }
+.patterns-table tbody tr:hover { background: var(--electric-dim); }
+.patterns-table td {
+  padding: 14px 20px; font-size: 12.5px; color: var(--ink-3);
+  vertical-align: top; line-height: 1.5;
+}
+.patterns-table td:first-child {
+  font-family: var(--font-display); font-size: 13px; font-weight: 600;
+  color: var(--ink); width: 180px;
+}
+
+.when-chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-family: var(--font-mono); font-size: 9.5px;
+  padding: 2px 8px; border: 1px solid; margin: 2px 2px 2px 0;
+}
+.wc-use   { color: var(--success); border-color: rgba(16,185,129,0.3); background: var(--success-dim); }
+.wc-avoid { color: var(--danger);  border-color: rgba(239,68,68,0.25); background: var(--danger-dim); }
+
+/* ── PRINCIPLES ── */
+.principles-section { margin-bottom: 72px; animation: riseUp 0.5s 0.33s ease-out both; }
+
+.principles-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+}
+
+.prin-card {
+  background: var(--cloud);
+  border: 1px solid var(--stratum2);
+  padding: 24px;
+  position: relative;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.02);
+  transition: all 0.2s;
+  overflow: hidden;
+}
+.prin-card::after {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, var(--electric), var(--teal));
+  transform: scaleX(0); transform-origin: left;
+  transition: transform 0.3s ease;
+}
+.prin-card:hover { box-shadow: 0 4px 16px rgba(0,87,255,0.07); border-color: var(--electric-line); }
+.prin-card:hover::after { transform: scaleX(1); }
+
+.prin-num {
+  font-family: var(--font-mono); font-size: 9px; color: var(--ink-4);
+  letter-spacing: 0.14em; margin-bottom: 10px;
+}
+.prin-title {
+  font-size: 14px; font-weight: 600; color: var(--ink);
+  margin-bottom: 8px; line-height: 1.3;
+}
+.prin-body {
+  font-size: 12px; color: var(--ink-3); line-height: 1.65;
+  font-weight: 300;
+}
+
+/* ── CHECKLIST ── */
+.checklist-section { margin-bottom: 72px; animation: riseUp 0.5s 0.4s ease-out both; }
+
+.checklist-wrap {
+  background: var(--cloud);
+  border: 1px solid var(--stratum2);
+  padding: 0;
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.03);
+}
+
+.checklist-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--stratum2);
+  background: var(--sky);
+  font-family: var(--font-mono); font-size: 10px; color: var(--ink-3);
+  letter-spacing: 0.14em; text-transform: uppercase;
+}
+.checklist-header span {
+  color: var(--success); display: flex; align-items: center; gap: 6px;
+}
+.checklist-header span::before {
+  content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--success);
+}
+
+.checklist-cols {
+  display: grid; grid-template-columns: 1fr 1fr 1fr;
+}
+.checklist-col { padding: 20px 24px; border-right: 1px solid var(--stratum); }
+.checklist-col:last-child { border-right: none; }
+
+.cl-title {
+  font-family: var(--font-mono); font-size: 9px; color: var(--electric);
+  letter-spacing: 0.16em; text-transform: uppercase; margin-bottom: 14px;
+}
+
+.cl-item {
+  display: flex; align-items: flex-start; gap: 9px;
+  font-family: var(--font-mono); font-size: 10.5px; color: var(--ink-3);
+  line-height: 1.5; padding: 5px 0;
+  border-bottom: 1px solid var(--stratum);
+}
+.cl-item:last-child { border-bottom: none; }
+
+.cl-check {
+  width: 12px; height: 12px; flex-shrink: 0; margin-top: 2px;
+  border: 1px solid var(--stratum2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 8px; color: var(--cloud);
+  background: var(--success);
+  border-color: var(--success);
+}
+
+/* ── WORKFLOW ── */
+.workflow-section { margin-bottom: 72px; animation: riseUp 0.5s 0.46s ease-out both; }
+
+.wf-flow {
+  display: grid; grid-template-columns: repeat(6, 1fr);
+  gap: 0; background: var(--stratum2);
+  border: 1px solid var(--stratum2);
+}
+
+.wf-stage {
+  background: var(--cloud);
+  padding: 24px 16px; text-align: center;
+  margin: 1px; transition: background 0.2s;
+  position: relative;
+}
+.wf-stage:hover { background: var(--electric-dim); }
+
+.wf-stage-num {
+  font-family: var(--font-mono); font-size: 8px; color: var(--ink-4);
+  letter-spacing: 0.14em; margin-bottom: 10px;
+}
+
+.wf-circle {
+  width: 48px; height: 48px; border-radius: 50%;
+  border: 1.5px solid var(--stratum2);
+  background: var(--sky);
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 12px;
+  font-size: 18px;
+  transition: all 0.2s;
+}
+.wf-stage:hover .wf-circle {
+  border-color: var(--electric);
+  background: var(--electric-dim);
+  box-shadow: 0 0 0 4px var(--electric-dim);
+}
+
+.wf-stage-name {
+  font-size: 12px; font-weight: 600; color: var(--ink); margin-bottom: 6px;
+}
+.wf-stage-desc {
+  font-size: 10px; color: var(--ink-3); line-height: 1.5; font-weight: 300;
+}
+
+/* ── FOOTER ── */
+.footer {
+  border-top: 2px solid var(--electric-line);
+  padding-top: 36px;
+  display: grid; grid-template-columns: 1fr auto; gap: 32px;
+  align-items: end;
+  animation: riseUp 0.5s 0.52s ease-out both;
+}
+
+.footer-statement {
+  font-size: clamp(18px, 2.5vw, 26px); font-weight: 300; color: var(--ink-2);
+  line-height: 1.4;
+}
+.footer-statement strong { font-weight: 700; color: var(--ink); }
+
+.footer-meta {
+  font-family: var(--font-mono); font-size: 9px; color: var(--ink-4);
+  letter-spacing: 0.14em; text-align: right; line-height: 2;
+}
+
+/* ── ANIMATIONS ── */
+@keyframes riseUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 800px) {
+  .hero { grid-template-columns: 1fr; }
+  .hero-name { font-size: 72px; }
+  .platform-grid { grid-template-columns: 1fr; }
+  .arch-diagram { grid-template-columns: 1fr; }
+  .principles-grid { grid-template-columns: 1fr 1fr; }
+  .checklist-cols { grid-template-columns: 1fr; }
+  .wf-flow { grid-template-columns: repeat(3, 1fr); }
+  .footer { grid-template-columns: 1fr; }
+  .footer-meta { text-align: left; }
+}
+</style>
+</head>
+<body>
+
+<div class="page">
+
+  <!-- NAVBAR -->
+  <nav class="navbar">
+    <div class="nav-brand">Claude Code · Cloud Architecture Agent · Identity System v1.0</div>
+    <div class="nav-pills">
+      <div class="nav-pill active">AWS</div>
+      <div class="nav-pill">GCP</div>
+      <div class="nav-pill">Azure</div>
+      <div class="nav-pill">K8s</div>
+      <div class="nav-pill">Terraform</div>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div>
+      <div class="hero-eyebrow">Principal Cloud Architect · Distributed Systems</div>
+      <div class="hero-name">
+        <span>STRATUS</span>
+      </div>
+      <p class="hero-tagline">
+        The breadth of a solutions architect, the depth of a platform engineer, and the operational judgment of an SRE who has been paged at 3am because of a design decision made six months earlier.
+      </p>
+    </div>
+
+    <div class="hero-card">
+      <div class="hero-card-title">Architecture KPIs</div>
+      <div class="stat-row">
+        <div class="stat">
+          <div class="stat-val">99.99%</div>
+          <div class="stat-label">Availability SLO</div>
+        </div>
+        <div class="stat">
+          <div class="stat-val">&lt;100ms</div>
+          <div class="stat-label">p99 Latency Target</div>
+        </div>
+        <div class="stat">
+          <div class="stat-val">10×</div>
+          <div class="stat-label">Scale Headroom</div>
+        </div>
+        <div class="stat">
+          <div class="stat-val">0</div>
+          <div class="stat-label">Manual Infra Changes</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PLATFORMS -->
+  <section class="platforms-section">
+    <div class="section-label">Cloud Platform Expertise</div>
+    <div class="platform-grid">
+      <div class="platform-card pc-aws">
+        <div class="platform-logo">Amazon Web Services</div>
+        <div class="platform-services">
+          <span class="svc-chip">VPC</span><span class="svc-chip">EKS</span>
+          <span class="svc-chip">ECS</span><span class="svc-chip">Lambda</span>
+          <span class="svc-chip">RDS</span><span class="svc-chip">ElastiCache</span>
+          <span class="svc-chip">S3</span><span class="svc-chip">CloudFront</span>
+          <span class="svc-chip">Route53</span><span class="svc-chip">SQS/SNS</span>
+          <span class="svc-chip">EventBridge</span><span class="svc-chip">Step Functions</span>
+          <span class="svc-chip">IAM</span><span class="svc-chip">GuardDuty</span>
+          <span class="svc-chip">CDK</span><span class="svc-chip">CloudWatch</span>
+        </div>
+      </div>
+      <div class="platform-card pc-gcp">
+        <div class="platform-logo">Google Cloud Platform</div>
+        <div class="platform-services">
+          <span class="svc-chip">GKE</span><span class="svc-chip">Cloud Run</span>
+          <span class="svc-chip">Cloud Functions</span><span class="svc-chip">Pub/Sub</span>
+          <span class="svc-chip">Cloud SQL</span><span class="svc-chip">Spanner</span>
+          <span class="svc-chip">BigQuery</span><span class="svc-chip">Cloud Storage</span>
+          <span class="svc-chip">Artifact Registry</span><span class="svc-chip">Cloud Build</span>
+          <span class="svc-chip">VPC</span><span class="svc-chip">Armor</span>
+          <span class="svc-chip">Workload Identity</span><span class="svc-chip">SCC</span>
+        </div>
+      </div>
+      <div class="platform-card pc-azure">
+        <div class="platform-logo">Microsoft Azure</div>
+        <div class="platform-services">
+          <span class="svc-chip">AKS</span><span class="svc-chip">Azure Functions</span>
+          <span class="svc-chip">Service Bus</span><span class="svc-chip">Cosmos DB</span>
+          <span class="svc-chip">Azure SQL</span><span class="svc-chip">Blob Storage</span>
+          <span class="svc-chip">Azure AD</span><span class="svc-chip">Key Vault</span>
+          <span class="svc-chip">API Management</span><span class="svc-chip">Front Door</span>
+          <span class="svc-chip">Monitor</span><span class="svc-chip">DevOps</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ARCHITECTURE DIAGRAM -->
+  <section class="arch-section">
+    <div class="section-label">Reference Architecture · Microservices on Kubernetes</div>
+    <div class="arch-canvas">
+      <div class="arch-diagram">
+
+        <div class="arch-col">
+          <div class="arch-node primary">
+            <div class="arch-node-label">Ingress</div>
+            <div class="arch-node-name">CDN + WAF</div>
+          </div>
+          <div class="arch-node primary">
+            <div class="arch-node-label">Gateway</div>
+            <div class="arch-node-name">API Gateway</div>
+          </div>
+          <div class="arch-node">
+            <div class="arch-node-label">Auth</div>
+            <div class="arch-node-name">Identity Provider</div>
+          </div>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:16px;">
+          <div style="display:grid; grid-template-columns: repeat(3,1fr); gap:10px;">
+            <div class="arch-node primary">
+              <div class="arch-node-label">Service A</div>
+              <div class="arch-node-name">Orders API</div>
+            </div>
+            <div class="arch-node primary">
+              <div class="arch-node-label">Service B</div>
+              <div class="arch-node-name">Users API</div>
+            </div>
+            <div class="arch-node primary">
+              <div class="arch-node-label">Service C</div>
+              <div class="arch-node-name">Payments API</div>
+            </div>
+          </div>
+          <div class="arch-node warning" style="text-align:center;">
+            <div class="arch-node-label">Event Bus</div>
+            <div class="arch-node-name">Kafka / SQS — Async Messaging Layer</div>
+          </div>
+          <div style="display:grid; grid-template-columns: repeat(3,1fr); gap:10px;">
+            <div class="arch-node">
+              <div class="arch-node-label">Worker A</div>
+              <div class="arch-node-name">Email Service</div>
+            </div>
+            <div class="arch-node">
+              <div class="arch-node-label">Worker B</div>
+              <div class="arch-node-name">Notifications</div>
+            </div>
+            <div class="arch-node">
+              <div class="arch-node-label">Worker C</div>
+              <div class="arch-node-name">Analytics Ingest</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="arch-col">
+          <div class="arch-node primary">
+            <div class="arch-node-label">Primary DB</div>
+            <div class="arch-node-name">PostgreSQL + Replica</div>
+          </div>
+          <div class="arch-node">
+            <div class="arch-node-label">Cache</div>
+            <div class="arch-node-name">Redis Cluster</div>
+          </div>
+          <div class="arch-node">
+            <div class="arch-node-label">Observability</div>
+            <div class="arch-node-name">Prometheus + Loki</div>
+          </div>
+        </div>
+
+      </div>
+      <div class="arch-legend">
+        <div class="legend-item"><div class="legend-dot ld-primary"></div>Core Services</div>
+        <div class="legend-item"><div class="legend-dot ld-teal"></div>Data Layer</div>
+        <div class="legend-item"><div class="legend-dot ld-warn"></div>Async Layer</div>
+        <div class="legend-item"><div class="legend-dot ld-neutral"></div>Observability</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PATTERNS -->
+  <section class="patterns-section">
+    <div class="section-label">Architecture Pattern Decision Guide</div>
+    <table class="patterns-table">
+      <thead>
+        <tr>
+          <th>Pattern</th>
+          <th>Use When</th>
+          <th>Avoid When</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Microservices</td>
+          <td><span class="when-chip wc-use">✓</span>Team scaling needed, independent deploys required</td>
+          <td><span class="when-chip wc-avoid">✗</span>Small team, monolith is fast enough</td>
+        </tr>
+        <tr>
+          <td>Event-Driven</td>
+          <td><span class="when-chip wc-use">✓</span>Loose coupling, async processing, fan-out patterns</td>
+          <td><span class="when-chip wc-avoid">✗</span>Simple request/response, low latency is critical</td>
+        </tr>
+        <tr>
+          <td>CQRS</td>
+          <td><span class="when-chip wc-use">✓</span>Read/write scale differs dramatically</td>
+          <td><span class="when-chip wc-avoid">✗</span>Simple CRUD — adds unnecessary complexity</td>
+        </tr>
+        <tr>
+          <td>Saga Pattern</td>
+          <td><span class="when-chip wc-use">✓</span>Distributed transactions span multiple services</td>
+          <td><span class="when-chip wc-avoid">✗</span>Single service can own the entire transaction</td>
+        </tr>
+        <tr>
+          <td>Service Mesh</td>
+          <td><span class="when-chip wc-use">✓</span>Many services need mTLS, retries, observability</td>
+          <td><span class="when-chip wc-avoid">✗</span>Few services — operational overhead exceeds value</td>
+        </tr>
+        <tr>
+          <td>Multi-Region</td>
+          <td><span class="when-chip wc-use">✓</span>RTO/RPO requirements, regulatory mandates</td>
+          <td><span class="when-chip wc-avoid">✗</span>Cost and complexity not justified by actual requirements</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- PRINCIPLES -->
+  <section class="principles-section">
+    <div class="section-label">Architectural Principles</div>
+    <div class="principles-grid">
+      <div class="prin-card">
+        <div class="prin-num">// PRINCIPLE 01</div>
+        <div class="prin-title">Design for Failure</div>
+        <div class="prin-body">Everything fails. Every design decision must answer: what happens when this fails? Partial failure modes are more dangerous than total. Design for graceful degradation, not just the happy path.</div>
+      </div>
+      <div class="prin-card">
+        <div class="prin-num">// PRINCIPLE 02</div>
+        <div class="prin-title">Operability is a Feature</div>
+        <div class="prin-body">A system that cannot be diagnosed, scaled, or recovered by an on-call engineer at 3am is an incomplete system. Every architecture decision is evaluated against its operational burden.</div>
+      </div>
+      <div class="prin-card">
+        <div class="prin-num">// PRINCIPLE 03</div>
+        <div class="prin-title">Explicit Over Implicit</div>
+        <div class="prin-body">Infrastructure state must be code. Manual changes are technical debt. Every resource has a declared, version-controlled source of truth. Drift is a bug with a blast radius.</div>
+      </div>
+      <div class="prin-card">
+        <div class="prin-num">// PRINCIPLE 04</div>
+        <div class="prin-title">Scale to the Real Problem</div>
+        <div class="prin-body">Design for 10× current load — not 1000×. Over-engineering for theoretical scale has real costs: complexity, money, and slower development. Model the actual growth curve.</div>
+      </div>
+      <div class="prin-card">
+        <div class="prin-num">// PRINCIPLE 05</div>
+        <div class="prin-title">Blast Radius Minimization</div>
+        <div class="prin-body">Services fail independently. A single crash does not cascade. Network policies, circuit breakers, and bulkheads contain failure. Blast radius is a design constraint, not an afterthought.</div>
+      </div>
+      <div class="prin-card">
+        <div class="prin-num">// PRINCIPLE 06</div>
+        <div class="prin-title">Cost is Architecture</div>
+        <div class="prin-body">Cloud bills are architecture feedback. Every resource has a cost implication. Cost is reviewed at design time — not at month-end when the invoice arrives.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CHECKLIST -->
+  <section class="checklist-section">
+    <div class="section-label">Production Readiness Checklist</div>
+    <div class="checklist-wrap">
+      <div class="checklist-header">
+        Production Readiness Gates
+        <span>All gates must pass before ship</span>
+      </div>
+      <div class="checklist-cols">
+        <div class="checklist-col">
+          <div class="cl-title">Reliability</div>
+          <div class="cl-item"><div class="cl-check">✓</div>No single point of failure</div>
+          <div class="cl-item"><div class="cl-check">✓</div>Multi-AZ deployment confirmed</div>
+          <div class="cl-item"><div class="cl-check">✓</div>Circuit breakers configured</div>
+          <div class="cl-item"><div class="cl-check">✓</div>PodDisruptionBudgets set</div>
+          <div class="cl-item"><div class="cl-check">✓</div>Health checks: live + ready</div>
+          <div class="cl-item"><div class="cl-check">✓</div>Rollback procedure tested</div>
+        </div>
+        <div class="checklist-col">
+          <div class="cl-title">Observability</div>
+          <div class="cl-item"><div class="cl-check">✓</div>RED metrics exposed (Prometheus)</div>
+          <div class="cl-item"><div class="cl-check">✓</div>Distributed traces instrumented</div>
+          <div class="cl-item"><div class="cl-check">✓</div>Structured logs with trace IDs</div>
+          <div class="cl-item"><div class="cl-check">✓</div>SLO dashboard live</div>
+          <div class="cl-item"><div class="cl-check">✓</div>Burn-rate alerts configured</div>
+          <div class="cl-item"><div class="cl-check">✓</div>Runbook linked from every alert</div>
+        </div>
+        <div class="checklist-col">
+          <div class="cl-title">Infrastructure</div>
+          <div class="cl-item"><div class="cl-check">✓</div>All resources in Terraform</div>
+          <div class="cl-item"><div class="cl-check">✓</div>Remote state + lock configured</div>
+          <div class="cl-item"><div class="cl-check">✓</div>Secrets in Vault / Secrets Manager</div>
+          <div class="cl-item"><div class="cl-check">✓</div>Resource limits set on all pods</div>
+          <div class="cl-item"><div class="cl-check">✓</div>Cost estimate reviewed and tagged</div>
+          <div class="cl-item"><div class="cl-check">✓</div>DR scenario documented + tested</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- WORKFLOW -->
+  <section class="workflow-section">
+    <div class="section-label">Architecture Delivery Workflow</div>
+    <div class="wf-flow">
+      <div class="wf-stage">
+        <div class="wf-stage-num">01</div>
+        <div class="wf-circle">🔍</div>
+        <div class="wf-stage-name">Discover</div>
+        <div class="wf-stage-desc">Map topology, pain points, scale requirements</div>
+      </div>
+      <div class="wf-stage">
+        <div class="wf-stage-num">02</div>
+        <div class="wf-circle">📐</div>
+        <div class="wf-stage-name">Architect</div>
+        <div class="wf-stage-desc">Design with failure modes, SLOs, cost estimate</div>
+      </div>
+      <div class="wf-stage">
+        <div class="wf-stage-num">03</div>
+        <div class="wf-circle">⚙️</div>
+        <div class="wf-stage-name">Terraform</div>
+        <div class="wf-stage-desc">All infra as code — reviewed plan before apply</div>
+      </div>
+      <div class="wf-stage">
+        <div class="wf-stage-num">04</div>
+        <div class="wf-circle">🚀</div>
+        <div class="wf-stage-name">Deploy</div>
+        <div class="wf-stage-desc">GitOps + canary + backward-compatible migrations</div>
+      </div>
+      <div class="wf-stage">
+        <div class="wf-stage-num">05</div>
+        <div class="wf-circle">📊</div>
+        <div class="wf-stage-name">Observe</div>
+        <div class="wf-stage-desc">RED + traces + SLO burn rate from day one</div>
+      </div>
+      <div class="wf-stage">
+        <div class="wf-stage-num">06</div>
+        <div class="wf-circle">💰</div>
+        <div class="wf-stage-name">Optimize</div>
+        <div class="wf-stage-desc">Monthly: cost, latency, reliability review</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="footer-statement">
+      Infrastructure is not where you deploy your code.<br>
+      <strong>It is where your business lives.</strong>
+    </div>
+    <div class="footer-meta">
+      CLAUDE CODE AGENT<br>
+      CLOUD · MICROSERVICES · PLATFORM<br>
+      STRATUS v1.0 · 2026
+    </div>
+  </footer>
+
+</div>
+
+</body>
+</html>
