@@ -32,9 +32,15 @@ export async function requireActionAuth(minRole?: Role) {
     throw new Error("Unauthorized");
   }
 
+  const userRole = (session.user as { role?: string }).role;
+  if (!userRole) {
+    // Session exists but has no role (corrupted/stale JWT) — treat as unauthorized
+    throw new Error("Unauthorized");
+  }
+
   if (minRole) {
     const roleHierarchy: Record<Role, number> = { VIEWER: 0, EDITOR: 1, ADMIN: 2 };
-    const userLevel = roleHierarchy[(session.user as { role: string }).role as Role] ?? -1;
+    const userLevel = roleHierarchy[userRole as Role] ?? -1;
     const requiredLevel = roleHierarchy[minRole];
     if (userLevel < requiredLevel) {
       throw new Error("Forbidden");
