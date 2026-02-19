@@ -129,7 +129,7 @@ export function UserList({ users }: UserListProps) {
                   <td className="px-4 py-3 text-right">
                     <div className="flex items-center justify-end gap-1">
                       <Link
-                        href={`/admin/settings/users/${user.id}/edit`}
+                        href={`/admin/settings/users/${user.id}`}
                         className="inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium text-[var(--color-muted-foreground)] hover:text-[var(--color-foreground)] hover:bg-[var(--color-muted)]/50 transition-colors"
                       >
                         <Pencil className="h-3.5 w-3.5" />

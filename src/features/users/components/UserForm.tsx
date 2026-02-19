@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { useTranslations } from "next-intl";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { createUserSchema, type CreateUserInput } from "../schemas";
+import { createUserSchema, updateUserSchema, type CreateUserInput, type UpdateUserInput } from "../schemas";
 import { createUser, updateUser } from "../actions";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
@@ -30,8 +30,9 @@ export function UserForm({ mode, initialData }: UserFormProps) {
   const tc = useTranslations("common");
   const [saving, setSaving] = useState(false);
 
-  const form = useForm<CreateUserInput>({
-    resolver: zodResolver(createUserSchema),
+  const schema = mode === "create" ? createUserSchema : updateUserSchema;
+  const form = useForm<CreateUserInput | UpdateUserInput>({
+    resolver: zodResolver(schema),
     defaultValues: {
       name: initialData?.name ?? "",
       email: initialData?.email ?? "",
