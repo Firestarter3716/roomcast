@@ -111,6 +111,7 @@ export function DisplayShell({ config, isPreview = false, style, connectionStatu
         "--display-secondary": theme.secondary,
         "--display-free": theme.statusBackground && roomStatus ? "#FFFFFF" : theme.free,
         "--display-busy": theme.statusBackground && roomStatus ? "#FFFFFF" : theme.busy,
+        "--display-ending-soon": theme.statusBackground && roomStatus ? "#FFFFFF" : (theme.endingSoon || "#F59E0B"),
         "--display-muted": theme.muted,
         "--display-base-size": `${theme.baseFontSize}px`,
         ...style,

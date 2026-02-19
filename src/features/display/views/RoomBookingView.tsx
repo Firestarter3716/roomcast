@@ -19,6 +19,7 @@ interface RoomBookingViewProps {
   roomLocation?: string;
   locale?: string;
   orientation?: string;
+  statusOverride?: "free" | "busy" | "endingSoon";
 }
 
 // ---------------------------------------------------------------------------
@@ -31,6 +32,7 @@ export function RoomBookingView({
   roomLocation,
   locale,
   orientation,
+  statusOverride,
 }: RoomBookingViewProps) {
   const now = useCurrentTime(10000);
   const isPortrait = orientation === "PORTRAIT";
@@ -182,9 +184,14 @@ export function RoomBookingView({
     year: "numeric",
   });
 
+  // Apply status override for preview mode
+  const effectiveFree = statusOverride ? statusOverride === "free" : isFree;
+  const effectiveEndingSoon = statusOverride ? statusOverride === "endingSoon" : isEndingSoon;
+  const effectiveBusy = statusOverride ? statusOverride === "busy" || statusOverride === "endingSoon" : !isFree;
+
   /** Large status banner spanning full width */
   const statusBanner = (
-    <StatusBanner isFree={isFree} locale={locale} />
+    <StatusBanner isFree={effectiveFree} isEndingSoon={effectiveEndingSoon} locale={locale} />
   );
 
   /** Current meeting detail block — highlighted card */
@@ -227,7 +234,7 @@ export function RoomBookingView({
         </div>
       )}
 
-      {isEndingSoon && (
+      {effectiveEndingSoon && (
         <div
           style={{
             marginTop: "0.5rem",
@@ -293,7 +300,7 @@ export function RoomBookingView({
   );
 
   /** "Free from HH:MM" indicator shown when room is busy */
-  const freeFromIndicator = !isFree && freeFromTime ? (
+  const freeFromIndicator = !effectiveFree && freeFromTime ? (
     <div
       style={{
         marginTop: "0.75rem",

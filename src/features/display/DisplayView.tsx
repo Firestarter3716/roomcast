@@ -177,6 +177,7 @@ export function DisplayView({
             roomLocation={roomLocation}
             locale={locale}
             orientation={resolvedOrientation}
+            statusOverride={roomStatus}
           />
         );
       case "AGENDA":
