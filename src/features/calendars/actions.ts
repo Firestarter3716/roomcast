@@ -120,8 +120,15 @@ export async function updateCalendar(id: string, input: UpdateCalendarInput) {
 
 export async function deleteCalendar(id: string) {
   await requireActionAuth("EDITOR");
-  const calendar = await prisma.calendar.findUnique({ where: { id } });
+  const calendar = await prisma.calendar.findUnique({
+    where: { id },
+    include: { _count: { select: { rooms: true } } },
+  });
   if (!calendar) throw new Error("Calendar not found");
+
+  if (calendar._count.rooms > 0) {
+    throw new Error("CALENDAR_HAS_ROOMS");
+  }
 
   await prisma.calendar.delete({ where: { id } });
 

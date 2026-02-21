@@ -72,6 +72,7 @@
     "editCalendar": "Kalender bearbeiten",
     "deleteCalendar": "Kalender löschen",
     "deleteConfirm": "Möchten Sie diesen Kalender wirklich löschen? Alle zugehörigen Termine werden ebenfalls gelöscht.",
+    "deleteHasRooms": "Dieser Kalender kann nicht gelöscht werden, da ihm noch Räume zugewiesen sind. Bitte löschen oder verschieben Sie zuerst die zugewiesenen Räume.",
     "name": "Name",
     "provider": "Anbieter",
     "color": "Farbe",
@@ -231,14 +232,16 @@
       "AGENDA": "Agenda",
       "DAY_GRID": "Tagesansicht",
       "WEEK_GRID": "Wochenansicht",
-      "INFO_DISPLAY": "Info-Anzeige"
+      "INFO_DISPLAY": "Info-Anzeige",
+      "EVENT_VENUE": "Veranstaltungsort"
     },
     "layoutDescriptions": {
       "ROOM_BOOKING": "Statusanzeige für einen einzelnen Raum",
       "AGENDA": "Zeitleiste der Termine",
       "DAY_GRID": "Stundenraster für einen Tag",
       "WEEK_GRID": "Wöchentliches Übersichtsraster",
-      "INFO_DISPLAY": "Uhr, Termine und Laufband"
+      "INFO_DISPLAY": "Uhr, Termine und Laufband",
+      "EVENT_VENUE": "Kommende Veranstaltungen für einen Ort"
     },
     "openDisplay": "Display öffnen",
     "newDisplay": "Neues Display",
@@ -373,7 +376,16 @@
       "tickerMedium": "Mittel",
       "tickerFast": "Schnell",
       "tickerSeparator": "Lauftext-Trennzeichen",
-      "tickerSeparatorHelp": "Zeichen zwischen Lauftext-Nachrichten"
+      "tickerSeparatorHelp": "Zeichen zwischen Lauftext-Nachrichten",
+      "showLocation": "Standort anzeigen",
+      "showDescription": "Beschreibung anzeigen"
+    },
+    "eventVenue": {
+      "noEvents": "Keine Veranstaltungen heute",
+      "now": "Jetzt",
+      "next": "Nächstes",
+      "upcoming": "Demnächst",
+      "attendees": "{count} Teilnehmer"
     },
     "saveFailed": "Erstellung fehlgeschlagen",
     "loadingPreview": "Vorschau wird geladen...",

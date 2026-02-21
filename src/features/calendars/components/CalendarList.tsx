@@ -49,8 +49,12 @@ export function CalendarList({ calendars }: CalendarListProps) {
     try {
       await deleteCalendar(deleteTarget.id);
       toast.success(tc("success"));
-    } catch {
-      toast.error(tc("error"));
+    } catch (error) {
+      if (error instanceof Error && error.message === "CALENDAR_HAS_ROOMS") {
+        toast.error(t("deleteHasRooms"));
+      } else {
+        toast.error(tc("error"));
+      }
     }
     setDeleteTarget(null);
   }

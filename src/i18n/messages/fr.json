@@ -72,6 +72,7 @@
     "editCalendar": "Modifier le calendrier",
     "deleteCalendar": "Supprimer le calendrier",
     "deleteConfirm": "Voulez-vous vraiment supprimer ce calendrier ? Tous les événements associés seront également supprimés.",
+    "deleteHasRooms": "Ce calendrier ne peut pas être supprimé car des salles y sont encore assignées. Veuillez d'abord supprimer ou réassigner les salles.",
     "name": "Nom",
     "provider": "Fournisseur",
     "color": "Couleur",
@@ -231,14 +232,16 @@
       "AGENDA": "Agenda",
       "DAY_GRID": "Vue journalière",
       "WEEK_GRID": "Vue hebdomadaire",
-      "INFO_DISPLAY": "Écran d'information"
+      "INFO_DISPLAY": "Écran d'information",
+      "EVENT_VENUE": "Lieu d'événement"
     },
     "layoutDescriptions": {
       "ROOM_BOOKING": "Affichage de statut pour une salle",
       "AGENDA": "Vue chronologique des événements",
       "DAY_GRID": "Grille horaire pour une journée",
       "WEEK_GRID": "Grille de vue hebdomadaire",
-      "INFO_DISPLAY": "Horloge, événements et bandeau défilant"
+      "INFO_DISPLAY": "Horloge, événements et bandeau défilant",
+      "EVENT_VENUE": "Événements à venir pour un lieu"
     },
     "openDisplay": "Ouvrir l'écran",
     "newDisplay": "Nouvel écran",
@@ -373,7 +376,16 @@
       "tickerMedium": "Moyen",
       "tickerFast": "Rapide",
       "tickerSeparator": "Séparateur du bandeau",
-      "tickerSeparatorHelp": "Caractère(s) entre les messages du bandeau"
+      "tickerSeparatorHelp": "Caractère(s) entre les messages du bandeau",
+      "showLocation": "Afficher le lieu",
+      "showDescription": "Afficher la description"
+    },
+    "eventVenue": {
+      "noEvents": "Aucun événement aujourd'hui",
+      "now": "Maintenant",
+      "next": "Suivant",
+      "upcoming": "À venir",
+      "attendees": "{count} participants"
     },
     "saveFailed": "Échec de la création",
     "loadingPreview": "Chargement de l'aperçu...",
