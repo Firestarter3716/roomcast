@@ -105,8 +105,8 @@ describe('HealthDashboard', () => {
     it('renders status badges for each calendar', () => {
       render(<HealthDashboard healthData={mockHealthData} />)
 
-      expect(screen.getByText('Idle')).toBeInTheDocument()
-      expect(screen.getByText('Error')).toBeInTheDocument()
+      expect(screen.getByText('statusIdle')).toBeInTheDocument()
+      expect(screen.getByText('statusError')).toBeInTheDocument()
     })
 
     it('shows error text for calendars with errors', () => {
@@ -124,14 +124,14 @@ describe('HealthDashboard', () => {
     it('shows "Never" for calendars that never synced', () => {
       render(<HealthDashboard healthData={mockHealthData} />)
 
-      expect(screen.getByText('Never')).toBeInTheDocument()
+      expect(screen.getByText('never')).toBeInTheDocument()
     })
 
     it('shows relative time for calendars that have synced', () => {
       render(<HealthDashboard healthData={mockHealthData} />)
 
-      // The Office Calendar has lastSyncAt set to now, so it should show "Just now"
-      expect(screen.getByText('Just now')).toBeInTheDocument()
+      // The Office Calendar has lastSyncAt set to now, so it should show "justNow" (translation key)
+      expect(screen.getByText('justNow')).toBeInTheDocument()
     })
   })
 

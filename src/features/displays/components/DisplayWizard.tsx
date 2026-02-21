@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useTranslations } from "next-intl";
 import { createDisplaySchema, type CreateDisplayInput } from "../schemas";
 import { LAYOUT_OPTIONS, ORIENTATION_OPTIONS } from "../types";
 import { createDisplay } from "../actions";
@@ -38,13 +39,15 @@ interface DisplayWizardProps {
   rooms: RoomOption[];
 }
 
-const ORIENTATION_HINTS: Record<string, string> = {
-  ROOM_BOOKING: "Recommended for Portrait",
-  AGENDA: "Works in any orientation",
-  DAY_GRID: "Recommended for Landscape",
-  WEEK_GRID: "Recommended for Landscape",
-  INFO_DISPLAY: "Works in any orientation",
-};
+function getOrientationHints(t: ReturnType<typeof useTranslations>): Record<string, string> {
+  return {
+    ROOM_BOOKING: t("orientationHints.PORTRAIT"),
+    AGENDA: t("orientationHints.AUTO"),
+    DAY_GRID: t("orientationHints.LANDSCAPE"),
+    WEEK_GRID: t("orientationHints.LANDSCAPE"),
+    INFO_DISPLAY: t("orientationHints.AUTO"),
+  };
+}
 
 /* ------------------------------------------------------------------ */
 /*  LayoutPreviewMini - small visual thumbnail for each layout type   */
@@ -613,22 +616,28 @@ interface CreatedDisplay {
 }
 
 export function DisplayWizard({ calendars, rooms }: DisplayWizardProps) {
+  const tc = useTranslations("common");
   return (
-    <Suspense fallback={<div className="py-8 text-center text-sm text-[var(--color-muted-foreground)]">Loading...</div>}>
+    <Suspense fallback={<div className="py-8 text-center text-sm text-[var(--color-muted-foreground)]">{tc("loading")}</div>}>
       <DisplayWizardInner calendars={calendars} rooms={rooms} />
     </Suspense>
   );
 }
 
 function DisplayWizardInner({ calendars, rooms }: DisplayWizardProps) {
+  const t = useTranslations("displays");
+  const tc = useTranslations("common");
   const router = useRouter();
   const searchParams = useSearchParams();
   const preselectedRoomId = searchParams.get("roomId") || "";
+  const ORIENTATION_HINTS = getOrientationHints(t);
 
   const [step, setStep] = useState(1);
   const [saving, setSaving] = useState(false);
   const [createdDisplay, setCreatedDisplay] = useState<CreatedDisplay | null>(null);
   const [copied, setCopied] = useState(false);
+  const [origin, setOrigin] = useState("");
+  useEffect(() => { setOrigin(window.location.origin); }, []);
 
   const form = useForm<CreateDisplayInput>({
     resolver: zodResolver(createDisplaySchema),
@@ -656,10 +665,10 @@ function DisplayWizardInner({ calendars, rooms }: DisplayWizardProps) {
         layoutType: data.layoutType,
         orientation: data.orientation,
       });
-      toast.success("Display created successfully");
+      toast.success(t("displayCreated"));
       setStep(3);
     } catch {
-      toast.error("Failed to create display");
+      toast.error(t("saveFailed"));
     } finally {
       setSaving(false);
     }
@@ -668,16 +677,14 @@ function DisplayWizardInner({ calendars, rooms }: DisplayWizardProps) {
   function copyToClipboard(text: string) {
     navigator.clipboard.writeText(text).then(() => {
       setCopied(true);
-      toast.success("Copied to clipboard");
+      toast.success(t("copiedToClipboard"));
       setTimeout(() => setCopied(false), 2000);
     });
   }
 
-  const displayUrl = typeof window !== "undefined" && createdDisplay
-    ? `${window.location.origin}/display/${createdDisplay.token}`
-    : createdDisplay ? `/display/${createdDisplay.token}` : "";
+  const displayUrl = createdDisplay ? `${origin}/display/${createdDisplay.token}` : "";
 
-  const stepLabels = ["Setup", "Layout", "Confirmation"];
+  const stepLabels = [t("wizard.setup"), t("wizard.layout"), t("wizard.confirmation")];
 
   const inputClass =
     "w-full rounded-md border border-[var(--color-input)] bg-[var(--color-background)] px-3 py-2 text-sm text-[var(--color-foreground)] placeholder:text-[var(--color-muted-foreground)] focus:border-[var(--color-ring)] focus:outline-none focus:ring-2 focus:ring-[var(--color-ring)]/40";
@@ -720,7 +727,7 @@ function DisplayWizardInner({ calendars, rooms }: DisplayWizardProps) {
       {step === 1 && (
         <div className="space-y-6">
           <div>
-            <label htmlFor="wizard-name" className={labelClass}>Display Name</label>
+            <label htmlFor="wizard-name" className={labelClass}>{t("name")}</label>
             <input
               id="wizard-name"
               {...form.register("name")}
@@ -736,7 +743,7 @@ function DisplayWizardInner({ calendars, rooms }: DisplayWizardProps) {
           </div>
 
           <div>
-            <label className={labelClass}>Orientation</label>
+            <label className={labelClass}>{t("orientation")}</label>
             <div className="grid grid-cols-3 gap-3">
               {ORIENTATION_OPTIONS.map((opt) => (
                 <button
@@ -762,13 +769,13 @@ function DisplayWizardInner({ calendars, rooms }: DisplayWizardProps) {
           </div>
 
           <div>
-            <label htmlFor="wizard-room" className={labelClass}>Assign to Room</label>
+            <label htmlFor="wizard-room" className={labelClass}>{t("assignToRoom")}</label>
             <select
               id="wizard-room"
               {...form.register("roomId")}
               className={inputClass}
             >
-              <option value="">No room (standalone)</option>
+              <option value="">{t("noRoomStandalone")}</option>
               {rooms.map((room) => (
                 <option key={room.id} value={room.id}>
                   {room.name}
@@ -776,13 +783,13 @@ function DisplayWizardInner({ calendars, rooms }: DisplayWizardProps) {
               ))}
             </select>
             <p className="mt-1 text-xs text-[var(--color-muted-foreground)]">
-              For Room Booking layout, exactly one room is required.
+              {t("roomBookingRoomRequired")}
             </p>
           </div>
 
           {selectedLayout !== "ROOM_BOOKING" && (
             <div>
-              <label className={labelClass}>Calendars to Display</label>
+              <label className={labelClass}>{t("calendarsToDisplay")}</label>
               <div className="space-y-2">
                 {calendars.map((cal) => {
                   const calendarIds = form.watch("calendarIds") ?? [];
@@ -823,7 +830,7 @@ function DisplayWizardInner({ calendars, rooms }: DisplayWizardProps) {
                 })}
                 {calendars.length === 0 && (
                   <p className="text-sm text-[var(--color-muted-foreground)]">
-                    No calendars available.
+                    {t("noCalendarsAvailable")}
                   </p>
                 )}
               </div>
@@ -835,7 +842,7 @@ function DisplayWizardInner({ calendars, rooms }: DisplayWizardProps) {
       {/* Step 2: Layout selection with orientation hints */}
       {step === 2 && (
         <div className="space-y-4">
-          <label className={labelClass}>Choose a Layout</label>
+          <label className={labelClass}>{t("chooseLayout")}</label>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {LAYOUT_OPTIONS.map((opt) => (
               <button
@@ -888,7 +895,7 @@ function DisplayWizardInner({ calendars, rooms }: DisplayWizardProps) {
 
           {selectedLayout === "ROOM_BOOKING" && !selectedRoomId && (
             <p role="alert" className="text-xs text-[var(--color-destructive)]">
-              Room Booking layout requires a room. Go back and assign a room first.
+              {t("roomBookingRequiresRoom")}
             </p>
           )}
         </div>
@@ -900,17 +907,17 @@ function DisplayWizardInner({ calendars, rooms }: DisplayWizardProps) {
           <div className="rounded-lg border border-[var(--color-primary)]/30 bg-[var(--color-primary)]/5 p-6 text-center">
             <Check className="mx-auto h-12 w-12 text-[var(--color-primary)] mb-3" />
             <h2 className="text-lg font-semibold text-[var(--color-foreground)]">
-              Display Created Successfully
+              {t("createdSuccessfully")}
             </h2>
             <p className="mt-1 text-sm text-[var(--color-muted-foreground)]">
-              &quot;{createdDisplay.name}&quot; is ready to use
+              {t("displayReady", { name: createdDisplay.name })}
             </p>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="rounded-lg border border-[var(--color-border)] p-4 space-y-3">
               <h3 className="text-sm font-semibold text-[var(--color-foreground)]">
-                Display Token
+                {t("displayToken")}
               </h3>
               <div className="flex items-center gap-2">
                 <code className="flex-1 rounded-md bg-[var(--color-muted)]/10 px-3 py-2 text-xs font-mono text-[var(--color-foreground)] break-all">
@@ -920,7 +927,7 @@ function DisplayWizardInner({ calendars, rooms }: DisplayWizardProps) {
                   type="button"
                   onClick={() => copyToClipboard(createdDisplay.token)}
                   className="shrink-0 rounded-md border border-[var(--color-border)] p-2 text-[var(--color-muted-foreground)] hover:text-[var(--color-foreground)] transition-colors"
-                  title="Copy token"
+                  title={t("copyToken")}
                 >
                   {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                 </button>
@@ -929,7 +936,7 @@ function DisplayWizardInner({ calendars, rooms }: DisplayWizardProps) {
 
             <div className="rounded-lg border border-[var(--color-border)] p-4 space-y-3">
               <h3 className="text-sm font-semibold text-[var(--color-foreground)]">
-                Display URL
+                {t("displayUrl")}
               </h3>
               <div className="flex items-center gap-2">
                 <code className="flex-1 rounded-md bg-[var(--color-muted)]/10 px-3 py-2 text-xs font-mono text-[var(--color-foreground)] break-all">
@@ -939,7 +946,7 @@ function DisplayWizardInner({ calendars, rooms }: DisplayWizardProps) {
                   type="button"
                   onClick={() => copyToClipboard(displayUrl)}
                   className="shrink-0 rounded-md border border-[var(--color-border)] p-2 text-[var(--color-muted-foreground)] hover:text-[var(--color-foreground)] transition-colors"
-                  title="Copy URL"
+                  title={t("copyUrl")}
                 >
                   <Copy className="h-4 w-4" />
                 </button>
@@ -950,7 +957,7 @@ function DisplayWizardInner({ calendars, rooms }: DisplayWizardProps) {
           <div className="flex justify-center">
             <div className="rounded-lg border border-[var(--color-border)] p-6">
               <h3 className="text-sm font-semibold text-[var(--color-foreground)] text-center mb-4">
-                QR Code
+                {t("qrCode")}
               </h3>
               <DisplayQRCode
                 token={createdDisplay.token}
@@ -962,16 +969,16 @@ function DisplayWizardInner({ calendars, rooms }: DisplayWizardProps) {
 
           <div className="rounded-lg border border-[var(--color-border)] p-4">
             <h3 className="text-sm font-semibold text-[var(--color-foreground)] mb-3">
-              Summary
+              {t("summary")}
             </h3>
             <dl className="grid grid-cols-2 gap-2 text-sm">
-              <dt className="text-[var(--color-muted-foreground)]">Name</dt>
+              <dt className="text-[var(--color-muted-foreground)]">{t("name")}</dt>
               <dd className="text-[var(--color-foreground)]">{createdDisplay.name}</dd>
-              <dt className="text-[var(--color-muted-foreground)]">Layout</dt>
+              <dt className="text-[var(--color-muted-foreground)]">{t("layout")}</dt>
               <dd className="text-[var(--color-foreground)]">
                 {LAYOUT_OPTIONS.find((l) => l.value === createdDisplay.layoutType)?.label || createdDisplay.layoutType}
               </dd>
-              <dt className="text-[var(--color-muted-foreground)]">Orientation</dt>
+              <dt className="text-[var(--color-muted-foreground)]">{t("orientation")}</dt>
               <dd className="text-[var(--color-foreground)]">
                 {ORIENTATION_OPTIONS.find((o) => o.value === createdDisplay.orientation)?.label || createdDisplay.orientation}
               </dd>
@@ -988,7 +995,7 @@ function DisplayWizardInner({ calendars, rooms }: DisplayWizardProps) {
             onClick={() => setStep(step - 1)}
             className="inline-flex items-center gap-1 rounded-md px-4 py-2.5 text-sm font-medium text-[var(--color-muted-foreground)] hover:text-[var(--color-foreground)] transition-colors"
           >
-            <ChevronLeft className="h-4 w-4" /> Back
+            <ChevronLeft className="h-4 w-4" /> {tc("back")}
           </button>
         )}
         {step === 1 && (
@@ -996,14 +1003,14 @@ function DisplayWizardInner({ calendars, rooms }: DisplayWizardProps) {
             type="button"
             onClick={() => {
               if (!form.getValues("name")) {
-                form.setError("name", { message: "Name is required" });
+                form.setError("name", { message: t("nameRequired") });
                 return;
               }
               setStep(2);
             }}
             className="inline-flex items-center gap-1 rounded-md bg-[var(--color-primary)] px-4 py-2.5 text-sm font-medium text-[var(--color-primary-foreground)] hover:bg-[var(--color-primary-hover)] transition-colors"
           >
-            Next <ChevronRight className="h-4 w-4" />
+            {tc("next")} <ChevronRight className="h-4 w-4" />
           </button>
         )}
         {step === 2 && (
@@ -1014,7 +1021,7 @@ function DisplayWizardInner({ calendars, rooms }: DisplayWizardProps) {
             className="inline-flex items-center gap-2 rounded-md bg-[var(--color-primary)] px-4 py-2.5 text-sm font-medium text-[var(--color-primary-foreground)] hover:bg-[var(--color-primary-hover)] transition-colors disabled:opacity-50"
           >
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-            Create Display
+            {t("addDisplay")}
           </button>
         )}
         {step === 3 && (
@@ -1025,14 +1032,14 @@ function DisplayWizardInner({ calendars, rooms }: DisplayWizardProps) {
               className="inline-flex items-center gap-1 rounded-md bg-[var(--color-primary)] px-4 py-2.5 text-sm font-medium text-[var(--color-primary-foreground)] hover:bg-[var(--color-primary-hover)] transition-colors"
             >
               <ExternalLink className="h-4 w-4" />
-              Open Display Settings
+              {t("openSettings")}
             </button>
             <button
               type="button"
               onClick={() => router.push("/admin/displays")}
               className="rounded-md px-4 py-2.5 text-sm font-medium text-[var(--color-muted-foreground)] hover:text-[var(--color-foreground)] transition-colors"
             >
-              Back to Displays
+              {tc("backToDisplays")}
             </button>
           </>
         )}
@@ -1042,7 +1049,7 @@ function DisplayWizardInner({ calendars, rooms }: DisplayWizardProps) {
             onClick={() => router.push("/admin/displays")}
             className="rounded-md px-4 py-2.5 text-sm font-medium text-[var(--color-muted-foreground)] hover:text-[var(--color-foreground)] transition-colors"
           >
-            Cancel
+            {tc("cancel")}
           </button>
         )}
       </div>

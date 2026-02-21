@@ -1,3 +1,4 @@
+import { getTranslations } from "next-intl/server";
 import prisma from "@/server/db/prisma";
 import { HealthDashboard } from "@/features/settings/components";
 import { sseRegistry } from "@/server/sse/registry";
@@ -5,6 +6,7 @@ import { sseRegistry } from "@/server/sse/registry";
 export const dynamic = "force-dynamic";
 
 export default async function HealthPage() {
+  const t = await getTranslations("admin.health");
   // Database connectivity check with timing
   let dbStatus: { connected: boolean; responseTimeMs: number };
   try {
@@ -30,9 +32,9 @@ export default async function HealthPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold text-[var(--color-foreground)]">System Health</h1>
+      <h1 className="text-2xl font-semibold text-[var(--color-foreground)]">{t("title")}</h1>
       <p className="mt-1 text-sm text-[var(--color-muted-foreground)]">
-        Monitor system status and calendar sync health
+        {t("description")}
       </p>
       <div className="mt-6">
         <HealthDashboard

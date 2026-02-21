@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { notFound } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { getRoom } from "@/features/rooms/actions";
 import { getCalendarsForSelect } from "@/features/calendars/queries";
 import { RoomForm } from "@/features/rooms/components";
@@ -13,6 +14,7 @@ interface EditRoomPageProps {
 
 export default async function EditRoomPage({ params }: EditRoomPageProps) {
   const { id } = await params;
+  const t = await getTranslations();
   const [room, calendars] = await Promise.all([
     getRoom(id),
     getCalendarsForSelect(),
@@ -28,10 +30,10 @@ export default async function EditRoomPage({ params }: EditRoomPageProps) {
           className="inline-flex items-center gap-1 text-sm text-[var(--color-muted-foreground)] hover:text-[var(--color-foreground)] transition-colors"
         >
           <ArrowLeft className="h-4 w-4" />
-          Back to Rooms
+          {t("common.backToRooms")}
         </Link>
         <h1 className="mt-2 text-2xl font-semibold text-[var(--color-foreground)]">
-          Edit Room
+          {t("rooms.editRoom")}
         </h1>
         <p className="mt-1 text-sm text-[var(--color-muted-foreground)]">{room.name}</p>
       </div>

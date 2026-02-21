@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import { useTranslations } from "next-intl";
 import { getDisplayPreviewEvents } from "../actions";
 import { getFontFamily } from "@/shared/lib/fonts";
 import {
@@ -112,6 +113,7 @@ function generateSampleEvents(): DisplayEvent[] {
 }
 
 export function DisplayPreview({ displayId, layoutType, config, orientation, roomName: initialRoomName }: DisplayPreviewProps) {
+  const t = useTranslations("displays");
   const containerRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
   const [events, setEvents] = useState<DisplayEvent[]>([]);
@@ -186,7 +188,7 @@ export function DisplayPreview({ displayId, layoutType, config, orientation, roo
       case "INFO_DISPLAY":
         return <InfoDisplayView events={events} config={config.layout as InfoDisplayConfig} locale="en-US" />;
       default:
-        return <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", opacity: 0.5 }}>Unknown layout: {layoutType}</div>;
+        return <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", opacity: 0.5 }}>{t("unknownLayout", { type: layoutType })}</div>;
     }
   }
 
@@ -239,7 +241,7 @@ export function DisplayPreview({ displayId, layoutType, config, orientation, roo
           <div style={{ flex: 1, minHeight: 0 }}>
             {loaded ? renderView() : (
               <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", opacity: 0.4 }}>
-                Loading preview...
+                {t("loadingPreview")}
               </div>
             )}
           </div>

@@ -2,18 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Monitor } from "lucide-react";
-
-const ERROR_TEXT: Record<string, { title: string; message: string; retrying: (n: number) => string }> = {
-  de: { title: "Wartung", message: "Bitte versuchen Sie es später erneut", retrying: (n) => `Erneuter Versuch in ${n} Sekunde${n !== 1 ? "n" : ""}...` },
-  en: { title: "Maintenance", message: "Please try again later", retrying: (n) => `Retrying in ${n} second${n !== 1 ? "s" : ""}...` },
-  fr: { title: "Maintenance", message: "Veuillez réessayer plus tard", retrying: (n) => `Nouvelle tentative dans ${n} seconde${n !== 1 ? "s" : ""}...` },
-};
-
-function getErrorText(): { title: string; message: string; retrying: (n: number) => string } {
-  if (typeof navigator === "undefined") return ERROR_TEXT.en;
-  const lang = navigator.language?.split("-")[0]?.toLowerCase() ?? "en";
-  return ERROR_TEXT[lang] ?? ERROR_TEXT.en;
-}
+import { useTranslations } from "next-intl";
 
 const RETRY_DELAYS = [5000, 10000, 30000, 60000];
 
@@ -24,7 +13,7 @@ export default function DisplayError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
-  const text = getErrorText();
+  const t = useTranslations("display");
   const [retryCount, setRetryCount] = useState(0);
   const [countdown, setCountdown] = useState(() => RETRY_DELAYS[0] / 1000);
 
@@ -76,7 +65,7 @@ export default function DisplayError({
           color: "#f8fafc",
         }}
       >
-        {text.title}
+        {t("maintenance")}
       </h1>
       <p
         style={{
@@ -87,7 +76,7 @@ export default function DisplayError({
           lineHeight: 1.5,
         }}
       >
-        {text.message}
+        {t("maintenanceMessage")}
       </p>
       <div
         style={{
@@ -96,7 +85,7 @@ export default function DisplayError({
           color: "#64748b",
         }}
       >
-        {text.retrying(countdown)}
+        {t("retryingIn", { seconds: countdown })}
       </div>
     </div>
   );

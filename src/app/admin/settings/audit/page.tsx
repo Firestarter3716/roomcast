@@ -1,3 +1,4 @@
+import { getTranslations } from "next-intl/server";
 import { getAuditLogs } from "@/features/audit/actions";
 import { AuditLogTable } from "@/features/audit/components";
 
@@ -14,6 +15,7 @@ interface AuditPageProps {
 }
 
 export default async function AuditPage({ searchParams }: AuditPageProps) {
+  const t = await getTranslations("admin.audit");
   const params = await searchParams;
 
   const { logs, total, page, totalPages } = await getAuditLogs({
@@ -27,10 +29,10 @@ export default async function AuditPage({ searchParams }: AuditPageProps) {
   return (
     <div>
       <h1 className="text-2xl font-semibold text-[var(--color-foreground)]">
-        Audit Log
+        {t("title")}
       </h1>
       <p className="mt-1 text-sm text-[var(--color-muted-foreground)]">
-        Track all system changes and user actions
+        {t("description")}
       </p>
       <div className="mt-6">
         <AuditLogTable

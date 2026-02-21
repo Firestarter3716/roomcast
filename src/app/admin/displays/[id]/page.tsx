@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowLeft, ExternalLink } from "lucide-react";
 import { notFound } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { getDisplay } from "@/features/displays/actions";
 import { DisplayEditor } from "@/features/displays/components";
 import { type DisplayConfig, DEFAULT_THEME, DEFAULT_BRANDING, DEFAULT_BACKGROUND, DEFAULT_SCREEN, getDefaultLayoutConfig } from "@/features/displays/types";
@@ -13,6 +14,7 @@ interface EditDisplayPageProps {
 
 export default async function EditDisplayPage({ params }: EditDisplayPageProps) {
   const { id } = await params;
+  const t = await getTranslations();
   const display = await getDisplay(id);
 
   if (!display) {
@@ -32,12 +34,12 @@ export default async function EditDisplayPage({ params }: EditDisplayPageProps) 
     <div>
       <div className="mb-6">
         <Link href="/admin/displays" className="inline-flex items-center gap-1 text-sm text-[var(--color-muted-foreground)] hover:text-[var(--color-foreground)] transition-colors">
-          <ArrowLeft className="h-4 w-4" /> Back to Displays
+          <ArrowLeft className="h-4 w-4" /> {t("common.backToDisplays")}
         </Link>
         <div className="mt-2 flex items-center gap-4">
           <h1 className="text-2xl font-semibold text-[var(--color-foreground)]">{display.name}</h1>
           <a href={`/display/${display.token}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 rounded-md border border-[var(--color-border)] px-3 py-1.5 text-xs text-[var(--color-muted-foreground)] hover:text-[var(--color-foreground)] transition-colors">
-            <ExternalLink className="h-3 w-3" /> Open Display
+            <ExternalLink className="h-3 w-3" /> {t("displays.openDisplay")}
           </a>
         </div>
         <p className="mt-1 text-sm text-[var(--color-muted-foreground)]">

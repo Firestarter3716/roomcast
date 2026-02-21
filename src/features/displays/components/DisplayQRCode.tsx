@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import QRCode from "qrcode";
 import { Download } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 interface DisplayQRCodeProps {
   token: string;
@@ -11,10 +12,11 @@ interface DisplayQRCodeProps {
 }
 
 export function DisplayQRCode({ token, displayName, size = 200 }: DisplayQRCodeProps) {
+  const t = useTranslations("displays");
   const [dataUrl, setDataUrl] = useState<string>("");
-  const displayUrl = typeof window !== "undefined"
-    ? `${window.location.origin}/display/${token}`
-    : `/display/${token}`;
+  const [origin, setOrigin] = useState("");
+  useEffect(() => { setOrigin(window.location.origin); }, []);
+  const displayUrl = `${origin}/display/${token}`;
 
   useEffect(() => {
     QRCode.toDataURL(displayUrl, {
@@ -51,7 +53,7 @@ export function DisplayQRCode({ token, displayName, size = 200 }: DisplayQRCodeP
         className="inline-flex items-center gap-1.5 rounded-md border border-[var(--color-border)] px-3 py-1.5 text-xs text-[var(--color-muted-foreground)] hover:text-[var(--color-foreground)] transition-colors"
       >
         <Download className="h-3 w-3" />
-        Download QR
+        {t("downloadQr")}
       </button>
     </div>
   );

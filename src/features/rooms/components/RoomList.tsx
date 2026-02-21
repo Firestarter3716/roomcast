@@ -49,7 +49,7 @@ export function RoomList({ rooms }: RoomListProps) {
     return (
       <div role="status" className="mt-8 flex items-center justify-center rounded-lg border border-dashed border-[var(--color-border)] p-12">
         <p className="text-[var(--color-muted-foreground)]">
-          No rooms created yet. Create your first room.
+          {t("noRooms")}
         </p>
       </div>
     );

@@ -125,13 +125,21 @@ export function DisplayView({
   const now = useCurrentTime(10000);
   const computedStatus: RoomStatus = useMemo(() => {
     const nowMs = now.getTime();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1).getTime();
     const current = displayEvents.find(
       (e) =>
         !e.isAllDay &&
         new Date(e.startTime).getTime() <= nowMs &&
         new Date(e.endTime).getTime() > nowMs,
     );
-    const allDay = displayEvents.find((e) => e.isAllDay);
+    // Only consider all-day events that overlap today
+    const allDay = displayEvents.find(
+      (e) =>
+        e.isAllDay &&
+        new Date(e.startTime).getTime() < todayEnd &&
+        new Date(e.endTime).getTime() > todayStart,
+    );
     if (!current && !allDay) return "free";
     if (current && !current.isAllDay) {
       const remaining = new Date(current.endTime).getTime() - nowMs;

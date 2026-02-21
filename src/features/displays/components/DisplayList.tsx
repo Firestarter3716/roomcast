@@ -66,7 +66,7 @@ export function DisplayList({ displays }: DisplayListProps) {
   if (displays.length === 0) {
     return (
       <div role="status" className="mt-8 flex items-center justify-center rounded-lg border border-dashed border-[var(--color-border)] p-12">
-        <p className="text-[var(--color-muted-foreground)]">No displays yet. Create your first display.</p>
+        <p className="text-[var(--color-muted-foreground)]">{t("noDisplays")}</p>
       </div>
     );
   }

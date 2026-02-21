@@ -40,7 +40,7 @@ export function SyncStatusIndicator({ status, lastSyncAt, error }: SyncStatusInd
       </span>
       {lastSyncAt && (
         <span className="text-xs text-[var(--color-muted-foreground)]">
-          {new Date(lastSyncAt).toLocaleTimeString()}
+          {new Date(lastSyncAt).toLocaleTimeString("de-DE", { timeZone: "Europe/Berlin" })}
         </span>
       )}
     </div>

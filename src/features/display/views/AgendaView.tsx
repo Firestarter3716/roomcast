@@ -27,7 +27,7 @@ type AgendaItem =
 // ---------------------------------------------------------------------------
 
 function fmtTime(date: Date, locale: string) {
-  return date.toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" });
+  return date.toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Berlin" });
 }
 
 /**
@@ -278,6 +278,7 @@ export function AgendaView({ events, config, locale: localeProp }: AgendaViewPro
     day: "numeric",
     month: "long",
     year: "numeric",
+    timeZone: "Europe/Berlin",
   });
 
   // Filter events to today's time range. `dateKey` is included so that the

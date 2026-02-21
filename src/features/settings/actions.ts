@@ -1,9 +1,11 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
 import prisma from "@/server/db/prisma";
 import { createAuditLog } from "@/server/middleware/audit";
 import { requireActionAuth } from "@/server/auth/require-auth";
+import { isValidLocale } from "@/i18n/config";
 
 export async function getSystemSettings() {
   await requireActionAuth("ADMIN");
@@ -45,6 +47,15 @@ export async function updateSystemSettings(data: {
     entityName: "System Settings",
   });
 
-  revalidatePath("/admin/settings");
+  if (data.defaultLocale && isValidLocale(data.defaultLocale)) {
+    const cookieStore = await cookies();
+    cookieStore.set("locale", data.defaultLocale, {
+      path: "/",
+      maxAge: 60 * 60 * 24 * 365,
+      sameSite: "lax",
+    });
+  }
+
+  revalidatePath("/", "layout");
   return settings;
 }

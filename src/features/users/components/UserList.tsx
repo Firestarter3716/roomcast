@@ -38,8 +38,8 @@ const roleBadgeColors: Record<Role, { bg: string; text: string }> = {
   },
 };
 
-function formatDate(date: Date | null): string {
-  if (!date) return "Never";
+function formatDate(date: Date | null): string | null {
+  if (!date) return null;
   return new Date(date).toLocaleDateString(undefined, {
     year: "numeric",
     month: "short",
@@ -69,7 +69,7 @@ export function UserList({ users }: UserListProps) {
     return (
       <div role="status" className="mt-8 flex items-center justify-center rounded-lg border border-dashed border-[var(--color-border)] p-12">
         <p className="text-[var(--color-muted-foreground)]">
-          No users created yet. Create your first user.
+          {t("noUsers")}
         </p>
       </div>
     );
@@ -82,19 +82,19 @@ export function UserList({ users }: UserListProps) {
           <thead>
             <tr className="border-b border-[var(--color-border)] bg-[var(--color-muted)]/30">
               <th scope="col" className="px-4 py-3 text-left font-medium text-[var(--color-muted-foreground)]">
-                Name
+                {t("name")}
               </th>
               <th scope="col" className="px-4 py-3 text-left font-medium text-[var(--color-muted-foreground)]">
-                Email
+                {t("email")}
               </th>
               <th scope="col" className="px-4 py-3 text-left font-medium text-[var(--color-muted-foreground)]">
-                Role
+                {t("role")}
               </th>
               <th scope="col" className="px-4 py-3 text-left font-medium text-[var(--color-muted-foreground)]">
-                Last Login
+                {t("lastLogin")}
               </th>
               <th scope="col" className="px-4 py-3 text-right font-medium text-[var(--color-muted-foreground)]">
-                Actions
+                {tc("actions")}
               </th>
             </tr>
           </thead>
@@ -124,7 +124,7 @@ export function UserList({ users }: UserListProps) {
                     </span>
                   </td>
                   <td className="px-4 py-3 text-[var(--color-muted-foreground)]">
-                    {formatDate(user.lastLoginAt)}
+                    {formatDate(user.lastLoginAt) ?? tc("never")}
                   </td>
                   <td className="px-4 py-3 text-right">
                     <div className="flex items-center justify-end gap-1">
@@ -133,14 +133,14 @@ export function UserList({ users }: UserListProps) {
                         className="inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium text-[var(--color-muted-foreground)] hover:text-[var(--color-foreground)] hover:bg-[var(--color-muted)]/50 transition-colors"
                       >
                         <Pencil className="h-3.5 w-3.5" />
-                        Edit
+                        {tc("edit")}
                       </Link>
                       <button
                         onClick={() => setDeleteTarget({ id: user.id, name: user.name })}
                         className="inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium text-[var(--color-destructive)] hover:bg-[var(--color-destructive)]/10 transition-colors"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
-                        Delete
+                        {tc("delete")}
                       </button>
                     </div>
                   </td>

@@ -29,7 +29,7 @@ export default async function RootLayout({
         />
       </head>
       <body className="min-h-screen antialiased">
-        <Providers locale={locale} messages={messages}>{children}</Providers>
+        <Providers locale={locale} messages={messages} timeZone="Europe/Berlin">{children}</Providers>
       </body>
     </html>
   );

@@ -1,8 +1,11 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 import { CalendarForm } from "@/features/calendars/components";
 
-export default function NewCalendarPage() {
+export default async function NewCalendarPage() {
+  const t = await getTranslations();
+
   return (
     <div>
       <div className="mb-6">
@@ -11,13 +14,13 @@ export default function NewCalendarPage() {
           className="inline-flex items-center gap-1 text-sm text-[var(--color-muted-foreground)] hover:text-[var(--color-foreground)] transition-colors"
         >
           <ArrowLeft className="h-4 w-4" />
-          Back to Calendars
+          {t("common.backToCalendars")}
         </Link>
         <h1 className="mt-2 text-2xl font-semibold text-[var(--color-foreground)]">
-          Add Calendar
+          {t("calendars.addCalendar")}
         </h1>
         <p className="mt-1 text-sm text-[var(--color-muted-foreground)]">
-          Connect an external calendar provider
+          {t("calendars.connectProvider")}
         </p>
       </div>
       <div className="mx-auto max-w-2xl">

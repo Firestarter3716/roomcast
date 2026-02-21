@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import {
   ChevronLeft,
   ChevronRight,
@@ -54,7 +54,7 @@ const ACTION_BADGE_STYLES: Record<string, string> = {
     "bg-[var(--color-warning)]/10 text-[var(--color-warning)]",
 };
 
-function formatRelativeTime(iso: string): string {
+function formatRelativeTime(iso: string, t: (key: string, values?: Record<string, string | number | Date>) => string, locale: string): string {
   const date = new Date(iso);
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
@@ -63,21 +63,22 @@ function formatRelativeTime(iso: string): string {
   const diffHr = Math.floor(diffMin / 60);
   const diffDay = Math.floor(diffHr / 24);
 
-  if (diffSec < 60) return "just now";
-  if (diffMin < 60) return `${diffMin}m ago`;
-  if (diffHr < 24) return `${diffHr}h ago`;
-  if (diffDay < 7) return `${diffDay}d ago`;
-  return date.toLocaleDateString();
+  if (diffSec < 60) return t("justNow");
+  if (diffMin < 60) return t("minutesAgo", { count: diffMin });
+  if (diffHr < 24) return t("hoursAgo", { count: diffHr });
+  if (diffDay < 7) return t("daysAgo", { count: diffDay });
+  return date.toLocaleDateString(locale, { timeZone: "Europe/Berlin" });
 }
 
-function formatExactTime(iso: string): string {
-  return new Date(iso).toLocaleString();
+function formatExactTime(iso: string, locale: string): string {
+  return new Date(iso).toLocaleString(locale, { timeZone: "Europe/Berlin" });
 }
 
 export function AuditLogTable({ logs, total, page, totalPages }: AuditLogTableProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const t = useTranslations("admin.audit");
+  const locale = useLocale();
   const [isPending, startTransition] = useTransition();
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const [isExporting, setIsExporting] = useState(false);
@@ -275,10 +276,10 @@ export function AuditLogTable({ logs, total, page, totalPages }: AuditLogTablePr
                     <td className="px-4 py-3 whitespace-nowrap">
                       <span
                         className="flex items-center gap-1.5 text-[var(--color-foreground)]"
-                        title={formatExactTime(log.createdAt)}
+                        title={formatExactTime(log.createdAt, locale)}
                       >
                         <Clock className="h-3.5 w-3.5 text-[var(--color-muted-foreground)]" />
-                        {formatRelativeTime(log.createdAt)}
+                        {formatRelativeTime(log.createdAt, t, locale)}
                       </span>
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap">

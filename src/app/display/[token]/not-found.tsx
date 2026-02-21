@@ -1,6 +1,8 @@
 import { Monitor } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 
-export default function DisplayNotFound() {
+export default async function DisplayNotFound() {
+  const t = await getTranslations("display");
   return (
     <div
       style={{
@@ -27,7 +29,7 @@ export default function DisplayNotFound() {
           color: "#ffffff",
         }}
       >
-        Display Not Found
+        {t("notFound")}
       </h1>
       <p
         style={{
@@ -38,7 +40,7 @@ export default function DisplayNotFound() {
           lineHeight: 1.5,
         }}
       >
-        The display token is invalid or has been deactivated.
+        {t("invalidToken")}
       </p>
     </div>
   );

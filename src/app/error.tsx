@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { AlertTriangle } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 export default function Error({
   error,
@@ -10,6 +11,9 @@ export default function Error({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const t = useTranslations("errors");
+  const tc = useTranslations("common");
+
   return (
     <div
       style={{
@@ -36,7 +40,7 @@ export default function Error({
           color: "var(--color-foreground)",
         }}
       >
-        Something went wrong
+        {t("somethingWentWrong")}
       </h1>
       <p
         style={{
@@ -47,7 +51,7 @@ export default function Error({
           maxWidth: "24rem",
         }}
       >
-        An unexpected error occurred. Please try again or return to the dashboard.
+        {t("unexpectedError")}
       </p>
       <div
         style={{
@@ -72,7 +76,7 @@ export default function Error({
             transition: "opacity 0.15s ease",
           }}
         >
-          Try again
+          {tc("tryAgain")}
         </button>
         <Link
           href="/admin"
@@ -90,7 +94,7 @@ export default function Error({
             transition: "opacity 0.15s ease",
           }}
         >
-          Back to Dashboard
+          {tc("backToDashboard")}
         </Link>
       </div>
     </div>

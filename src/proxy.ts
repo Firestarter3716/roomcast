@@ -2,6 +2,17 @@ import { auth } from "@/server/auth";
 import { NextResponse } from "next/server";
 
 export default auth((req) => {
+  // Strip accidental locale prefixes from URLs.
+  // This app uses cookie-based locale, not URL-based, so paths like
+  // /en/admin/calendars should redirect to /admin/calendars.
+  const localeMatch = req.nextUrl.pathname.match(/^\/(de|en|fr)(\/.*)?$/);
+  if (localeMatch) {
+    const rest = localeMatch[2] || "/";
+    const url = req.nextUrl.clone();
+    url.pathname = rest;
+    return NextResponse.redirect(url);
+  }
+
   const response = NextResponse.next();
 
   // Security headers

@@ -16,6 +16,7 @@ export function DisplayClock({ format = "24h", showSeconds = false, className, l
     minute: "2-digit",
     second: showSeconds ? "2-digit" : undefined,
     hour12: format === "12h",
+    timeZone: "Europe/Berlin",
   });
   return <span className={className}>{timeString}</span>;
 }

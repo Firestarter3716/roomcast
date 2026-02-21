@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { getUser } from "@/features/users/actions";
 import { UserForm } from "@/features/users/components";
 
@@ -8,6 +9,7 @@ interface EditUserPageProps {
 
 export default async function EditUserPage({ params }: EditUserPageProps) {
   const { id } = await params;
+  const t = await getTranslations("admin.users");
   const user = await getUser(id);
 
   if (!user) {
@@ -17,10 +19,10 @@ export default async function EditUserPage({ params }: EditUserPageProps) {
   return (
     <div>
       <h1 className="text-2xl font-semibold text-[var(--color-foreground)]">
-        Edit User
+        {t("editUser")}
       </h1>
       <p className="mt-1 text-sm text-[var(--color-muted-foreground)]">
-        Update user account details
+        {t("editDescription")}
       </p>
       <div className="mt-6 max-w-2xl">
         <UserForm

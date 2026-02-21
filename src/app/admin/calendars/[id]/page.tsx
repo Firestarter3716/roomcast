@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { notFound } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { getCalendar } from "@/features/calendars/actions";
 import { CalendarForm } from "@/features/calendars/components";
 
@@ -12,6 +13,7 @@ interface EditCalendarPageProps {
 
 export default async function EditCalendarPage({ params }: EditCalendarPageProps) {
   const { id } = await params;
+  const t = await getTranslations();
   const calendar = await getCalendar(id);
 
   if (!calendar) {
@@ -26,10 +28,10 @@ export default async function EditCalendarPage({ params }: EditCalendarPageProps
           className="inline-flex items-center gap-1 text-sm text-[var(--color-muted-foreground)] hover:text-[var(--color-foreground)] transition-colors"
         >
           <ArrowLeft className="h-4 w-4" />
-          Back to Calendars
+          {t("common.backToCalendars")}
         </Link>
         <h1 className="mt-2 text-2xl font-semibold text-[var(--color-foreground)]">
-          Edit Calendar
+          {t("calendars.editCalendar")}
         </h1>
         <p className="mt-1 text-sm text-[var(--color-muted-foreground)]">
           {calendar.name}

@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { Monitor, ExternalLink, Copy, RotateCcw, Trash2 } from "lucide-react";
 import { DisplayQRCode } from "./DisplayQRCode";
 import { toast } from "sonner";
@@ -24,11 +25,13 @@ interface DisplayCardProps {
 export function DisplayCard({ display, onDelete, onRegenerateToken }: DisplayCardProps) {
   const t = useTranslations("displays");
   const tc = useTranslations("common");
-  const displayUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/display/${display.token}`;
+  const [origin, setOrigin] = useState("");
+  useEffect(() => { setOrigin(window.location.origin); }, []);
+  const displayUrl = `${origin}/display/${display.token}`;
 
   function copyUrl() {
     navigator.clipboard.writeText(displayUrl);
-    toast.success("URL copied to clipboard");
+    toast.success(t("urlCopied"));
   }
 
   return (
@@ -46,14 +49,14 @@ export function DisplayCard({ display, onDelete, onRegenerateToken }: DisplayCar
           </div>
         </div>
         <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${display.enabled ? "bg-[var(--color-success)]/10 text-[var(--color-success)]" : "bg-[var(--color-destructive)]/10 text-[var(--color-destructive)]"}`}>
-          {display.enabled ? "Active" : "Disabled"}
+          {display.enabled ? t("active") : tc("disabled")}
         </span>
       </div>
 
       {display.room && (
         <div className="mt-3">
           <span className="inline-flex items-center rounded-md bg-[var(--color-secondary)]/10 px-2 py-1 text-xs text-[var(--color-secondary-foreground)]">
-            Room: {display.room.name}
+            {t("room")}: {display.room.name}
           </span>
         </div>
       )}
@@ -82,16 +85,16 @@ export function DisplayCard({ display, onDelete, onRegenerateToken }: DisplayCar
         <a href={`/admin/displays/${display.id}`} className="inline-flex items-center gap-1 rounded-md bg-[var(--color-primary)] px-3 py-1.5 text-xs font-medium text-[var(--color-primary-foreground)] hover:bg-[var(--color-primary-hover)] transition-colors">
           {tc("edit")}
         </a>
-        <button onClick={copyUrl} className="inline-flex items-center gap-1 rounded-md border border-[var(--color-border)] px-3 py-1.5 text-xs text-[var(--color-muted-foreground)] hover:text-[var(--color-foreground)] transition-colors" title="Copy display URL" aria-label="Copy display URL">
+        <button onClick={copyUrl} className="inline-flex items-center gap-1 rounded-md border border-[var(--color-border)] px-3 py-1.5 text-xs text-[var(--color-muted-foreground)] hover:text-[var(--color-foreground)] transition-colors" title={t("copyDisplayUrl")} aria-label={t("copyDisplayUrl")}>
           <Copy className="h-3 w-3" /> URL
         </button>
-        <a href={displayUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 rounded-md border border-[var(--color-border)] px-3 py-1.5 text-xs text-[var(--color-muted-foreground)] hover:text-[var(--color-foreground)] transition-colors" title="Open display" aria-label="Open display in new tab">
+        <a href={displayUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 rounded-md border border-[var(--color-border)] px-3 py-1.5 text-xs text-[var(--color-muted-foreground)] hover:text-[var(--color-foreground)] transition-colors" title={t("openDisplayNewTab")} aria-label={t("openDisplayNewTab")}>
           <ExternalLink className="h-3 w-3" />
         </a>
-        <button onClick={() => onRegenerateToken(display.id)} className="inline-flex items-center gap-1 rounded-md border border-[var(--color-border)] px-3 py-1.5 text-xs text-[var(--color-muted-foreground)] hover:text-[var(--color-foreground)] transition-colors" title="Regenerate token" aria-label="Regenerate display token">
+        <button onClick={() => onRegenerateToken(display.id)} className="inline-flex items-center gap-1 rounded-md border border-[var(--color-border)] px-3 py-1.5 text-xs text-[var(--color-muted-foreground)] hover:text-[var(--color-foreground)] transition-colors" title={t("regenerateTokenAction")} aria-label={t("regenerateTokenAction")}>
           <RotateCcw className="h-3 w-3" />
         </button>
-        <button onClick={() => onDelete(display.id)} className="ml-auto inline-flex items-center gap-1 rounded-md border border-[var(--color-destructive)]/20 px-3 py-1.5 text-xs text-[var(--color-destructive)] hover:bg-[var(--color-destructive)]/10 transition-colors" title="Delete display" aria-label="Delete display">
+        <button onClick={() => onDelete(display.id)} className="ml-auto inline-flex items-center gap-1 rounded-md border border-[var(--color-destructive)]/20 px-3 py-1.5 text-xs text-[var(--color-destructive)] hover:bg-[var(--color-destructive)]/10 transition-colors" title={tc("delete")} aria-label={tc("delete")}>
           <Trash2 className="h-3 w-3" />
         </button>
       </div>

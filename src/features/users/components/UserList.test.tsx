@@ -90,18 +90,18 @@ describe('UserList', () => {
 
   it('shows "Never" for users with no last login', () => {
     render(<UserList users={mockUsers} />)
-    expect(screen.getByText('Never')).toBeInTheDocument()
+    expect(screen.getByText('never')).toBeInTheDocument()
   })
 
   it('shows empty state when users array is empty', () => {
     render(<UserList users={[]} />)
     expect(screen.getByRole('status')).toBeInTheDocument()
-    expect(screen.getByText(/No users created yet/)).toBeInTheDocument()
+    expect(screen.getByText('noUsers')).toBeInTheDocument()
   })
 
   it('has edit links for each user', () => {
     render(<UserList users={mockUsers} />)
-    const editLinks = screen.getAllByText('Edit')
+    const editLinks = screen.getAllByText('edit')
     expect(editLinks).toHaveLength(2)
     expect(editLinks[0].closest('a')).toHaveAttribute('href', '/admin/settings/users/u1')
     expect(editLinks[1].closest('a')).toHaveAttribute('href', '/admin/settings/users/u2')
@@ -109,7 +109,7 @@ describe('UserList', () => {
 
   it('has delete buttons for each user', () => {
     render(<UserList users={mockUsers} />)
-    const deleteButtons = screen.getAllByText('Delete')
+    const deleteButtons = screen.getAllByText('delete')
     expect(deleteButtons).toHaveLength(2)
     expect(deleteButtons[0].tagName).toBe('BUTTON')
     expect(deleteButtons[1].tagName).toBe('BUTTON')

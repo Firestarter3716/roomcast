@@ -4,6 +4,7 @@ import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Monitor } from "lucide-react";
 import { requestPasswordReset, resetPasswordWithToken } from "@/features/users/password-reset";
+import { useTranslations } from "next-intl";
 
 export default function ResetPasswordPage() {
   return (
@@ -14,6 +15,8 @@ export default function ResetPasswordPage() {
 }
 
 function ResetPasswordForm() {
+  const t = useTranslations("auth.resetPassword");
+  const ta = useTranslations("auth");
   const searchParams = useSearchParams();
   const tokenParam = searchParams.get("token");
   const emailParam = searchParams.get("email");
@@ -26,7 +29,7 @@ function ResetPasswordForm() {
         <div className="mb-8 flex flex-col items-center">
           <Monitor className="h-10 w-10 text-[var(--color-primary)]" />
           <h1 className="mt-4 text-2xl font-semibold text-[var(--color-foreground)]">
-            {hasToken ? "New Password" : "Reset Password"}
+            {hasToken ? t("newPassword") : t("title")}
           </h1>
         </div>
         {hasToken ? (
@@ -40,6 +43,8 @@ function ResetPasswordForm() {
 }
 
 function RequestResetForm() {
+  const t = useTranslations("auth.resetPassword");
+  const ta = useTranslations("auth");
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -56,10 +61,10 @@ function RequestResetForm() {
     return (
       <div className="text-center">
         <p className="text-sm text-[var(--color-muted-foreground)]">
-          If an account with that email exists, we sent a reset link. Check your inbox.
+          {t("linkSent")}
         </p>
         <a href="/login" className="mt-4 inline-block text-sm text-[var(--color-primary)] hover:underline">
-          Back to login
+          {t("backToLogin")}
         </a>
       </div>
     );
@@ -68,20 +73,22 @@ function RequestResetForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label htmlFor="email" className="mb-1.5 block text-sm font-medium text-[var(--color-foreground)]">E-Mail</label>
+        <label htmlFor="email" className="mb-1.5 block text-sm font-medium text-[var(--color-foreground)]">{ta("email")}</label>
         <input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="your@email.com" className="w-full rounded-md border border-[var(--color-input)] bg-[var(--color-background)] px-3 py-2 text-sm text-[var(--color-foreground)] placeholder:text-[var(--color-muted-foreground)] focus:border-[var(--color-ring)] focus:outline-none focus:ring-2 focus:ring-[var(--color-ring)]/20" required disabled={loading} />
       </div>
       <button type="submit" disabled={loading} className="w-full rounded-md bg-[var(--color-primary)] px-4 py-2.5 text-sm font-medium text-[var(--color-primary-foreground)] transition-colors hover:bg-[var(--color-primary-hover)] focus:outline-none focus:ring-2 focus:ring-[var(--color-ring)] focus:ring-offset-2 disabled:opacity-50">
-        {loading ? "Sending..." : "Send Reset Link"}
+        {loading ? t("sending") : t("sendResetLink")}
       </button>
       <div className="text-center">
-        <a href="/login" className="text-sm text-[var(--color-muted-foreground)] hover:text-[var(--color-foreground)]">Back to login</a>
+        <a href="/login" className="text-sm text-[var(--color-muted-foreground)] hover:text-[var(--color-foreground)]">{t("backToLogin")}</a>
       </div>
     </form>
   );
 }
 
 function SetNewPasswordForm({ email, token }: { email: string; token: string }) {
+  const t = useTranslations("auth.resetPassword");
+  const ta = useTranslations("auth");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [error, setError] = useState("");
@@ -90,8 +97,8 @@ function SetNewPasswordForm({ email, token }: { email: string; token: string }) 
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (password !== confirm) { setError("Passwords do not match"); return; }
-    if (password.length < 8) { setError("Password must be at least 8 characters"); return; }
+    if (password !== confirm) { setError(t("passwordMismatch")); return; }
+    if (password.length < 8) { setError(t("minLength")); return; }
     setError("");
     setLoading(true);
     const result = await resetPasswordWithToken(email, token, password);
@@ -106,8 +113,8 @@ function SetNewPasswordForm({ email, token }: { email: string; token: string }) 
   if (success) {
     return (
       <div className="text-center">
-        <p className="text-sm text-[var(--color-success)]">Password reset successfully!</p>
-        <a href="/login" className="mt-4 inline-block text-sm text-[var(--color-primary)] hover:underline">Sign in</a>
+        <p className="text-sm text-[var(--color-success)]">{t("success")}</p>
+        <a href="/login" className="mt-4 inline-block text-sm text-[var(--color-primary)] hover:underline">{ta("login")}</a>
       </div>
     );
   }
@@ -116,15 +123,15 @@ function SetNewPasswordForm({ email, token }: { email: string; token: string }) 
     <form onSubmit={handleSubmit} className="space-y-4">
       {error && <div role="alert" className="rounded-md bg-[var(--color-destructive)]/10 p-3 text-sm text-[var(--color-destructive)]">{error}</div>}
       <div>
-        <label htmlFor="password" className="mb-1.5 block text-sm font-medium text-[var(--color-foreground)]">New Password</label>
+        <label htmlFor="password" className="mb-1.5 block text-sm font-medium text-[var(--color-foreground)]">{t("newPassword")}</label>
         <input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full rounded-md border border-[var(--color-input)] bg-[var(--color-background)] px-3 py-2 text-sm text-[var(--color-foreground)] focus:border-[var(--color-ring)] focus:outline-none focus:ring-2 focus:ring-[var(--color-ring)]/20" required disabled={loading} minLength={8} />
       </div>
       <div>
-        <label htmlFor="confirm" className="mb-1.5 block text-sm font-medium text-[var(--color-foreground)]">Confirm Password</label>
+        <label htmlFor="confirm" className="mb-1.5 block text-sm font-medium text-[var(--color-foreground)]">{t("confirmPassword")}</label>
         <input id="confirm" type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} className="w-full rounded-md border border-[var(--color-input)] bg-[var(--color-background)] px-3 py-2 text-sm text-[var(--color-foreground)] focus:border-[var(--color-ring)] focus:outline-none focus:ring-2 focus:ring-[var(--color-ring)]/20" required disabled={loading} minLength={8} />
       </div>
       <button type="submit" disabled={loading} className="w-full rounded-md bg-[var(--color-primary)] px-4 py-2.5 text-sm font-medium text-[var(--color-primary-foreground)] transition-colors hover:bg-[var(--color-primary-hover)] focus:outline-none focus:ring-2 focus:ring-[var(--color-ring)] focus:ring-offset-2 disabled:opacity-50">
-        {loading ? "Resetting..." : "Reset Password"}
+        {loading ? t("resetting") : t("title")}
       </button>
     </form>
   );

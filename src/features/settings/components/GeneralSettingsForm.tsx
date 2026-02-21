@@ -52,6 +52,7 @@ export function GeneralSettingsForm({ initialSettings }: GeneralSettingsFormProp
   });
 
   async function onSubmit(data: SettingsData) {
+    const localeChanged = data.defaultLocale !== initialSettings.defaultLocale;
     setSaving(true);
     try {
       await updateSystemSettings({
@@ -61,6 +62,10 @@ export function GeneralSettingsForm({ initialSettings }: GeneralSettingsFormProp
         defaultLogoUrl: data.defaultLogoUrl || null,
         sessionTimeoutHours: data.sessionTimeoutHours,
       });
+      if (localeChanged) {
+        window.location.reload();
+        return;
+      }
       toast.success(t("saved"));
     } catch {
       toast.error(t("saveFailed"));

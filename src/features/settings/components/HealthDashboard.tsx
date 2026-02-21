@@ -1,6 +1,6 @@
 "use client";
 
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { Calendar, CalendarDays, Database, Monitor, Radio } from "lucide-react";
 
 interface SyncStatus {
@@ -28,8 +28,8 @@ interface HealthDashboardProps {
   healthData: HealthData;
 }
 
-function formatRelativeTime(isoString: string | null): string {
-  if (!isoString) return "Never";
+function formatRelativeTime(isoString: string | null, t: (key: string, values?: Record<string, string | number | Date>) => string): string {
+  if (!isoString) return t("never");
   const date = new Date(isoString);
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
@@ -38,27 +38,27 @@ function formatRelativeTime(isoString: string | null): string {
   const diffHours = Math.floor(diffMinutes / 60);
   const diffDays = Math.floor(diffHours / 24);
 
-  if (diffSeconds < 60) return "Just now";
-  if (diffMinutes < 60) return `${diffMinutes}m ago`;
-  if (diffHours < 24) return `${diffHours}h ago`;
-  return `${diffDays}d ago`;
+  if (diffSeconds < 60) return t("justNow");
+  if (diffMinutes < 60) return t("minutesAgo", { count: diffMinutes });
+  if (diffHours < 24) return t("hoursAgo", { count: diffHours });
+  return t("daysAgo", { count: diffDays });
 }
 
-function StatusBadge({ status }: { status: string }) {
-  const config: Record<string, { bg: string; text: string; label: string; animate?: boolean }> = {
-    IDLE: { bg: "color-mix(in srgb, var(--color-success) 15%, transparent)", text: "var(--color-success)", label: "Idle" },
-    SYNCING: { bg: "color-mix(in srgb, var(--color-primary) 15%, transparent)", text: "var(--color-primary)", label: "Syncing", animate: true },
-    ERROR: { bg: "color-mix(in srgb, var(--color-destructive) 15%, transparent)", text: "var(--color-destructive)", label: "Error" },
+function StatusBadge({ status, t }: { status: string; t: (key: string) => string }) {
+  const config: Record<string, { bg: string; text: string; labelKey: string; animate?: boolean }> = {
+    IDLE: { bg: "color-mix(in srgb, var(--color-success) 15%, transparent)", text: "var(--color-success)", labelKey: "statusIdle" },
+    SYNCING: { bg: "color-mix(in srgb, var(--color-primary) 15%, transparent)", text: "var(--color-primary)", labelKey: "statusSyncing", animate: true },
+    ERROR: { bg: "color-mix(in srgb, var(--color-destructive) 15%, transparent)", text: "var(--color-destructive)", labelKey: "statusError" },
   };
 
-  const c = config[status] ?? { bg: "color-mix(in srgb, var(--color-muted-foreground) 15%, transparent)", text: "var(--color-muted-foreground)", label: status };
+  const c = config[status] ?? { bg: "color-mix(in srgb, var(--color-muted-foreground) 15%, transparent)", text: "var(--color-muted-foreground)", labelKey: status };
 
   return (
     <span
       className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ${c.animate ? "animate-pulse" : ""}`}
       style={{ backgroundColor: c.bg, color: c.text }}
     >
-      {c.label}
+      {status in config ? t(c.labelKey) : c.labelKey}
     </span>
   );
 }
@@ -172,10 +172,10 @@ export function HealthDashboard({ healthData }: HealthDashboardProps) {
                       {sync.name}
                     </td>
                     <td className="px-4 py-3">
-                      <StatusBadge status={sync.status} />
+                      <StatusBadge status={sync.status} t={t} />
                     </td>
                     <td className="px-4 py-3 text-[var(--color-muted-foreground)]">
-                      {formatRelativeTime(sync.lastSyncAt)}
+                      {formatRelativeTime(sync.lastSyncAt, t)}
                     </td>
                     <td className="px-4 py-3 text-[var(--color-destructive)]">
                       {sync.error ?? "\u2014"}

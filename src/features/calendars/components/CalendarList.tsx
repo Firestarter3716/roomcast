@@ -59,7 +59,7 @@ export function CalendarList({ calendars }: CalendarListProps) {
     return (
       <div role="status" className="mt-8 flex items-center justify-center rounded-lg border border-dashed border-[var(--color-border)] p-12">
         <p className="text-[var(--color-muted-foreground)]">
-          No calendars connected yet. Add your first calendar.
+          {t("noCalendars")}
         </p>
       </div>
     );

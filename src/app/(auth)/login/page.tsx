@@ -4,6 +4,7 @@ import { Suspense, useEffect, useState } from "react";
 import { getProviders, signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Monitor } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 /** SVG icon for Google */
 function GoogleIcon({ className }: { className?: string }) {
@@ -46,6 +47,8 @@ export default function LoginPage() {
 }
 
 function LoginForm() {
+  const t = useTranslations("auth");
+  const tc = useTranslations("common");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -79,13 +82,13 @@ function LoginForm() {
       });
 
       if (result?.error) {
-        setError("Ungültige Anmeldedaten");
+        setError(t("invalidCredentials"));
       } else {
         router.push(callbackUrl);
         router.refresh();
       }
     } catch {
-      setError("Ein Fehler ist aufgetreten");
+      setError(t("errorOccurred"));
     } finally {
       setLoading(false);
     }
@@ -125,10 +128,10 @@ function LoginForm() {
         <div className="mb-8 flex flex-col items-center">
           <Monitor className="h-10 w-10 text-[var(--color-primary)]" />
           <h1 className="mt-4 text-2xl font-semibold text-[var(--color-foreground)]">
-            RoomCast
+            {t("loginTitle")}
           </h1>
           <p className="mt-1 text-sm text-[var(--color-muted-foreground)]">
-            Digital Signage Calendar Platform
+            {t("loginSubtitle")}
           </p>
         </div>
 
@@ -144,7 +147,7 @@ function LoginForm() {
               htmlFor="email"
               className="mb-1.5 block text-sm font-medium text-[var(--color-foreground)]"
             >
-              E-Mail
+              {t("email")}
             </label>
             <input
               id="email"
@@ -163,7 +166,7 @@ function LoginForm() {
               htmlFor="password"
               className="mb-1.5 block text-sm font-medium text-[var(--color-foreground)]"
             >
-              Passwort
+              {t("password")}
             </label>
             <input
               id="password"
@@ -181,11 +184,11 @@ function LoginForm() {
             disabled={loading}
             className="w-full rounded-md bg-[var(--color-primary)] px-4 py-2.5 text-sm font-medium text-[var(--color-primary-foreground)] transition-colors hover:bg-[var(--color-primary-hover)] focus:outline-none focus:ring-2 focus:ring-[var(--color-ring)] focus:ring-offset-2 disabled:opacity-50"
           >
-            {loading ? "Anmelden..." : "Anmelden"}
+            {loading ? t("signingIn") : t("login")}
           </button>
           <div className="text-center pt-2">
             <a href="/reset-password" className="text-sm text-[var(--color-muted-foreground)] hover:text-[var(--color-foreground)]">
-              Forgot password?
+              {t("forgotPassword")}
             </a>
           </div>
         </form>
@@ -199,7 +202,7 @@ function LoginForm() {
               </div>
               <div className="relative flex justify-center text-xs uppercase">
                 <span className="bg-[var(--color-card)] px-2 text-[var(--color-muted-foreground)]">
-                  or continue with
+                  {t("orContinueWith")}
                 </span>
               </div>
             </div>
@@ -213,7 +216,7 @@ function LoginForm() {
                   className="flex w-full items-center justify-center gap-3 rounded-md border border-[var(--color-input)] bg-[var(--color-background)] px-4 py-2.5 text-sm font-medium text-[var(--color-foreground)] transition-colors hover:bg-[var(--color-surface)] focus:outline-none focus:ring-2 focus:ring-[var(--color-ring)] focus:ring-offset-2"
                 >
                   {providerIcon(provider.id)}
-                  Sign in with {providerDisplayName(provider)}
+                  {t("signInWith", { provider: providerDisplayName(provider) })}
                 </button>
               ))}
             </div>

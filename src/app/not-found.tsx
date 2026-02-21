@@ -1,7 +1,10 @@
 import Link from "next/link";
 import { Monitor } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 
-export default function NotFound() {
+export default async function NotFound() {
+  const t = await getTranslations("errors");
+  const tc = await getTranslations("common");
   return (
     <div
       style={{
@@ -39,7 +42,7 @@ export default function NotFound() {
           marginBottom: "2rem",
         }}
       >
-        Page not found
+        {t("pageNotFound")}
       </p>
       <Link
         href="/admin"
@@ -56,7 +59,7 @@ export default function NotFound() {
           transition: "opacity 0.15s ease",
         }}
       >
-        Back to Dashboard
+        {tc("backToDashboard")}
       </Link>
     </div>
   );

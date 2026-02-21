@@ -194,6 +194,7 @@ export function DayGridView({ events, config, locale: localeProp }: DayGridViewP
     day: "numeric",
     month: "long",
     year: "numeric",
+    timeZone: "Europe/Berlin",
   });
 
   return (
@@ -262,7 +263,7 @@ export function DayGridView({ events, config, locale: localeProp }: DayGridViewP
               >
                 <div style={{ fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{event.title}</div>
                 <div style={{ opacity: 0.7, fontSize: "var(--display-text-xs, 0.6875rem)" }}>
-                  {new Date(event.startTime).toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" })} - {new Date(event.endTime).toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" })}
+                  {new Date(event.startTime).toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Berlin" })} - {new Date(event.endTime).toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Berlin" })}
                 </div>
               </div>
             );

@@ -81,6 +81,7 @@ export function RoomBookingView({
       freeFrom = new Date(current.endTime).toLocaleTimeString(locale || "de-DE", {
         hour: "2-digit",
         minute: "2-digit",
+        timeZone: "Europe/Berlin",
       });
     }
 
@@ -175,6 +176,7 @@ export function RoomBookingView({
     new Date(iso).toLocaleTimeString(locale || "de-DE", {
       hour: "2-digit",
       minute: "2-digit",
+      timeZone: "Europe/Berlin",
     });
 
   const dateString = now.toLocaleDateString(locale || "de-DE", {
@@ -182,6 +184,7 @@ export function RoomBookingView({
     day: "numeric",
     month: "long",
     year: "numeric",
+    timeZone: "Europe/Berlin",
   });
 
   // Apply status override for preview mode

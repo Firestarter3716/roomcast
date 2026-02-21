@@ -1,11 +1,13 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 import { RoomForm } from "@/features/rooms/components";
 import { getCalendarsForSelect } from "@/features/calendars/queries";
 
 export const dynamic = "force-dynamic";
 
 export default async function NewRoomPage() {
+  const t = await getTranslations();
   const calendars = await getCalendarsForSelect();
 
   return (
@@ -16,10 +18,10 @@ export default async function NewRoomPage() {
           className="inline-flex items-center gap-1 text-sm text-[var(--color-muted-foreground)] hover:text-[var(--color-foreground)] transition-colors"
         >
           <ArrowLeft className="h-4 w-4" />
-          Back to Rooms
+          {t("common.backToRooms")}
         </Link>
         <h1 className="mt-2 text-2xl font-semibold text-[var(--color-foreground)]">
-          Create Room
+          {t("rooms.createRoom")}
         </h1>
       </div>
       <div className="mx-auto max-w-2xl">

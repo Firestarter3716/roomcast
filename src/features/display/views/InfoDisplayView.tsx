@@ -40,7 +40,7 @@ export function InfoDisplayView({ events, config, locale }: InfoDisplayViewProps
     return events.filter((e) => { const s = new Date(e.startTime); return s >= tomorrow && s < futureEnd; }).slice(0, 10);
   }, [events, now, config.upcomingDaysCount]);
 
-  const dateString = now.toLocaleDateString(locale || "de-DE", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
+  const dateString = now.toLocaleDateString(locale || "de-DE", { weekday: "long", year: "numeric", month: "long", day: "numeric", timeZone: "Europe/Berlin" });
 
   return (
     <div key={fadeKey} style={{ display: "flex", flexDirection: "column", height: "100%", padding: "2rem", animation: "display-fade-in-subtle 0.5s ease-in-out" }}>
@@ -65,7 +65,7 @@ export function InfoDisplayView({ events, config, locale }: InfoDisplayViewProps
               <div key={event.id} style={{ padding: "0.75rem", marginBottom: "0.5rem", borderRadius: "0.5rem", borderLeft: `3px solid ${event.calendarColor || "var(--display-primary)"}`, backgroundColor: `color-mix(in srgb, ${event.calendarColor || "var(--display-primary)"} 8%, transparent)` }}>
                 <div style={{ fontWeight: 600, fontSize: "var(--display-text-base, 0.9375rem)" }}>{event.title}</div>
                 <div style={{ fontSize: "var(--display-text-sm, 0.8125rem)", opacity: 0.7, marginTop: "0.25rem" }}>
-                  {new Date(event.startTime).toLocaleTimeString(locale || "de-DE", { hour: "2-digit", minute: "2-digit" })} - {new Date(event.endTime).toLocaleTimeString(locale || "de-DE", { hour: "2-digit", minute: "2-digit" })}
+                  {new Date(event.startTime).toLocaleTimeString(locale || "de-DE", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Berlin" })} - {new Date(event.endTime).toLocaleTimeString(locale || "de-DE", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Berlin" })}
                 </div>
               </div>
             ))}
@@ -75,8 +75,8 @@ export function InfoDisplayView({ events, config, locale }: InfoDisplayViewProps
           <div style={{ fontSize: "var(--display-text-xs, 0.75rem)", textTransform: "uppercase", letterSpacing: "0.1em", opacity: 0.5, marginBottom: "1rem" }}>{t.upcoming}</div>
           {upcomingEvents.length === 0 ? <div style={{ opacity: 0.4, fontSize: "var(--display-text-base, 0.875rem)" }}>{t.noUpcomingEvents}</div> : upcomingEvents.map((event) => (
             <div key={event.id} style={{ display: "flex", gap: "1rem", padding: "0.5rem 0", borderBottom: "1px solid color-mix(in srgb, var(--display-muted) 8%, transparent)" }}>
-              <div style={{ fontSize: "var(--display-text-xs, 0.75rem)", opacity: 0.6, width: "5rem", flexShrink: 0 }}>{new Date(event.startTime).toLocaleDateString(locale || "de-DE", { weekday: "short", day: "numeric", month: "short" })}</div>
-              <div><div style={{ fontSize: "var(--display-text-sm, 0.875rem)", fontWeight: 500 }}>{event.title}</div><div style={{ fontSize: "var(--display-text-xs, 0.75rem)", opacity: 0.6 }}>{new Date(event.startTime).toLocaleTimeString(locale || "de-DE", { hour: "2-digit", minute: "2-digit" })}</div></div>
+              <div style={{ fontSize: "var(--display-text-xs, 0.75rem)", opacity: 0.6, width: "5rem", flexShrink: 0 }}>{new Date(event.startTime).toLocaleDateString(locale || "de-DE", { weekday: "short", day: "numeric", month: "short", timeZone: "Europe/Berlin" })}</div>
+              <div><div style={{ fontSize: "var(--display-text-sm, 0.875rem)", fontWeight: 500 }}>{event.title}</div><div style={{ fontSize: "var(--display-text-xs, 0.75rem)", opacity: 0.6 }}>{new Date(event.startTime).toLocaleTimeString(locale || "de-DE", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Berlin" })}</div></div>
             </div>
           ))}
         </div>

@@ -90,6 +90,8 @@ interface ParsedVEvent {
   endTime: Date;
   isAllDay: boolean;
   rruleString?: string;
+  status?: string;
+  exdates: Date[];
   rawData: string;
 }
 
@@ -147,6 +149,9 @@ export class ICSProvider implements CalendarProviderAdapter {
       const parsed = this.parseVEvent(eventText);
       if (!parsed) continue;
 
+      // Skip cancelled events
+      if (parsed.status === "CANCELLED") continue;
+
       const durationMs = parsed.endTime.getTime() - parsed.startTime.getTime();
 
       if (parsed.rruleString) {
@@ -156,6 +161,9 @@ export class ICSProvider implements CalendarProviderAdapter {
           const occurrences = rule.between(range.start, range.end, true);
 
           for (const occStart of occurrences) {
+            // Skip occurrences that fall on an EXDATE (cancelled instance)
+            if (parsed.exdates.some((exd) => Math.abs(exd.getTime() - occStart.getTime()) < 86_400_000)) continue;
+
             const occEnd = new Date(occStart.getTime() + durationMs);
             events.push({
               externalId: `${parsed.uid}_${occStart.toISOString()}`,
@@ -252,6 +260,22 @@ export class ICSProvider implements CalendarProviderAdapter {
       const dtendField = getDateField("DTEND");
       const durationStr = getField("DURATION");
       const rruleString = getField("RRULE");
+      const status = getField("STATUS")?.toUpperCase();
+
+      // Parse EXDATE lines (cancelled recurring instances)
+      const exdates: Date[] = [];
+      const exdateRegex = /^EXDATE([^:]*):(.+)$/gm;
+      let exdateMatch;
+      while ((exdateMatch = exdateRegex.exec(unfolded)) !== null) {
+        const params = exdateMatch[1];
+        const tzidMatch = /TZID=([^;:]+)/.exec(params);
+        const tzid = tzidMatch?.[1];
+        const values = exdateMatch[2].split(",");
+        for (const val of values) {
+          const d = this.parseDate(val.trim(), tzid);
+          if (d) exdates.push(d);
+        }
+      }
 
       if (!dtstartField) return null;
 
@@ -280,6 +304,8 @@ export class ICSProvider implements CalendarProviderAdapter {
         endTime,
         isAllDay,
         rruleString: rruleString || undefined,
+        status,
+        exdates,
         rawData: eventText.slice(0, 500),
       };
     } catch {

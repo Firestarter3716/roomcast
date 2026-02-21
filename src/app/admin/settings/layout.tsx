@@ -1,49 +1,24 @@
-"use client";
+import { getTranslations } from "next-intl/server";
+import { SettingsNav } from "./SettingsNav";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { Settings, Users, Activity, FileText } from "lucide-react";
-
-const NAV_ITEMS = [
-  { href: "/admin/settings/general", label: "General", icon: Settings },
-  { href: "/admin/settings/users", label: "Users", icon: Users },
-  { href: "/admin/settings/health", label: "Health", icon: Activity },
-  { href: "/admin/settings/audit", label: "Audit Log", icon: FileText },
-];
-
-export default function SettingsLayout({
+export default async function SettingsLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const pathname = usePathname();
+  const t = await getTranslations();
+
+  const navItems = [
+    { href: "/admin/settings/general", label: t("admin.settings.general") },
+    { href: "/admin/settings/users", label: t("admin.users.title") },
+    { href: "/admin/settings/health", label: t("admin.health.title") },
+    { href: "/admin/settings/audit", label: t("admin.audit.title") },
+  ];
 
   return (
     <div className="flex flex-col md:flex-row gap-6 md:gap-8">
       {/* Sidebar */}
-      <nav className="w-full md:w-56 shrink-0">
-        <div className="md:sticky md:top-24 flex md:flex-col gap-1 overflow-x-auto md:overflow-x-visible">
-          {NAV_ITEMS.map((item) => {
-            const Icon = item.icon;
-            const isActive = pathname.startsWith(item.href);
-
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
-                  isActive
-                    ? "bg-[var(--color-primary)] text-[var(--color-primary-foreground)]"
-                    : "text-[var(--color-muted-foreground)] hover:bg-[var(--color-muted)]/50 hover:text-[var(--color-foreground)]"
-                }`}
-              >
-                <Icon className="h-4 w-4" />
-                {item.label}
-              </Link>
-            );
-          })}
-        </div>
-      </nav>
+      <SettingsNav items={navItems} />
 
       {/* Main Content */}
       <main className="min-w-0 flex-1">{children}</main>
